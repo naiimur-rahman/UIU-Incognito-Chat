@@ -155,6 +155,36 @@
             display: inline-flex; vertical-align: middle; margin-left: 4px; color: var(--verified-blue);
         }
 
+        /* --- DELETED MESSAGE STYLE --- */
+        .message.deleted-message {
+            background-color: #f0f0f0;
+            color: #888;
+            font-style: italic;
+            border: 1px solid #ddd;
+            box-shadow: none;
+        }
+        body.dark-mode .message.deleted-message {
+            background-color: #333;
+            color: #aaa;
+            border: 1px solid #444;
+        }
+
+        /* --- ADMIN DELETE BUTTON --- */
+        .admin-delete-btn {
+            position: absolute;
+            top: 50%; transform: translateY(-50%);
+            background: #ff4757; color: white;
+            border: none; border-radius: 50%;
+            width: 24px; height: 24px;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; opacity: 0; transition: opacity 0.2s;
+            z-index: 15;
+            font-size: 12px;
+        }
+        .message-wrapper:hover .admin-delete-btn { opacity: 1; }
+        .delete-left { left: -30px; }
+        .delete-right { right: -30px; }
+
         .meta { font-size: 0.7rem; margin-bottom: 3px; opacity: 0.8; font-weight: 600; display: flex; align-items: center; }
 
         /* --- REACTIONS STYLES --- */
@@ -208,6 +238,7 @@
             .login-card { padding: 2rem 1.5rem; width: 90%; }
             .message { font-size: 0.9rem; }
             .welcome-watermark { width: 90%; }
+            .admin-delete-btn { opacity: 1; } /* Always show on mobile for admin */
         }
     </style>
 </head>
@@ -459,8 +490,18 @@
                 username: username,
                 text: text,
                 senderId: myUUID,
-                timestamp: firebase.database.ServerValue.TIMESTAMP
+                timestamp: firebase.database.ServerValue.TIMESTAMP,
+                isDeleted: false
             }).then(() => { messageInput.value = ''; }).catch(error => console.error(error));
+        }
+
+        function deleteMessage(msgId) {
+            if(confirm("Delete this message permanently?")) {
+                database.ref('messages/' + msgId).update({
+                    text: "🚫 Admin deleted message",
+                    isDeleted: true
+                });
+            }
         }
 
         function loadMessages() {
@@ -471,48 +512,80 @@
                 const data = snapshot.val();
                 const msgId = snapshot.key; 
                 if (data) { 
-                    displayMessage(msgId, data.username, data.text, data.timestamp, data.senderId); 
+                    displayMessage(msgId, data.username, data.text, data.timestamp, data.senderId, data.isDeleted); 
                     scrollToBottom(); 
                 }
             });
 
+            // Handle Changes (Reactions & Deletions)
             messagesRef.limitToLast(MAX_MESSAGES).on('child_changed', (snapshot) => {
                 const data = snapshot.val();
                 const msgId = snapshot.key;
+                
+                // 1. Update Reactions
                 if(data.reactions) {
                     updateReactions(msgId, data.reactions);
+                }
+
+                // 2. Update Text (if deleted)
+                const msgEl = document.getElementById(`msg-${msgId}`);
+                if (msgEl) {
+                    const textEl = msgEl.querySelector('.text');
+                    const bubble = msgEl.querySelector('.message');
+                    
+                    if (data.isDeleted) {
+                        textEl.textContent = "🚫 Admin deleted message";
+                        bubble.classList.add('deleted-message');
+                        // Remove reactions from UI if deleted (optional cleanup)
+                    }
                 }
             });
         }
 
-        function displayMessage(msgId, user, text, timestamp, senderId) {
+        function displayMessage(msgId, user, text, timestamp, senderId, isDeleted) {
             const wrapper = document.createElement('div');
             wrapper.classList.add('message-wrapper');
             wrapper.id = `msg-${msgId}`;
 
             const messageDiv = document.createElement('div');
             const isMyMessage = senderId ? (senderId === myUUID) : (user === username);
-            
-            // --- CHECK FOR ADMIN / RESTRICTED USER ---
             const lowerUser = user.toLowerCase();
-            // ONLY "Naimur Rahman" gets the badge and border
             const isNaimur = lowerUser === 'naimur rahman';
+            
+            // Check if *current logged in user* is Naimur (Admin)
+            const iAmAdmin = username.toLowerCase() === 'naimur rahman';
 
             messageDiv.classList.add('message');
             messageDiv.classList.add(isMyMessage ? 'my-message' : 'other-message');
             
-            // Add Special Admin Class (Gold Glow) ONLY for Naimur Rahman
             if (isNaimur) {
                 messageDiv.classList.add('admin-special');
             }
+
+            if (isDeleted) {
+                messageDiv.classList.add('deleted-message');
+            }
             
             // --- EVENT LISTENERS FOR REACTIONS ---
-            messageDiv.addEventListener('dblclick', (e) => showReactionMenu(e, msgId, wrapper));
-            let pressTimer;
-            messageDiv.addEventListener('touchstart', () => {
-                pressTimer = setTimeout(() => showReactionMenu(null, msgId, wrapper), 600);
-            });
-            messageDiv.addEventListener('touchend', () => clearTimeout(pressTimer));
+            if (!isDeleted) {
+                messageDiv.addEventListener('dblclick', (e) => showReactionMenu(e, msgId, wrapper));
+                let pressTimer;
+                messageDiv.addEventListener('touchstart', () => {
+                    pressTimer = setTimeout(() => showReactionMenu(null, msgId, wrapper), 600);
+                });
+                messageDiv.addEventListener('touchend', () => clearTimeout(pressTimer));
+            }
+
+            // --- ADMIN DELETE BUTTON ---
+            if (iAmAdmin && !isDeleted) {
+                const delBtn = document.createElement('button');
+                delBtn.innerHTML = '<i data-lucide="trash-2" style="width:14px;"></i>';
+                delBtn.className = isMyMessage ? 'admin-delete-btn delete-left' : 'admin-delete-btn delete-right';
+                delBtn.onclick = () => deleteMessage(msgId);
+                wrapper.appendChild(delBtn);
+                // We need to init icon later for this dynamic element
+                setTimeout(() => lucide.createIcons(), 100);
+            }
 
             let timeStr = "";
             if (timestamp) {
@@ -523,10 +596,8 @@
             const metaDiv = document.createElement('div');
             metaDiv.classList.add('meta');
             
-            // HTML for Name
             let nameHTML = isMyMessage ? 'You' : user;
             
-            // ADD VERIFIED BADGE *ONLY* FOR NAIMUR RAHMAN
             if (isNaimur) {
                 nameHTML += `
                 <span class="verified-badge" title="Verified Owner">
@@ -636,7 +707,7 @@
         }
 
         document.addEventListener('click', (e) => {
-            if(!e.target.closest('.message') && !e.target.closest('.reaction-menu')) {
+            if(!e.target.closest('.message') && !e.target.closest('.reaction-menu') && !e.target.closest('.admin-delete-btn')) {
                 const existingMenu = document.getElementById('active-reaction-menu');
                 if(existingMenu) {
                     existingMenu.remove();
