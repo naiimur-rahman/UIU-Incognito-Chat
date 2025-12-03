@@ -169,21 +169,22 @@
             border: 1px solid #444;
         }
 
-        /* --- ADMIN DELETE BUTTON --- */
+        /* --- ADMIN DELETE BUTTON (FIXED VISIBILITY) --- */
         .admin-delete-btn {
             position: absolute;
             top: 50%; transform: translateY(-50%);
             background: #ff4757; color: white;
             border: none; border-radius: 50%;
-            width: 24px; height: 24px;
+            width: 26px; height: 26px;
             display: flex; align-items: center; justify-content: center;
-            cursor: pointer; opacity: 0; transition: opacity 0.2s;
+            cursor: pointer; 
             z-index: 15;
-            font-size: 12px;
+            font-size: 14px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
         }
-        .message-wrapper:hover .admin-delete-btn { opacity: 1; }
-        .delete-left { left: -30px; }
-        .delete-right { right: -30px; }
+        /* Removed Opacity: Button is always visible for Admin now */
+        .delete-left { left: -32px; }
+        .delete-right { right: -32px; }
 
         .meta { font-size: 0.7rem; margin-bottom: 3px; opacity: 0.8; font-weight: 600; display: flex; align-items: center; }
 
@@ -238,7 +239,6 @@
             .login-card { padding: 2rem 1.5rem; width: 90%; }
             .message { font-size: 0.9rem; }
             .welcome-watermark { width: 90%; }
-            .admin-delete-btn { opacity: 1; } /* Always show on mobile for admin */
         }
     </style>
 </head>
@@ -536,7 +536,6 @@
                     if (data.isDeleted) {
                         textEl.textContent = "🚫 Admin deleted message";
                         bubble.classList.add('deleted-message');
-                        // Remove reactions from UI if deleted (optional cleanup)
                     }
                 }
             });
@@ -576,15 +575,13 @@
                 messageDiv.addEventListener('touchend', () => clearTimeout(pressTimer));
             }
 
-            // --- ADMIN DELETE BUTTON ---
+            // --- ADMIN DELETE BUTTON (EMOJI) ---
             if (iAmAdmin && !isDeleted) {
                 const delBtn = document.createElement('button');
-                delBtn.innerHTML = '<i data-lucide="trash-2" style="width:14px;"></i>';
+                delBtn.innerText = '🗑️'; // Direct emoji for visibility
                 delBtn.className = isMyMessage ? 'admin-delete-btn delete-left' : 'admin-delete-btn delete-right';
                 delBtn.onclick = () => deleteMessage(msgId);
                 wrapper.appendChild(delBtn);
-                // We need to init icon later for this dynamic element
-                setTimeout(() => lucide.createIcons(), 100);
             }
 
             let timeStr = "";
