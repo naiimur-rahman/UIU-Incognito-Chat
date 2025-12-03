@@ -1,6 +1,3 @@
-# UIU Anonymous Chat
-
-A simple, real-time chat application for UIU students.
 
 ## 🚀 Setup Instructions
 

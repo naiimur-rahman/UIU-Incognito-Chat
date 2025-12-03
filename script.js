@@ -1,7 +1,9 @@
-// TODO: Replace with your actual Firebase project configuration
+// --- 1. Firebase Configuration ---
 const firebaseConfig = {
   apiKey: "AIzaSyBx260kRaZe010DhaTxD7vPHER1ZIcQuxI",
   authDomain: "uiu-incognito-chat.firebaseapp.com",
+  // I added this URL so the "Red Light" error goes away
+  databaseURL: "https://uiu-incognito-chat-default-rtdb.firebaseio.com",
   projectId: "uiu-incognito-chat",
   storageBucket: "uiu-incognito-chat.firebasestorage.app",
   messagingSenderId: "579619680960",
@@ -9,17 +11,7 @@ const firebaseConfig = {
   measurementId: "G-B2RGV7N5JX"
 };
 
-// Initialize Firebase
-// Note: We use try/catch to handle cases where config is invalid initially
-let database;
-try {
-    firebase.initializeApp(firebaseConfig);
-    database = firebase.database();
-} catch (error) {
-    console.error("Firebase initialization failed. Make sure to update the config object.", error);
-}
-
-// DOM Elements
+// --- 2. DOM Elements ---
 const loginScreen = document.getElementById('login-screen');
 const chatScreen = document.getElementById('chat-screen');
 const usernameInput = document.getElementById('username-input');
@@ -30,32 +22,82 @@ const messagesContainer = document.getElementById('messages-container');
 const messageInput = document.getElementById('message-input');
 const sendBtn = document.getElementById('send-btn');
 
-// State
+// --- 3. State & Initialization ---
 let username = '';
+let database = null;
 const MAX_MESSAGES = 500;
 
-// --- Event Listeners ---
+function initFirebase() {
+    const statusDot = document.getElementById('status-indicator');
 
-// Join Chat
-joinBtn.addEventListener('click', joinChat);
-usernameInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') joinChat();
-});
+    // Check if Firebase is loaded
+    if (typeof firebase === 'undefined') {
+        alert("Critical Error: Firebase SDK not loaded. Check your internet.");
+        if(statusDot) statusDot.className = 'status-disconnected';
+        return;
+    }
 
-// Send Message
-sendBtn.addEventListener('click', sendMessage);
-messageInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') sendMessage();
-});
+    try {
+        firebase.initializeApp(firebaseConfig);
+        database = firebase.database();
 
-// Logout
-logoutBtn.addEventListener('click', () => {
-    location.reload(); // Simple reload to reset state
-});
+        // Connection Status Listener (Green/Red Light)
+        const connectedRef = database.ref(".info/connected");
+        connectedRef.on("value", (snap) => {
+            if (snap.val() === true) {
+                console.log("Connected to UIU Chat");
+                if (statusDot) {
+                    statusDot.className = 'status-connected';
+                    statusDot.title = "Online";
+                }
+            } else {
+                console.log("Disconnected");
+                if (statusDot) {
+                    statusDot.className = 'status-disconnected';
+                    statusDot.title = "Offline";
+                }
+            }
+        });
 
-// --- Functions ---
+    } catch (error) {
+        console.error("Firebase Init Error:", error);
+        alert("Firebase failed to load: " + error.message);
+    }
+}
+
+// Start App
+initFirebase();
+
+// --- 4. Event Listeners ---
+
+if (joinBtn) joinBtn.addEventListener('click', joinChat);
+if (usernameInput) {
+    usernameInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') joinChat();
+    });
+}
+
+if (sendBtn) sendBtn.addEventListener('click', sendMessage);
+if (messageInput) {
+    messageInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') sendMessage();
+    });
+}
+
+if (logoutBtn) {
+    logoutBtn.addEventListener('click', () => {
+        location.reload(); // Reloads page to reset state
+    });
+}
+
+// --- 5. Functions ---
 
 function joinChat() {
+    if (!database) {
+        alert("Connecting to server... please wait.");
+        return;
+    }
+
     const name = usernameInput.value.trim();
     if (name) {
         username = name;
@@ -70,7 +112,13 @@ function joinChat() {
 
 function sendMessage() {
     const text = messageInput.value.trim();
-    if (text && database) {
+
+    if (!database) {
+        alert("Error: Database not connected.");
+        return;
+    }
+
+    if (text) {
         const messagesRef = database.ref('messages');
         const newMessageRef = messagesRef.push();
 
@@ -80,10 +128,13 @@ function sendMessage() {
             timestamp: firebase.database.ServerValue.TIMESTAMP
         }).then(() => {
             messageInput.value = '';
-            // Optional: cleanup logic could go here, but listener handles view
         }).catch(error => {
             console.error("Error sending message:", error);
-            alert("Error sending message. Check console/config.");
+            if (error.code === "PERMISSION_DENIED") {
+                alert("Permission Denied! \nDid you set your Database Rules to 'test mode'?");
+            } else {
+                alert("Error sending message. Check console.");
+            }
         });
     }
 }
@@ -96,22 +147,21 @@ function loadMessages() {
     // Load last 500 messages
     messagesRef.limitToLast(MAX_MESSAGES).on('child_added', (snapshot) => {
         const data = snapshot.val();
-        displayMessage(data.username, data.text, data.timestamp);
-        scrollToBottom();
+        if (data && data.username && data.text) {
+            displayMessage(data.username, data.text, data.timestamp);
+            scrollToBottom();
+        }
     });
 
-    // Optional: Prune old messages logic
-    // This runs ONCE when loading to clean up DB if it gets too huge
-    // Note: In a real "secure" app, this would be a Cloud Function.
-    // Here we do a client-side "best effort" cleanup.
+    // Cleanup logic (runs once on load)
     messagesRef.once('value', (snapshot) => {
         const count = snapshot.numChildren();
-        if (count > MAX_MESSAGES + 50) { // Buffer of 50
+        if (count > MAX_MESSAGES + 50) {
              const toDelete = count - MAX_MESSAGES;
              let i = 0;
              snapshot.forEach((child) => {
                  if (i < toDelete) {
-                     child.ref.remove();
+                     child.ref.remove().catch(err => console.log("Cleanup error", err));
                  }
                  i++;
              });
@@ -126,9 +176,12 @@ function displayMessage(user, text, timestamp) {
     messageDiv.classList.add('message');
     messageDiv.classList.add(isMyMessage ? 'my-message' : 'other-message');
 
-    // Format Time
-    const date = new Date(timestamp);
-    const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    // Format Time (Safe check)
+    let timeStr = "";
+    if (timestamp) {
+        const date = new Date(timestamp);
+        timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
 
     const metaDiv = document.createElement('div');
     metaDiv.classList.add('meta');
