@@ -1,12 +1,14 @@
 // TODO: Replace with your actual Firebase project configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyBx260kRaZe010DhaTxD7vPHER1ZIcQuxI",
-  authDomain: "uiu-incognito-chat.firebaseapp.com",
-  projectId: "uiu-incognito-chat",
-  storageBucket: "uiu-incognito-chat.firebasestorage.app",
-  messagingSenderId: "579619680960",
-  appId: "1:579619680960:web:11c11c4813eba3422cb325",
-  measurementId: "G-B2RGV7N5JX"
+    apiKey: "AIzaSyBx260kRaZe010DhaTxD7vPHER1ZIcQuxI",
+    authDomain: "uiu-incognito-chat.firebaseapp.com",
+    // IMPORTANT: I added this line. If your DB region is different, check your Firebase Console!
+    databaseURL: "https://uiu-incognito-chat-default-rtdb.firebaseio.com",
+    projectId: "uiu-incognito-chat",
+    storageBucket: "uiu-incognito-chat.firebasestorage.app",
+    messagingSenderId: "579619680960",
+    appId: "1:579619680960:web:11c11c4813eba3422cb325",
+    measurementId: "G-B2RGV7N5JX"
 };
 
 // DOM Elements
@@ -29,10 +31,13 @@ const MAX_MESSAGES = 500;
 function initFirebase() {
     const statusDot = document.getElementById('status-indicator');
 
-    // 1. Check for placeholders
-    if (firebaseConfig.apiKey === "YOUR_API_KEY" || firebaseConfig.databaseURL.includes("YOUR_PROJECT_ID")) {
+    // 1. Check for placeholders (Fixed to prevent crashing if databaseURL is missing)
+    const isInvalidConfig = firebaseConfig.apiKey === "YOUR_API_KEY" || 
+                           (firebaseConfig.databaseURL && firebaseConfig.databaseURL.includes("YOUR_PROJECT_ID"));
+
+    if (isInvalidConfig) {
         alert("CRITICAL ERROR:\n\nYou have not updated the 'firebaseConfig' in script.js!\n\nPlease open script.js and replace the placeholder keys with your actual Firebase details from the console.");
-        statusDot.className = 'status-disconnected';
+        if (statusDot) statusDot.className = 'status-disconnected';
         return;
     }
 
@@ -45,12 +50,16 @@ function initFirebase() {
         connectedRef.on("value", (snap) => {
             if (snap.val() === true) {
                 console.log("Firebase Connected!");
-                statusDot.className = 'status-connected';
-                statusDot.title = "Connected to Firebase";
+                if (statusDot) {
+                    statusDot.className = 'status-connected';
+                    statusDot.title = "Connected to Firebase";
+                }
             } else {
                 console.log("Firebase Disconnected/Connecting...");
-                statusDot.className = 'status-disconnected';
-                statusDot.title = "Disconnected";
+                if (statusDot) {
+                    statusDot.className = 'status-disconnected';
+                    statusDot.title = "Disconnected";
+                }
             }
         });
 
@@ -150,14 +159,14 @@ function loadMessages() {
     messagesRef.once('value', (snapshot) => {
         const count = snapshot.numChildren();
         if (count > MAX_MESSAGES + 50) {
-             const toDelete = count - MAX_MESSAGES;
-             let i = 0;
-             snapshot.forEach((child) => {
-                 if (i < toDelete) {
-                     child.ref.remove().catch(err => console.log("Cleanup error", err));
-                 }
-                 i++;
-             });
+            const toDelete = count - MAX_MESSAGES;
+            let i = 0;
+            snapshot.forEach((child) => {
+                if (i < toDelete) {
+                    child.ref.remove().catch(err => console.log("Cleanup error", err));
+                }
+                i++;
+            });
         }
     });
 }
