@@ -22,6 +22,8 @@
             --chat-bg: rgba(255, 255, 255, 0.5);
             --status-green: #2ecc71;
             --status-red: #ff4757;
+            --verified-blue: #1da1f2;
+            --admin-gold: #ffd700;
         }
 
         body.dark-mode {
@@ -49,7 +51,7 @@
         @keyframes popUp { 0% { transform: scale(0.9); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes floatUp { 0% { transform: translateY(10px); opacity: 0; } 100% { transform: translateY(0); opacity: 1; } }
-
+        
         .background-shape { position: absolute; border-radius: 50%; filter: blur(80px); z-index: -1; opacity: 0.6; pointer-events: none; }
         .shape-1 { width: 300px; height: 300px; background: #ffe259; top: -50px; left: -50px; }
         .shape-2 { width: 400px; height: 400px; background: #ffa751; bottom: -100px; right: -100px; }
@@ -144,7 +146,16 @@
         .my-message { align-self: flex-end; background: var(--primary); color: white; border-bottom-right-radius: 2px; }
         .other-message { align-self: flex-start; background: white; color: #333; border-bottom-left-radius: 2px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         
-        .meta { font-size: 0.7rem; margin-bottom: 3px; opacity: 0.8; font-weight: 600; display: block; }
+        /* --- SPECIAL ADMIN STYLES --- */
+        .message.admin-special {
+            border: 2px solid var(--admin-gold);
+            box-shadow: 0 0 8px rgba(255, 215, 0, 0.4);
+        }
+        .verified-badge {
+            display: inline-flex; vertical-align: middle; margin-left: 4px; color: var(--verified-blue);
+        }
+
+        .meta { font-size: 0.7rem; margin-bottom: 3px; opacity: 0.8; font-weight: 600; display: flex; align-items: center; }
 
         /* --- REACTIONS STYLES --- */
         .reaction-menu {
@@ -321,7 +332,7 @@
         
         // --- RESTRICTED USERNAMES ---
         const RESTRICTED_NAMES = ['naimur rahman', 'naimurrahman', 'naimur', 'admin'];
-        const ADMIN_PASSWORD = "aadminn"; // CHANGE THIS IF YOU WANT A DIFFERENT PASSWORD
+        const ADMIN_PASSWORD = "admin"; // Change password here
 
         const REACTION_OPTIONS = ['❤️', '😂', '😮', '😢', '😡', '👍'];
 
@@ -418,8 +429,6 @@
             const userRef = database.ref('active_users/' + userKey);
             
             userRef.once('value', (snapshot) => {
-                // If it exists but is NOT the restricted user trying to log in, block it.
-                // But since we already password checked restricted names, we just check if someone else is online with this name.
                 if (snapshot.exists()) {
                     alert(`The name "${rawName}" is currently online! Please choose another.`);
                 } else {
@@ -460,14 +469,13 @@
             
             messagesRef.limitToLast(MAX_MESSAGES).on('child_added', (snapshot) => {
                 const data = snapshot.val();
-                const msgId = snapshot.key; // Get Unique Message ID
+                const msgId = snapshot.key; 
                 if (data) { 
                     displayMessage(msgId, data.username, data.text, data.timestamp, data.senderId); 
                     scrollToBottom(); 
                 }
             });
 
-            // Listen for changes (Reactions)
             messagesRef.limitToLast(MAX_MESSAGES).on('child_changed', (snapshot) => {
                 const data = snapshot.val();
                 const msgId = snapshot.key;
@@ -484,14 +492,23 @@
 
             const messageDiv = document.createElement('div');
             const isMyMessage = senderId ? (senderId === myUUID) : (user === username);
+            
+            // --- CHECK FOR ADMIN / RESTRICTED USER ---
+            const lowerUser = user.toLowerCase();
+            const isRestricted = RESTRICTED_NAMES.includes(lowerUser);
+            // ONLY "Naimur Rahman" gets the badge
+            const isNaimur = lowerUser === 'naimur rahman';
 
             messageDiv.classList.add('message');
             messageDiv.classList.add(isMyMessage ? 'my-message' : 'other-message');
             
+            // Add Special Admin Class (Gold Glow) for all restricted users
+            if (isRestricted) {
+                messageDiv.classList.add('admin-special');
+            }
+            
             // --- EVENT LISTENERS FOR REACTIONS ---
-            // Desktop: Double Click
             messageDiv.addEventListener('dblclick', (e) => showReactionMenu(e, msgId, wrapper));
-            // Mobile: Long Press
             let pressTimer;
             messageDiv.addEventListener('touchstart', () => {
                 pressTimer = setTimeout(() => showReactionMenu(null, msgId, wrapper), 600);
@@ -506,7 +523,21 @@
 
             const metaDiv = document.createElement('div');
             metaDiv.classList.add('meta');
-            metaDiv.textContent = isMyMessage ? 'You' : `${user} • ${timeStr}`;
+            
+            // HTML for Name
+            let nameHTML = isMyMessage ? 'You' : user;
+            
+            // ADD VERIFIED BADGE *ONLY* FOR NAIMUR RAHMAN
+            if (isNaimur) {
+                nameHTML += `
+                <span class="verified-badge" title="Verified Owner">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                        <path d="M9 12L11 14L15 10M12 3L13.9101 4.25465C14.616 4.71826 15.5286 4.71826 16.2345 4.25465L18.1446 3L18.8858 5.17418C19.1598 5.97794 19.8211 6.63919 20.6248 6.91322L22.799 7.65444L21.5443 9.56449C21.0807 10.2704 21.0807 11.183 21.5443 11.8889L22.799 13.7989L20.6248 14.5402C19.8211 14.8142 19.1598 15.4754 18.8858 16.2792L18.1446 18.4534L16.2345 17.1987C15.5286 16.7351 14.616 16.7351 13.9101 17.1987L12 18.4534L10.0899 17.1987C9.38396 16.7351 8.47135 16.7351 7.76543 17.1987L5.85538 18.4534L5.11417 16.2792C4.84015 15.4754 4.17889 14.8142 3.37513 14.5402L1.20096 13.7989L2.45561 11.8889C2.91923 11.183 2.91923 10.2704 2.45561 9.56449L1.20096 7.65444L3.37513 6.91322C4.17889 6.63919 4.84015 5.97794 5.11417 5.17418L5.85538 3L7.76543 4.25465C8.47135 4.71826 9.38396 4.71826 10.0899 4.25465L12 3Z"/>
+                    </svg>
+                </span>`;
+            }
+
+            metaDiv.innerHTML = `${nameHTML} • ${timeStr}`;
 
             const textDiv = document.createElement('div');
             textDiv.classList.add('text');
@@ -515,7 +546,6 @@
             messageDiv.appendChild(metaDiv);
             messageDiv.appendChild(textDiv);
             
-            // Reaction Display Area (Empty initially)
             const reactionDisplay = document.createElement('div');
             reactionDisplay.id = `react-disp-${msgId}`;
             reactionDisplay.className = 'reaction-display-bubble hidden';
@@ -523,7 +553,6 @@
             wrapper.appendChild(messageDiv);
             wrapper.appendChild(reactionDisplay);
 
-            // Alignment wrapper
             if(isMyMessage) {
                 wrapper.style.alignItems = 'flex-end';
             } else {
@@ -532,8 +561,6 @@
 
             messagesContainer.appendChild(wrapper);
 
-            // Load initial reactions if any
-            // We fetch once to check current state
             database.ref(`messages/${msgId}/reactions`).once('value', (snap) => {
                 if(snap.exists()) updateReactions(msgId, snap.val());
             });
@@ -543,9 +570,8 @@
         let currentOpenMenuId = null;
 
         function showReactionMenu(e, msgId, wrapper) {
-            if(e) e.preventDefault(); // Stop zoom on double tap
+            if(e) e.preventDefault(); 
             
-            // Close existing menu
             const existingMenu = document.getElementById('active-reaction-menu');
             if(existingMenu) existingMenu.remove();
 
@@ -566,11 +592,9 @@
                 menu.appendChild(span);
             });
 
-            // Position relative to the message wrapper
             wrapper.appendChild(menu);
             currentOpenMenuId = msgId;
 
-            // Auto close after 3 seconds
             setTimeout(() => {
                 if(menu.parentNode) menu.remove();
                 currentOpenMenuId = null;
@@ -582,7 +606,6 @@
             if(existingMenu) existingMenu.remove();
             currentOpenMenuId = null;
 
-            // Update Firebase: messages/msgId/reactions/myUUID = emoji
             database.ref(`messages/${msgId}/reactions/${myUUID}`).set(emoji);
         }
 
@@ -595,15 +618,12 @@
                 return;
             }
 
-            // Count reactions
             const counts = {};
             Object.values(reactionsData).forEach(emoji => {
                 counts[emoji] = (counts[emoji] || 0) + 1;
             });
 
-            // Format display (e.g. ❤️ 2  😂 1)
             let html = '';
-            // Sort by most popular
             Object.entries(counts).sort((a,b) => b[1] - a[1]).forEach(([emoji, count]) => {
                 html += `<span>${emoji} ${count > 1 ? count : ''}</span>`;
             });
@@ -616,7 +636,6 @@
             }
         }
 
-        // Close menu if clicking elsewhere
         document.addEventListener('click', (e) => {
             if(!e.target.closest('.message') && !e.target.closest('.reaction-menu')) {
                 const existingMenu = document.getElementById('active-reaction-menu');
