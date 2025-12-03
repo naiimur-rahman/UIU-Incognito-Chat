@@ -495,15 +495,14 @@
             
             // --- CHECK FOR ADMIN / RESTRICTED USER ---
             const lowerUser = user.toLowerCase();
-            const isRestricted = RESTRICTED_NAMES.includes(lowerUser);
-            // ONLY "Naimur Rahman" gets the badge
+            // ONLY "Naimur Rahman" gets the badge and border
             const isNaimur = lowerUser === 'naimur rahman';
 
             messageDiv.classList.add('message');
             messageDiv.classList.add(isMyMessage ? 'my-message' : 'other-message');
             
-            // Add Special Admin Class (Gold Glow) for all restricted users
-            if (isRestricted) {
+            // Add Special Admin Class (Gold Glow) ONLY for Naimur Rahman
+            if (isNaimur) {
                 messageDiv.classList.add('admin-special');
             }
             
