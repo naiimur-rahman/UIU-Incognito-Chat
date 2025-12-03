@@ -1,12 +1,12 @@
 // TODO: Replace with your actual Firebase project configuration
 const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-    databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_PROJECT_ID.appspot.com",
-    messagingSenderId: "YOUR_SENDER_ID",
-    appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyBx260kRaZe010DhaTxD7vPHER1ZIcQuxI",
+  authDomain: "uiu-incognito-chat.firebaseapp.com",
+  projectId: "uiu-incognito-chat",
+  storageBucket: "uiu-incognito-chat.firebasestorage.app",
+  messagingSenderId: "579619680960",
+  appId: "1:579619680960:web:11c11c4813eba3422cb325",
+  measurementId: "G-B2RGV7N5JX"
 };
 
 // DOM Elements
