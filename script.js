@@ -1,17 +1,54 @@
-// TODO: Replace with your actual Firebase project configuration
+// --- 1. Firebase Configuration ---
 const firebaseConfig = {
-    apiKey: "AIzaSyBx260kRaZe010DhaTxD7vPHER1ZIcQuxI",
-    authDomain: "uiu-incognito-chat.firebaseapp.com",
-    // IMPORTANT: I added this line. If your DB region is different, check your Firebase Console!
-    databaseURL: "https://uiu-incognito-chat-default-rtdb.firebaseio.com",
-    projectId: "uiu-incognito-chat",
-    storageBucket: "uiu-incognito-chat.firebasestorage.app",
-    messagingSenderId: "579619680960",
-    appId: "1:579619680960:web:11c11c4813eba3422cb325",
-    measurementId: "G-B2RGV7N5JX"
+  apiKey: "AIzaSyBx260kRaZe010DhaTxD7vPHER1ZIcQuxI",
+  authDomain: "uiu-incognito-chat.firebaseapp.com",
+  // This was missing before, which caused the Red Light!
+  databaseURL: "https://uiu-incognito-chat-default-rtdb.firebaseio.com",
+  projectId: "uiu-incognito-chat",
+  storageBucket: "uiu-incognito-chat.firebasestorage.app",
+  messagingSenderId: "579619680960",
+  appId: "1:579619680960:web:11c11c4813eba3422cb325",
+  measurementId: "G-B2RGV7N5JX"
 };
 
-// DOM Elements
+// --- 2. Initialize Firebase ---
+let database = null;
+
+function initFirebase() {
+    const statusDot = document.getElementById('status-indicator');
+
+    try {
+        firebase.initializeApp(firebaseConfig);
+        database = firebase.database();
+
+        // Connection Listener (Controls the Red/Green Light)
+        const connectedRef = database.ref(".info/connected");
+        connectedRef.on("value", (snap) => {
+            if (snap.val() === true) {
+                console.log("Connected");
+                if (statusDot) {
+                    statusDot.className = 'status-connected';
+                    statusDot.title = "Online";
+                }
+            } else {
+                console.log("Disconnected");
+                if (statusDot) {
+                    statusDot.className = 'status-disconnected';
+                    statusDot.title = "Offline";
+                }
+            }
+        });
+
+    } catch (error) {
+        console.error("Firebase Error:", error);
+        if (statusDot) statusDot.className = 'status-disconnected';
+    }
+}
+
+// Start Firebase immediately
+initFirebase();
+
+// --- 3. DOM Elements ---
 const loginScreen = document.getElementById('login-screen');
 const chatScreen = document.getElementById('chat-screen');
 const usernameInput = document.getElementById('username-input');
@@ -22,80 +59,35 @@ const messagesContainer = document.getElementById('messages-container');
 const messageInput = document.getElementById('message-input');
 const sendBtn = document.getElementById('send-btn');
 
-// State
+// --- 4. State ---
 let username = '';
-let database = null;
 const MAX_MESSAGES = 500;
 
-// Initialize Firebase
-function initFirebase() {
-    const statusDot = document.getElementById('status-indicator');
-
-    // 1. Check for placeholders (Fixed to prevent crashing if databaseURL is missing)
-    const isInvalidConfig = firebaseConfig.apiKey === "YOUR_API_KEY" || 
-                           (firebaseConfig.databaseURL && firebaseConfig.databaseURL.includes("YOUR_PROJECT_ID"));
-
-    if (isInvalidConfig) {
-        alert("CRITICAL ERROR:\n\nYou have not updated the 'firebaseConfig' in script.js!\n\nPlease open script.js and replace the placeholder keys with your actual Firebase details from the console.");
-        if (statusDot) statusDot.className = 'status-disconnected';
-        return;
-    }
-
-    try {
-        firebase.initializeApp(firebaseConfig);
-        database = firebase.database();
-
-        // Test connection
-        const connectedRef = database.ref(".info/connected");
-        connectedRef.on("value", (snap) => {
-            if (snap.val() === true) {
-                console.log("Firebase Connected!");
-                if (statusDot) {
-                    statusDot.className = 'status-connected';
-                    statusDot.title = "Connected to Firebase";
-                }
-            } else {
-                console.log("Firebase Disconnected/Connecting...");
-                if (statusDot) {
-                    statusDot.className = 'status-disconnected';
-                    statusDot.title = "Disconnected";
-                }
-            }
-        });
-
-    } catch (error) {
-        console.error("Firebase initialization failed:", error);
-        alert("Firebase failed to load. See console for details.");
-    }
+// --- 5. Event Listeners ---
+if (joinBtn) joinBtn.addEventListener('click', joinChat);
+if (usernameInput) {
+    usernameInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') joinChat();
+    });
+}
+if (sendBtn) sendBtn.addEventListener('click', sendMessage);
+if (messageInput) {
+    messageInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') sendMessage();
+    });
+}
+if (logoutBtn) {
+    logoutBtn.addEventListener('click', () => {
+        location.reload();
+    });
 }
 
-// Run Init
-initFirebase();
-
-// --- Event Listeners ---
-
-// Join Chat
-joinBtn.addEventListener('click', joinChat);
-usernameInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') joinChat();
-});
-
-// Send Message
-sendBtn.addEventListener('click', sendMessage);
-messageInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') sendMessage();
-});
-
-// Logout
-logoutBtn.addEventListener('click', () => {
-    location.reload();
-});
-
-// --- Functions ---
+// --- 6. Functions ---
 
 function joinChat() {
+    // Check if database is ready
     if (!database) {
-        alert("Cannot join: Firebase is not connected. Did you update the config?");
+        alert("Connecting to server... please wait a moment.");
         return;
     }
 
@@ -113,60 +105,27 @@ function joinChat() {
 
 function sendMessage() {
     const text = messageInput.value.trim();
-
-    if (!database) {
-        alert("Error: Database not connected.");
-        return;
-    }
-
-    if (text) {
+    if (text && database) {
         const messagesRef = database.ref('messages');
-        const newMessageRef = messagesRef.push();
-
-        newMessageRef.set({
+        messagesRef.push({
             username: username,
             text: text,
             timestamp: firebase.database.ServerValue.TIMESTAMP
-        }).then(() => {
-            messageInput.value = '';
-        }).catch(error => {
-            console.error("Error sending message:", error);
-            if (error.code === "PERMISSION_DENIED") {
-                alert("Permission Denied! \nDid you set your Database Rules to 'test mode' (public)?");
-            } else {
-                alert("Error sending message: " + error.message);
-            }
         });
+        messageInput.value = '';
     }
 }
 
 function loadMessages() {
     if (!database) return;
-
     const messagesRef = database.ref('messages');
-
-    // Load last 500 messages
+    
+    // Listen for new messages
     messagesRef.limitToLast(MAX_MESSAGES).on('child_added', (snapshot) => {
         const data = snapshot.val();
-        // Handle potential null/bad data
-        if (data && data.username && data.text) {
+        if (data) {
             displayMessage(data.username, data.text, data.timestamp);
             scrollToBottom();
-        }
-    });
-
-    // Cleanup logic (runs once)
-    messagesRef.once('value', (snapshot) => {
-        const count = snapshot.numChildren();
-        if (count > MAX_MESSAGES + 50) {
-            const toDelete = count - MAX_MESSAGES;
-            let i = 0;
-            snapshot.forEach((child) => {
-                if (i < toDelete) {
-                    child.ref.remove().catch(err => console.log("Cleanup error", err));
-                }
-                i++;
-            });
         }
     });
 }
@@ -178,7 +137,6 @@ function displayMessage(user, text, timestamp) {
     messageDiv.classList.add('message');
     messageDiv.classList.add(isMyMessage ? 'my-message' : 'other-message');
 
-    // Format Time
     let timeStr = "";
     if (timestamp) {
         const date = new Date(timestamp);
