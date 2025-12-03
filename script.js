@@ -1,15 +1,17 @@
-// TODO: Replace with your actual Firebase project configuration
+// --- 1. Firebase Configuration ---
 const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-    databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_PROJECT_ID.appspot.com",
-    messagingSenderId: "YOUR_SENDER_ID",
-    appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyBx260kRaZe010DhaTxD7vPHER1ZIcQuxI",
+  authDomain: "uiu-incognito-chat.firebaseapp.com",
+  // I added this URL so the "Red Light" error goes away
+  databaseURL: "https://uiu-incognito-chat-default-rtdb.firebaseio.com",
+  projectId: "uiu-incognito-chat",
+  storageBucket: "uiu-incognito-chat.firebasestorage.app",
+  messagingSenderId: "579619680960",
+  appId: "1:579619680960:web:11c11c4813eba3422cb325",
+  measurementId: "G-B2RGV7N5JX"
 };
 
-// DOM Elements
+// --- 2. DOM Elements ---
 const loginScreen = document.getElementById('login-screen');
 const chatScreen = document.getElementById('chat-screen');
 const usernameInput = document.getElementById('username-input');
@@ -20,104 +22,79 @@ const messagesContainer = document.getElementById('messages-container');
 const messageInput = document.getElementById('message-input');
 const sendBtn = document.getElementById('send-btn');
 
-// State
+// --- 3. State & Initialization ---
 let username = '';
 let database = null;
 const MAX_MESSAGES = 500;
 
-// Initialize Firebase
 function initFirebase() {
     const statusDot = document.getElementById('status-indicator');
 
-    logToUI("Initializing Firebase...", "info-msg");
-
-    // 1. Check for global firebase object (CDN loaded?)
+    // Check if Firebase is loaded
     if (typeof firebase === 'undefined') {
-        logToUI("CRITICAL: Firebase SDK not found. Check internet connection or CDN URLs.", "error-msg");
-        alert("Firebase SDK not loaded. Check internet connection.");
-        statusDot.className = 'status-disconnected';
-        return;
-    }
-
-    // 2. Check for placeholders
-    if (firebaseConfig.apiKey === "YOUR_API_KEY" || firebaseConfig.databaseURL.includes("YOUR_PROJECT_ID")) {
-        logToUI("CRITICAL: Config keys are still placeholders.", "error-msg");
-        alert("CRITICAL ERROR:\n\nYou have not updated the 'firebaseConfig' in script.js!\n\nPlease open script.js and replace the placeholder keys.");
-        statusDot.className = 'status-disconnected';
+        alert("Critical Error: Firebase SDK not loaded. Check your internet.");
+        if(statusDot) statusDot.className = 'status-disconnected';
         return;
     }
 
     try {
         firebase.initializeApp(firebaseConfig);
         database = firebase.database();
-        logToUI("Firebase App Initialized.", "success-msg");
 
-        // Test connection
+        // Connection Status Listener (Green/Red Light)
         const connectedRef = database.ref(".info/connected");
         connectedRef.on("value", (snap) => {
             if (snap.val() === true) {
-                console.log("Firebase Connected!");
-                statusDot.className = 'status-connected';
-                statusDot.title = "Connected to Firebase";
-                logToUI("Database Connected!", "success-msg");
+                console.log("Connected to UIU Chat");
+                if (statusDot) {
+                    statusDot.className = 'status-connected';
+                    statusDot.title = "Online";
+                }
             } else {
-                console.log("Firebase Disconnected/Connecting...");
-                statusDot.className = 'status-disconnected';
-                statusDot.title = "Disconnected";
-                logToUI("Database Disconnected. Connecting...", "info-msg");
+                console.log("Disconnected");
+                if (statusDot) {
+                    statusDot.className = 'status-disconnected';
+                    statusDot.title = "Offline";
+                }
             }
         });
 
     } catch (error) {
-        console.error("Firebase initialization failed:", error);
-        logToUI("Init Failed: " + error.message, "error-msg");
+        console.error("Firebase Init Error:", error);
         alert("Firebase failed to load: " + error.message);
     }
 }
 
-function toggleDebugLog() {
-    const log = document.getElementById('debug-log');
-    if (log.style.display === 'none') {
-        log.style.display = 'block';
-    } else {
-        log.style.display = 'none';
-    }
-}
-
-function logToUI(msg, className) {
-    const logBox = document.getElementById('debug-log');
-    if (logBox) {
-        logBox.innerHTML += `<div class="${className}">${msg}</div>`;
-    }
-}
-
-// Run Init
+// Start App
 initFirebase();
 
-// --- Event Listeners ---
+// --- 4. Event Listeners ---
 
-// Join Chat
-joinBtn.addEventListener('click', joinChat);
-usernameInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') joinChat();
-});
+if (joinBtn) joinBtn.addEventListener('click', joinChat);
+if (usernameInput) {
+    usernameInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') joinChat();
+    });
+}
 
-// Send Message
-sendBtn.addEventListener('click', sendMessage);
-messageInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') sendMessage();
-});
+if (sendBtn) sendBtn.addEventListener('click', sendMessage);
+if (messageInput) {
+    messageInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') sendMessage();
+    });
+}
 
-// Logout
-logoutBtn.addEventListener('click', () => {
-    location.reload();
-});
+if (logoutBtn) {
+    logoutBtn.addEventListener('click', () => {
+        location.reload(); // Reloads page to reset state
+    });
+}
 
-// --- Functions ---
+// --- 5. Functions ---
 
 function joinChat() {
     if (!database) {
-        alert("Cannot join: Firebase is not connected. Did you update the config?");
+        alert("Connecting to server... please wait.");
         return;
     }
 
@@ -154,9 +131,9 @@ function sendMessage() {
         }).catch(error => {
             console.error("Error sending message:", error);
             if (error.code === "PERMISSION_DENIED") {
-                alert("Permission Denied! \nDid you set your Database Rules to 'test mode' (public)?");
+                alert("Permission Denied! \nDid you set your Database Rules to 'test mode'?");
             } else {
-                alert("Error sending message: " + error.message);
+                alert("Error sending message. Check console.");
             }
         });
     }
@@ -170,14 +147,13 @@ function loadMessages() {
     // Load last 500 messages
     messagesRef.limitToLast(MAX_MESSAGES).on('child_added', (snapshot) => {
         const data = snapshot.val();
-        // Handle potential null/bad data
         if (data && data.username && data.text) {
             displayMessage(data.username, data.text, data.timestamp);
             scrollToBottom();
         }
     });
 
-    // Cleanup logic (runs once)
+    // Cleanup logic (runs once on load)
     messagesRef.once('value', (snapshot) => {
         const count = snapshot.numChildren();
         if (count > MAX_MESSAGES + 50) {
@@ -200,7 +176,7 @@ function displayMessage(user, text, timestamp) {
     messageDiv.classList.add('message');
     messageDiv.classList.add(isMyMessage ? 'my-message' : 'other-message');
 
-    // Format Time
+    // Format Time (Safe check)
     let timeStr = "";
     if (timestamp) {
         const date = new Date(timestamp);
