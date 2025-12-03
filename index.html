@@ -9,11 +9,13 @@
 <body>
 
     <div id="login-screen">
+        <button id="theme-toggle-login" class="theme-toggle">🌙</button>
         <div class="login-container">
             <h1>UIU Chat</h1>
             <p>Anonymous Student Chat</p>
             <input type="text" id="username-input" placeholder="Enter your name..." maxlength="20">
             <button id="join-btn">Join Chat</button>
+            <a href="https://naiimur-rahman.github.io/UIU-CGPA-Calculator/" target="_blank" id="cgpa-btn">CGPA Calculator</a>
         </div>
     </div>
 
@@ -23,7 +25,10 @@
                 <h2>UIU Community</h2>
                 <span id="current-user-display"></span>
             </div>
-            <button id="logout-btn">Leave</button>
+            <div class="header-controls">
+                <button id="theme-toggle-chat" class="theme-toggle">🌙</button>
+                <button id="logout-btn">Leave</button>
+            </div>
         </header>
 
         <div id="messages-container">
@@ -40,5 +45,9 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
     <script src="script.js"></script>
+
+    <footer>
+        Developed by <a href="https://www.facebook.com/naiimurr/" target="_blank" class="dev-link">Naimur Rahman</a> (CSE 242) for the students of UIU❤️
+    </footer>
 </body>
 </html>

@@ -22,10 +22,38 @@ const messagesContainer = document.getElementById('messages-container');
 const messageInput = document.getElementById('message-input');
 const sendBtn = document.getElementById('send-btn');
 
+// Dark Mode Toggle Elements
+const themeToggleLogin = document.getElementById('theme-toggle-login');
+const themeToggleChat = document.getElementById('theme-toggle-chat');
+
 // --- 3. State & Initialization ---
 let username = '';
 let database = null;
 const MAX_MESSAGES = 500;
+
+// --- Dark Mode Logic ---
+function initTheme() {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'dark') {
+        document.body.classList.add('dark-mode');
+        updateThemeIcon(true);
+    } else {
+        updateThemeIcon(false);
+    }
+}
+
+function toggleTheme() {
+    document.body.classList.toggle('dark-mode');
+    const isDark = document.body.classList.contains('dark-mode');
+    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+    updateThemeIcon(isDark);
+}
+
+function updateThemeIcon(isDark) {
+    const icon = isDark ? '☀️' : '🌙';
+    if (themeToggleLogin) themeToggleLogin.textContent = icon;
+    if (themeToggleChat) themeToggleChat.textContent = icon;
+}
 
 function initFirebase() {
     const statusDot = document.getElementById('status-indicator');
@@ -66,9 +94,12 @@ function initFirebase() {
 }
 
 // Start App
+initTheme();
 initFirebase();
 
 // --- 4. Event Listeners ---
+if (themeToggleLogin) themeToggleLogin.addEventListener('click', toggleTheme);
+if (themeToggleChat) themeToggleChat.addEventListener('click', toggleTheme);
 
 if (joinBtn) joinBtn.addEventListener('click', joinChat);
 if (usernameInput) {
