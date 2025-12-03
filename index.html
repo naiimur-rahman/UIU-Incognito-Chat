@@ -2,11 +2,10 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content">
     <title>UIU Student Chat</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
-    
     <script src="https://unpkg.com/lucide@latest"></script>
 
     <style>
@@ -27,7 +26,7 @@
 
         body.dark-mode {
             --bg-gradient: linear-gradient(135deg, #1f1c2c 0%, #928dab 100%);
-            --glass-bg: rgba(30, 30, 30, 0.9);
+            --glass-bg: rgba(30, 30, 30, 0.95);
             --glass-border: rgba(255, 255, 255, 0.1);
             --text-color: #eee;
             --text-secondary: #aaa;
@@ -39,7 +38,8 @@
 
         body {
             background: var(--bg-gradient);
-            height: 100vh;
+            /* Use dvh (Dynamic Viewport Height) for mobile browsers */
+            height: 100dvh; 
             display: flex;
             flex-direction: column;
             overflow: hidden;
@@ -48,127 +48,178 @@
         }
 
         /* --- ANIMATIONS --- */
-        @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-20px); } 100% { transform: translateY(0px); } }
         @keyframes popUp { 0% { transform: scale(0.9); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        .background-shape { position: absolute; border-radius: 50%; filter: blur(80px); z-index: -1; opacity: 0.6; animation: float 10s infinite ease-in-out; }
+        /* Floating shapes - Z-index fixed to stay behind */
+        .background-shape { position: absolute; border-radius: 50%; filter: blur(80px); z-index: -1; opacity: 0.6; }
         .shape-1 { width: 300px; height: 300px; background: #ffe259; top: -50px; left: -50px; }
-        .shape-2 { width: 400px; height: 400px; background: #ffa751; bottom: -100px; right: -100px; animation-delay: 2s; }
+        .shape-2 { width: 400px; height: 400px; background: #ffa751; bottom: -100px; right: -100px; }
 
         /* --- LOGIN SCREEN --- */
         #login-screen {
-            flex: 1; display: flex; justify-content: center; align-items: center; position: relative; padding: 20px; animation: fadeIn 0.5s ease-out;
+            flex: 1; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            position: relative; 
+            padding: 20px; 
+            animation: fadeIn 0.5s ease-out;
             flex-direction: column;
+            width: 100%;
         }
 
         .theme-toggle-container { position: absolute; top: 20px; right: 20px; }
 
         .login-card {
             background: var(--glass-bg); backdrop-filter: blur(12px); border: 1px solid var(--glass-border);
-            padding: 3rem; border-radius: 24px; box-shadow: var(--shadow); text-align: center;
-            width: 100%; max-width: 400px; animation: popUp 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            margin-bottom: 30px;
+            padding: 2.5rem 2rem; 
+            border-radius: 24px; box-shadow: var(--shadow); text-align: center;
+            width: 100%; 
+            max-width: 380px; /* Optimized for mobile width */
+            animation: popUp 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            margin-bottom: 40px; /* Space for footer */
         }
 
         .logo-area { display: flex; flex-direction: column; align-items: center; gap: 5px; }
         .logo-icon { color: var(--primary); width: 48px; height: 48px; margin-bottom: 5px; }
-        h1 { font-weight: 600; margin-bottom: 5px; }
+        h1 { font-weight: 600; margin-bottom: 5px; font-size: 1.5rem; }
         .subtitle { color: var(--text-secondary); margin-bottom: 2rem; font-size: 0.9rem; }
 
         .input-group { position: relative; margin-bottom: 1.5rem; }
         .input-icon { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--text-secondary); width: 18px; }
         input {
-            width: 100%; padding: 12px 12px 12px 45px; border: 2px solid transparent; border-radius: 12px;
+            width: 100%; padding: 14px 14px 14px 45px; /* Larger tap area */
+            border: 2px solid transparent; border-radius: 12px;
             background: rgba(0,0,0,0.05); font-size: 1rem; transition: 0.3s; outline: none; color: var(--text-color);
         }
         input:focus { background: rgba(255, 255, 255, 0.8); border-color: var(--primary); box-shadow: 0 0 0 4px rgba(255, 102, 0, 0.1); }
 
         .primary-btn, .secondary-btn {
-            width: 100%; padding: 12px; border-radius: 12px; border: none; cursor: pointer;
+            width: 100%; padding: 14px; border-radius: 12px; border: none; cursor: pointer;
             font-weight: 600; display: flex; justify-content: center; align-items: center; gap: 8px;
             transition: transform 0.2s, box-shadow 0.2s; font-size: 1rem;
         }
         .primary-btn { background: var(--primary); color: white; margin-bottom: 1rem; box-shadow: 0 4px 15px rgba(255, 102, 0, 0.3); }
-        .primary-btn:hover { background: var(--primary-dark); transform: translateY(-2px); }
+        .primary-btn:active { transform: scale(0.98); } /* Mobile tap effect */
+        
         .secondary-btn { background: transparent; border: 2px solid var(--primary); color: var(--primary); text-decoration: none; }
-        .secondary-btn:hover { background: rgba(255, 102, 0, 0.1); }
 
         .login-footer {
-            position: absolute; bottom: 15px; width: 100%; text-align: center;
-            font-size: 0.75rem; color: rgba(255,255,255,0.9); pointer-events: none;
+            position: absolute; bottom: 20px; width: 100%; text-align: center;
+            font-size: 0.8rem; color: rgba(255,255,255,0.9); pointer-events: none;
         }
         .login-footer a { color: white; font-weight: 600; text-decoration: none; pointer-events: auto; }
 
         /* --- CHAT SCREEN --- */
-        #chat-screen { height: 100vh; display: flex; flex-direction: column; animation: fadeIn 0.5s ease-out; position: relative; }
+        #chat-screen { 
+            height: 100dvh; /* Dynamic Height for Mobile */
+            display: flex; 
+            flex-direction: column; 
+            animation: fadeIn 0.5s ease-out; 
+            position: relative; 
+        }
 
         .glass-header {
-            background: var(--glass-bg); backdrop-filter: blur(10px); padding: 15px 20px;
+            background: var(--glass-bg); backdrop-filter: blur(10px); 
+            padding: 12px 15px; /* Smaller padding for mobile */
             display: flex; justify-content: space-between; align-items: center;
             box-shadow: 0 2px 10px rgba(0,0,0,0.05); z-index: 20;
+            flex-shrink: 0; /* Prevent header shrinking */
         }
-        .header-info { display: flex; align-items: center; gap: 12px; }
-        .avatar { width: 40px; height: 40px; background: rgba(255, 102, 0, 0.15); color: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+        .header-info { display: flex; align-items: center; gap: 10px; }
+        .avatar { width: 38px; height: 38px; background: rgba(255, 102, 0, 0.15); color: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; }
         
-        .header-text h2 { font-size: 1.1rem; margin-bottom: 2px; }
-        .active-count { font-size: 0.8rem; color: var(--text-secondary); font-weight: 500; display: flex; align-items: center; gap: 5px; }
+        .header-text h2 { font-size: 1rem; margin-bottom: 0; }
+        .active-count { font-size: 0.75rem; color: var(--text-secondary); font-weight: 500; display: flex; align-items: center; gap: 5px; }
         .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; background-color: var(--status-green); box-shadow: 0 0 5px var(--status-green); }
 
-        .header-controls { display: flex; gap: 10px; }
+        .header-controls { display: flex; gap: 5px; }
 
-        /* Welcome Watermark (FIXED CENTER) */
+        /* Welcome Watermark */
         .welcome-watermark {
             position: absolute;
             top: 50%; left: 50%;
             transform: translate(-50%, -50%);
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            text-align: center; width: 90%; pointer-events: none; 
+            text-align: center; width: 85%; pointer-events: none; 
             z-index: 0; opacity: 0.6;
         }
-        .welcome-icon-wrapper { margin-bottom: 15px; color: var(--text-secondary); transform: rotate(-10deg); }
-        .welcome-icon-wrapper svg { width: 64px; height: 64px; stroke-width: 1.5px; opacity: 0.5; }
-        .welcome-watermark p { color: var(--text-secondary); font-size: 1rem; font-weight: 500; opacity: 0.7; }
+        .welcome-icon-wrapper svg { width: 50px; height: 50px; stroke-width: 1.5px; opacity: 0.5; margin-bottom: 10px;}
+        .welcome-watermark p { color: var(--text-secondary); font-size: 0.95rem; font-weight: 500; opacity: 0.7; }
 
         /* Messages Area */
         #messages-container { 
-            flex: 1; overflow-y: auto; padding: 20px; 
+            flex: 1; 
+            overflow-y: auto; 
+            padding: 15px; 
             background: transparent; 
             display: flex; flex-direction: column; gap: 10px; z-index: 10; 
+            /* Smooth scrolling */
+            scroll-behavior: smooth;
         }
-        #messages-container::-webkit-scrollbar { width: 6px; }
-        #messages-container::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 10px; }
-
+        
         /* Chat Bubbles */
-        .message { padding: 10px 15px; border-radius: 12px; max-width: 80%; font-size: 0.95rem; line-height: 1.4; animation: popUp 0.3s ease; position: relative; z-index: 11; }
+        .message { padding: 10px 14px; border-radius: 14px; max-width: 85%; font-size: 0.95rem; line-height: 1.4; animation: popUp 0.3s ease; position: relative; z-index: 11; }
         .my-message { align-self: flex-end; background: var(--primary); color: white; border-bottom-right-radius: 2px; }
         .other-message { align-self: flex-start; background: white; color: #333; border-bottom-left-radius: 2px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .meta { font-size: 0.7rem; margin-bottom: 4px; opacity: 0.8; font-weight: 600; display: block; }
-        .text { word-wrap: break-word; }
+        .meta { font-size: 0.7rem; margin-bottom: 3px; opacity: 0.8; font-weight: 600; display: block; }
 
-        /* Input Area */
+        /* --- INPUT AREA & FOOTER --- */
         .input-area {
-            padding: 15px 20px 25px 20px; background: var(--glass-bg); display: flex; gap: 10px; align-items: center;
-            backdrop-filter: blur(10px); position: relative; z-index: 20;
+            padding: 15px; 
+            background: var(--glass-bg); 
+            display: flex; 
+            flex-direction: column; /* Stack input and footer */
+            backdrop-filter: blur(10px); 
+            position: relative; 
+            z-index: 20;
+            padding-bottom: max(15px, env(safe-area-inset-bottom)); /* iOS Safe Area */
         }
-        .input-area input { background: rgba(255,255,255,0.5); box-shadow: inset 0 2px 5px rgba(0,0,0,0.05); flex: 1; }
+
+        .input-wrapper {
+            display: flex;
+            width: 100%;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .input-area input { 
+            background: rgba(255,255,255,0.5); 
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.05); 
+            flex: 1; 
+            font-size: 16px; /* Prevents zoom on iOS */
+        }
         
         .send-btn {
-            background: var(--primary); color: white; border: none; width: 50px; height: 50px;
+            background: var(--primary); color: white; border: none; width: 48px; height: 48px;
             border-radius: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center;
             transition: 0.2s; box-shadow: 0 4px 10px rgba(255, 102, 0, 0.3);
+            flex-shrink: 0;
         }
-        .send-btn:hover { transform: scale(1.05); background: var(--primary-dark); }
+        .send-btn:active { transform: scale(0.95); }
 
+        /* Fixed Footer Visibility */
         .chat-footer {
-            position: absolute; bottom: 4px; left: 0; width: 100%; text-align: center;
-            font-size: 0.65rem; color: var(--text-secondary); opacity: 0.7; pointer-events: none;
+            width: 100%; 
+            text-align: center;
+            font-size: 0.75rem; /* Bigger font */
+            color: var(--text-secondary); 
+            opacity: 0.8; 
+            margin-top: 8px; /* Space between input and text */
+            pointer-events: none;
         }
 
         .hidden { display: none !important; }
         .icon-btn { background: none; border: none; cursor: pointer; color: var(--text-color); padding: 8px; border-radius: 50%; transition: background 0.2s; display: flex; align-items: center; justify-content: center; }
-        .icon-btn:hover { background: rgba(0,0,0,0.1); }
-        .icon-btn.danger:hover { background: rgba(255, 71, 87, 0.1); color: #ff4757; }
+        
+        /* Mobile Breakpoints */
+        @media (max-width: 480px) {
+            .login-card { padding: 2rem 1.5rem; width: 90%; }
+            .message { font-size: 0.9rem; }
+            .welcome-watermark { width: 90%; }
+        }
+
     </style>
 </head>
 <body>
@@ -243,15 +294,17 @@
         </div>
 
         <div id="messages-container">
-            </div>
+        </div>
 
         <div class="input-area">
-            <input type="text" id="message-input" placeholder="Type a message...">
-            <button id="send-btn" class="send-btn">
-                <i data-lucide="send" style="width: 20px;"></i>
-            </button>
+            <div class="input-wrapper">
+                <input type="text" id="message-input" placeholder="Type a message...">
+                <button id="send-btn" class="send-btn">
+                    <i data-lucide="send" style="width: 20px;"></i>
+                </button>
+            </div>
             <div class="chat-footer">
-                Developed by Naimur Rahman (CSE 242) ❤️
+                Developed by Naimur Rahman (CSE 242) for UIU ❤️
             </div>
         </div>
     </div>
@@ -322,7 +375,6 @@
                 firebase.initializeApp(firebaseConfig);
                 database = firebase.database();
                 
-                // Monitor Total Active Users
                 const activeUsersRef = database.ref('active_users');
                 activeUsersRef.on('value', (snapshot) => {
                     const count = snapshot.numChildren();
@@ -347,7 +399,6 @@
         if (logoutBtn) {
             logoutBtn.addEventListener('click', () => {
                 if(username && database) {
-                    // Remove lowercase key
                     const userKey = username.toLowerCase();
                     database.ref('active_users/' + userKey).remove().then(() => {
                         location.reload();
@@ -365,7 +416,6 @@
             if (!rawName) { alert("Please enter your name."); return; }
             if (/[.#$\[\]]/.test(rawName)) { alert("Name cannot contain special characters."); return; }
 
-            // ROBUST DUPLICATE CHECK: Use lowercase key
             const userKey = rawName.toLowerCase(); 
             const userRef = database.ref('active_users/' + userKey);
             
@@ -373,16 +423,14 @@
                 if (snapshot.exists()) {
                     alert(`The name "${rawName}" is already taken! Please choose another.`);
                 } else {
-                    // Name is free
                     username = rawName;
                     
                     userRef.set({
-                        originalName: username, // Save original casing for reference if needed
+                        originalName: username, 
                         status: "online",
                         timestamp: firebase.database.ServerValue.TIMESTAMP
                     });
                     
-                    // Auto-remove on disconnect
                     userRef.onDisconnect().remove();
 
                     loginScreen.classList.add('hidden');
