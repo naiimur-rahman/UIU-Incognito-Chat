@@ -6,6 +6,26 @@
     --my-msg-bg: #ffdbc2;
     --other-msg-bg: #ffffff;
     --text-color: #333;
+    --input-bg: #ffffff;
+    --input-border: #ddd;
+    --welcome-bg: rgba(255,255,255,0.6);
+    --welcome-text: #666;
+    --meta-color: #555;
+    --input-area-bg: #f0f0f0;
+}
+
+.dark-mode {
+    --bg-color: #18191a;
+    --chat-bg: #0b141a;
+    --my-msg-bg: #005c4b;
+    --other-msg-bg: #202c33;
+    --text-color: #e9edef;
+    --input-bg: #2a3942;
+    --input-border: #2a3942;
+    --welcome-bg: rgba(32, 44, 51, 0.8);
+    --welcome-text: #8696a0;
+    --meta-color: #8696a0;
+    --input-area-bg: #202c33;
 }
 
 * {
@@ -30,21 +50,27 @@ body {
 /* Login Screen */
 #login-screen {
     width: 100%;
-    height: 100%;
+    height: calc(100vh - 40px);
     display: flex;
     justify-content: center;
     align-items: center;
     background: linear-gradient(135deg, var(--primary-orange), #ff9966);
+    position: relative;
+}
+
+.dark-mode #login-screen {
+    background: linear-gradient(135deg, #2c1a0e, #1a1a1a);
 }
 
 .login-container {
-    background: white;
+    background: var(--input-bg);
     padding: 2rem;
     border-radius: 10px;
     box-shadow: 0 4px 15px rgba(0,0,0,0.2);
     text-align: center;
     width: 90%;
     max-width: 400px;
+    color: var(--text-color);
 }
 
 .login-container h1 {
@@ -53,7 +79,7 @@ body {
 }
 
 .login-container p {
-    color: #666;
+    color: var(--welcome-text);
     margin-bottom: 1.5rem;
 }
 
@@ -61,17 +87,19 @@ body {
     width: 100%;
     padding: 12px;
     margin-bottom: 1rem;
-    border: 1px solid #ddd;
+    border: 1px solid var(--input-border);
     border-radius: 5px;
     font-size: 16px;
     outline: none;
+    background-color: var(--bg-color);
+    color: var(--text-color);
 }
 
 .login-container input:focus {
     border-color: var(--primary-orange);
 }
 
-.login-container button {
+.login-container button#join-btn {
     width: 100%;
     padding: 12px;
     background-color: var(--primary-orange);
@@ -84,14 +112,53 @@ body {
     transition: background 0.2s;
 }
 
-.login-container button:hover {
+.login-container button#join-btn:hover {
     background-color: var(--primary-dark);
+}
+
+#cgpa-btn {
+    display: inline-block;
+    margin-top: 15px;
+    padding: 10px 15px;
+    background-color: #28a745;
+    color: white;
+    text-decoration: none;
+    border-radius: 5px;
+    font-weight: bold;
+    font-size: 0.9rem;
+    transition: background 0.2s;
+}
+
+#cgpa-btn:hover {
+    background-color: #218838;
+}
+
+/* Theme Toggle Button */
+.theme-toggle {
+    background: transparent;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: white;
+    padding: 5px;
+    border-radius: 50%;
+    transition: background 0.2s;
+}
+
+.theme-toggle:hover {
+    background: rgba(255,255,255,0.2);
+}
+
+#theme-toggle-login {
+    position: absolute;
+    top: 20px;
+    right: 20px;
 }
 
 /* Chat Screen */
 #chat-screen {
     width: 100%;
-    height: 100%;
+    height: calc(100vh - 40px);
     max-width: 600px;
     display: flex;
     flex-direction: column;
@@ -108,6 +175,12 @@ header {
     align-items: center;
     box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     z-index: 10;
+}
+
+.header-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
 .header-info h2 {
@@ -154,13 +227,14 @@ header {
     position: relative;
     word-wrap: break-word;
     box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    color: var(--text-color);
 }
 
 .message .meta {
     font-size: 0.7rem;
     margin-bottom: 2px;
     font-weight: bold;
-    color: #555;
+    color: var(--meta-color);
 }
 
 .message .text {
@@ -171,6 +245,11 @@ header {
     align-self: flex-end;
     background-color: var(--my-msg-bg);
     border-bottom-right-radius: 2px;
+    color: #333; /* Keep dark text for my message in light mode */
+}
+
+.dark-mode .message.my-message {
+    color: #e9edef;
 }
 
 .message.other-message {
@@ -181,30 +260,32 @@ header {
 
 .welcome-message {
     align-self: center;
-    background-color: rgba(255,255,255,0.6);
+    background-color: var(--welcome-bg);
     padding: 5px 15px;
     border-radius: 15px;
     font-size: 0.8rem;
-    color: #666;
+    color: var(--welcome-text);
     margin-bottom: 10px;
     box-shadow: 0 1px 1px rgba(0,0,0,0.05);
 }
 
 .input-area {
     padding: 10px;
-    background-color: #f0f0f0;
+    background-color: var(--input-area-bg);
     display: flex;
     gap: 10px;
-    border-top: 1px solid #ddd;
+    border-top: 1px solid var(--input-border);
 }
 
 #message-input {
     flex: 1;
     padding: 10px 15px;
-    border: 1px solid #ccc;
+    border: 1px solid var(--input-border);
     border-radius: 20px;
     outline: none;
     font-size: 1rem;
+    background-color: var(--input-bg);
+    color: var(--text-color);
 }
 
 #message-input:focus {
@@ -228,8 +309,37 @@ header {
 
 @media (min-width: 600px) {
     #chat-screen {
-        height: 90vh;
+        height: calc(90vh - 40px);
         border-radius: 10px;
         overflow: hidden;
     }
+}
+
+/* Footer */
+footer {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    text-align: center;
+    padding: 10px;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    font-size: 0.8rem;
+    border-top: 1px solid var(--input-border);
+    z-index: 100;
+}
+
+.dark-mode footer {
+    background-color: #1a1a1a;
+    border-top: 1px solid #333;
+}
+
+footer .dev-link {
+    color: #9496f7;
+    font-weight: bold;
+    text-decoration: none;
+}
+
+footer .dev-link:hover {
+    text-decoration: underline;
 }
