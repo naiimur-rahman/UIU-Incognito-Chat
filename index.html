@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,7 +6,6 @@
     <title>UIU Incognito Chat + AI</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
-    
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 
     <style>
@@ -31,17 +29,16 @@
             --ai-color: #6c5ce7;
         }
 
-        /* --- UPDATED DARK MODE --- */
+        /* --- DARK MODE --- */
         body.dark-mode {
-            /* Deep Midnight Gradient */
             --bg-gradient: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
-            --glass-bg: rgba(22, 22, 27, 0.95); /* Much darker glass */
+            --glass-bg: rgba(22, 22, 27, 0.95);
             --glass-border: rgba(255, 255, 255, 0.08);
             --text-color: #e0e0e0;
             --text-secondary: #a0a0a0;
             --primary: #ff8c00;
             --chat-bg: rgba(0, 0, 0, 0.3);
-            --msg-other-bg: #2d2d3a; /* Dark gray for other messages */
+            --msg-other-bg: #2d2d3a;
             --msg-other-text: #e0e0e0;
             --input-bg: rgba(255, 255, 255, 0.08);
             --ai-color: #a29bfe;
@@ -68,7 +65,6 @@
         .shape-1 { width: 300px; height: 300px; background: #ffe259; top: -50px; left: -50px; }
         .shape-2 { width: 400px; height: 400px; background: #ffa751; bottom: -100px; right: -100px; }
         
-        /* Dark mode shapes adjustment */
         body.dark-mode .shape-1 { background: #4e54c8; opacity: 0.2; }
         body.dark-mode .shape-2 { background: #8f94fb; opacity: 0.2; }
 
@@ -163,12 +159,11 @@
         .message { 
             padding: 10px 14px; border-radius: 14px; max-width: 85%; font-size: 0.95rem; line-height: 1.4; 
             animation: popUp 0.3s ease; position: relative; z-index: 11; user-select: none;
-            touch-action: pan-y; /* Important for swipe */
+            touch-action: pan-y;
         }
 
         .my-message { align-self: flex-end; background: var(--primary); color: white; border-bottom-right-radius: 2px; }
         
-        /* Updated Other Message Style for better Dark Mode */
         .other-message { 
             align-self: flex-start; 
             background: var(--msg-other-bg); 
@@ -427,12 +422,17 @@
             measurementId: "G-B2RGV7N5JX"
         };
 
-        // 🔥 SECURITY TRICK: Key split kora hoise jate GitHub bot dhorte na pare
+        // 🔥 GEMINI API SETUP
         const k_part1 = "AIzaSyC_WOMJ9J_";
         const k_part2 = "mRxWFmGGHyVbR8D8fh72r7d8";
         const GEMINI_API_KEY = k_part1 + k_part2; 
         
         const BOT_ID = "ai-system-bot-v1";
+        
+        // 🔒 SECURE ADMIN SETUP
+        const ADMIN_HASH = "e6c3898950482594665e8a56f265f284e963c6214342795cce27d9d00938f36a";
+        // ✅ Naimur Rahma Added to Restricted List
+        const RESTRICTED_NAMES = ['naimur rahman', 'naimur rahma', 'naimur', 'admin', 'uiu bot', 'ai'];
 
         // --- 2. INITIALIZATION ---
         const loginScreen = document.getElementById('login-screen');
@@ -447,7 +447,6 @@
         const themeToggleLogin = document.getElementById('theme-toggle-login');
         const themeToggleChat = document.getElementById('theme-toggle-chat');
 
-        // New Reply & AI Elements
         const replyPreview = document.getElementById('reply-preview');
         const closeReplyBtn = document.getElementById('close-reply');
         const aiTriggerBtn = document.getElementById('ai-trigger-btn');
@@ -460,8 +459,6 @@
         let currentReply = null;
         const MAX_MESSAGES = 500;
         
-        const RESTRICTED_NAMES = ['naimur rahman', 'naimurrahman', 'naimur', 'admin', 'uiu bot', 'ai'];
-        const ADMIN_PASSWORD = "0112420186"; 
         const REACTION_OPTIONS = ['❤️', '😂', '😮', '😢', '😡', '👍'];
 
         if (typeof lucide !== 'undefined') lucide.createIcons();
@@ -518,18 +515,15 @@
         if (joinBtn) joinBtn.addEventListener('click', joinChat);
         if (usernameInput) usernameInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') joinChat(); });
         
-        // Send Logic
         if (sendBtn) sendBtn.addEventListener('click', () => sendMessage());
         if (messageInput) messageInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
 
-        // AI Logic
         if(aiTriggerBtn) aiTriggerBtn.addEventListener('click', () => {
             const text = messageInput.value.trim();
             if(!text) { alert("Type something to ask AI!"); return; }
-            sendMessage(true); // Send as AI request
+            sendMessage(true);
         });
 
-        // Reply Logic
         if(closeReplyBtn) closeReplyBtn.addEventListener('click', cancelReply);
         
         if (logoutBtn) {
@@ -549,16 +543,29 @@
             return Date.now().toString(36) + Math.random().toString(36).substr(2);
         }
 
-        function joinChat() {
+        // --- HELPER: PASSWORD HASHING ---
+        async function hashPassword(string) {
+            const utf8 = new TextEncoder().encode(string);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', utf8);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(bytes => bytes.toString(16).padStart(2, '0')).join('');
+        }
+
+        // --- JOIN LOGIC ---
+        async function joinChat() {
             if (!database) { alert("Connecting to server... Please check your internet."); return; }
             
             const rawName = usernameInput.value.trim();
             if (!rawName) { alert("Please enter your name."); return; }
             if (/[.#$\[\]]/.test(rawName)) { alert("Name cannot contain special characters."); return; }
 
+            // Admin Password Check
             if (RESTRICTED_NAMES.includes(rawName.toLowerCase())) {
                 const password = prompt(`The username "${rawName}" is reserved. Please enter the password:`);
-                if (password !== ADMIN_PASSWORD) {
+                if (!password) return; 
+
+                const hashedPassword = await hashPassword(password);
+                if (hashedPassword !== ADMIN_HASH) {
                     alert("Access Denied: Incorrect Password.");
                     return;
                 }
@@ -589,24 +596,63 @@
             });
         }
 
-        // --- GEMINI AI (Funny/Sarcastic) ---
-        async function askGemini(query) {
+        // --- AI LOGIC (FIXED) ---
+        async function askGemini(currentQuery) {
+            // ✅ Fix 1: Correct Model URL
             const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
             
-            // Instruction to ignore @ai tag
-            const systemInstruction = "Act as a Bully Master,witty, sarcastic Bangladeshi student. Ignore '@ai'/'/ai'. Reply in short, funny Banglish (max 25 words). Roast the situation logically. Mention 'UIU' or 'Campus' ONLY if the user talks about studies/exams/university. Otherwise, keep it general.";
+            let chatHistory = "Recent Chat Context:\n";
+            const messages = document.querySelectorAll('.message-wrapper');
+            const lastMessages = Array.from(messages).slice(-20); 
+
+            lastMessages.forEach(msgWrapper => {
+                const nameEl = msgWrapper.querySelector('.meta');
+                const textEl = msgWrapper.querySelector('.text');
+                
+                if (nameEl && textEl) {
+                    let name = nameEl.innerText.split('•')[0].trim();
+                    let text = textEl.innerText;
+                    chatHistory += `${name}: ${text}\n`;
+                }
+            });
+
+            const systemInstruction = `
+            Identity: You are 'BhodAi', a witty, sarcastic, and savage UIU student (Batch 242). You are the 'Bully Master' of this chat.
+            
+            Current Task: Reply to the "Current User Query" based on the "Recent Chat Context".
+            
+            CRITICAL RULES (Follow Strictness Level: MAX):
+            1. NEVER repeat the same phrase or roast twice in a row. Be creative.
+            2. If the user repeats the same input, mock them.
+            3. Keep replies SHORT (Max 25 words).
+            4. Language: Mix of Bangla (in English script) and English. Use emojis.
+            
+            5. ⚠️ IMPORTANT EXCEPTIONS:
+               - Emotional/Sad/Serious Topic -> DO NOT BULLY. Act like a supportive friend.
+               - Question about Creator/Developer -> Reply with respect: "My developer is Naimur Rahman".
+            
+            6. Triggers (Only if user is chill/joking):
+               - Exams/CGPA -> Roast about UIU struggle.
+               - Love/Relationship -> Roast about being single/engineering fate.
+               - Insults -> Roast back harder.
+            
+            ${chatHistory}
+            
+            Current User Query: ${currentQuery}
+            Your Reply:`;
 
             try {
+                // ✅ Fix 2: Removed generationConfig completely as requested
                 const response = await fetch(url, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        contents: [{ parts: [{ text: systemInstruction + query }] }]
+                        contents: [{ parts: [{ text: systemInstruction }] }]
                     })
                 });
                 
                 const data = await response.json();
-                let aiResponse = "Server e jhamela. Naimur ke janan taratari... 😒"; 
+                let aiResponse = "Matha hang korse mama... server e jhamela 😵‍💫";
                 
                 if (data.candidates && data.candidates[0].content) {
                     aiResponse = data.candidates[0].content.parts[0].text;
@@ -627,9 +673,7 @@
             const text = messageInput.value.trim();
             if (!database || !text) return;
 
-            // 🔥 CHECK IF REPLYING TO BOT
             const isReplyingToBot = currentReply && currentReply.username === "UIU Bot 🤖";
-
             const isAiRequest = isDirectAI || text.toLowerCase().startsWith('@ai') || text.toLowerCase().startsWith('/ai') || isReplyingToBot;
             
             const msgData = {
@@ -665,7 +709,7 @@
                 database.ref('messages/' + msgId).update({
                     text: "🚫 Admin deleted message",
                     isDeleted: true,
-                    replyTo: null // remove reply link if deleted
+                    replyTo: null 
                 });
             }
         }
@@ -687,10 +731,8 @@
                 const data = snapshot.val();
                 const msgId = snapshot.key;
                 
-                // Update Reactions
                 if(data.reactions) updateReactions(msgId, data.reactions);
 
-                // Update Content (Delete)
                 const msgEl = document.getElementById(`msg-${msgId}`);
                 if (msgEl) {
                     const bubble = msgEl.querySelector('.message');
@@ -705,7 +747,6 @@
             });
         }
 
-        // --- DISPLAY MESSAGE + SWIPE LOGIC ---
         function displayMessage(msgId, user, text, timestamp, senderId, isDeleted, replyToData) {
             const wrapper = document.createElement('div');
             wrapper.classList.add('message-wrapper');
@@ -715,9 +756,13 @@
             
             const isMyMessage = senderId ? (senderId === myUUID) : (user === username);
             const isBot = senderId === BOT_ID; 
-            const lowerUser = user.toLowerCase();
-            const isNaimur = lowerUser.includes('naimur') && (lowerUser.includes('rahman') || lowerUser === 'naimur');
-            const iAmAdmin = username.toLowerCase().includes('naimur');
+            const lowerUser = user.toLowerCase().trim();
+            
+            // ✅ Badge Logic: Only EXACT MATCH gets badge
+            const isNaimur = lowerUser === 'naimur rahman';
+            
+            // ✅ Strict Delete Power: Only 'Naimur Rahman' gets delete button
+            const iAmAdmin = lowerUser === 'naimur rahman';
 
             messageDiv.classList.add('message');
             if (isBot) {
@@ -742,7 +787,6 @@
                     touchCurrentX = e.touches[0].clientX;
                     const diff = touchCurrentX - touchStartX;
                     
-                    // Only allow swiping right
                     if (diff > 0 && diff < 150) { 
                         messageDiv.style.transform = `translateX(${diff}px)`;
                     }
@@ -751,17 +795,14 @@
                 messageDiv.addEventListener('touchend', () => {
                     const diff = touchCurrentX - touchStartX;
                     if (diff > SWIPE_THRESHOLD) {
-                        // Vibrate if supported
                         if(navigator.vibrate) navigator.vibrate(50);
                         initiateReply(msgId, user, text);
                     }
-                    // Reset position
                     messageDiv.style.transform = 'translateX(0)';
                     touchStartX = 0;
                     touchCurrentX = 0;
                 });
             }
-            // -------------------------------------
 
             // Double Click Reply (Desktop) & Long Press
             if (!isDeleted) {
@@ -797,7 +838,6 @@
                 metaDiv.innerHTML = `${nameHTML} • ${timeStr}`;
             }
 
-            // Display Reply Quote
             if (replyToData) {
                 const replyBlock = document.createElement('div');
                 replyBlock.className = 'reply-quote-block';
@@ -835,7 +875,6 @@
             }
         }
 
-        // --- REPLY HANDLING ---
         function initiateReply(msgId, name, text) {
             currentReply = { id: msgId, username: name, text: text };
             replyToName.innerText = `Replying to ${name}`;
@@ -849,7 +888,6 @@
             replyPreview.classList.add('hidden');
         }
 
-        // --- REACTIONS LOGIC ---
         let currentOpenMenuId = null;
 
         function showReactionMenu(e, msgId, wrapper) {
@@ -863,7 +901,6 @@
             menu.id = 'active-reaction-menu';
             menu.className = 'reaction-menu';
 
-            // Reply Option
             const replyBtn = document.createElement('div');
             replyBtn.innerHTML = '<i data-lucide="reply" style="width:16px;"></i>';
             replyBtn.className = 'reply-option-btn';
@@ -881,7 +918,6 @@
             sep.style.borderLeft = '1px solid #ccc'; sep.style.margin = '0 5px';
             menu.appendChild(sep);
 
-            // Emojis
             REACTION_OPTIONS.forEach(emoji => {
                 const span = document.createElement('span');
                 span.className = 'reaction-option';
