@@ -505,47 +505,51 @@
         }
 
         // --- 4. GEMINI AI LOGIC (GEMINI 2.5) ---
-        async function askGemini(query) {
-            const apiKey = "AIzaSyBVkHAKk7mLsrs2mROfdRlLQK6D9plahcc"; 
-            
-            // Using Gemini 2.5 Flash as per your system
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
-            
-            console.log("Asking Gemini 2.5...");
+        // --- GEMINI AI FUNCTION (SHORT & FUNNY MODE) ---
+// --- GEMINI AI FUNCTION (ROASTER & BULLY MODE) ---
+// --- GEMINI AI FUNCTION (INTEGRATED: FUNNY + BULLY + SHORT) ---
+async function askGemini(query) {
+    const apiKey = "AIzaSyBVkHAKk7mLsrs2mROfdRlLQK6D9plahcc"; 
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+    
+    // 🔥 কম্বাইন করা ইন্সট্রাকশন: Funny, Sarcastic & Roaster
+    const systemInstruction = "You are a funny, sarcastic, and playfully toxic UIU student bot. Roast the user if they ask simple questions. Reply in extremely short sentences (max 15 words). Use emojis and casual Banglish (Bengali+English). Don't give lectures. User asks: ";
 
-            try {
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{ parts: [{ text: query }] }]
-                    })
-                });
-                
-                const data = await response.json();
-                
-                let aiResponse = "I am tired right now.";
-                
-                if (data.error) {
-                    console.error("Error:", data.error);
-                    aiResponse = `Error: ${data.error.message}`; 
-                } 
-                else if (data.candidates && data.candidates[0].content) {
-                    aiResponse = data.candidates[0].content.parts[0].text;
-                }
+    console.log("Asking Spicy AI...");
 
-                database.ref('messages').push({
-                    username: "UIU Bot 🤖",
-                    text: aiResponse,
-                    senderId: BOT_ID, 
-                    timestamp: firebase.database.ServerValue.TIMESTAMP,
-                    isDeleted: false
-                });
-
-            } catch (error) {
-                console.error("Network Error:", error);
-            }
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contents: [{ parts: [{ text: systemInstruction + query }] }]
+            })
+        });
+        
+        const data = await response.json();
+        
+        let aiResponse = "Mood nai. Pore ay. 😒"; // Default mood-off reply
+        
+        if (data.error) {
+            console.error("Error:", data.error);
+            aiResponse = "Server e jhamela, tui pore ay 🥴"; 
+        } 
+        else if (data.candidates && data.candidates[0].content) {
+            aiResponse = data.candidates[0].content.parts[0].text;
         }
+
+        database.ref('messages').push({
+            username: "UIU Bot 🤖",
+            text: aiResponse,
+            senderId: BOT_ID, 
+            timestamp: firebase.database.ServerValue.TIMESTAMP,
+            isDeleted: false
+        });
+
+    } catch (error) {
+        console.error("Network Error:", error);
+    }
+}
 
         function sendMessage() {
             const text = messageInput.value.trim();
