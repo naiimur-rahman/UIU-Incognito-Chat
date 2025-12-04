@@ -21,22 +21,30 @@
             --text-secondary: #666;
             --shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
             --chat-bg: rgba(255, 255, 255, 0.5);
+            --msg-other-bg: #ffffff;
+            --msg-other-text: #333;
+            --input-bg: rgba(255,255,255,0.5);
             --status-green: #2ecc71;
-            --status-red: #ff4757;
             --verified-blue: #1da1f2;
             --admin-gold: #ffd700;
             --ai-color: #6c5ce7;
         }
 
+        /* --- UPDATED DARK MODE --- */
         body.dark-mode {
-            --bg-gradient: linear-gradient(135deg, #1f1c2c 0%, #928dab 100%);
-            --glass-bg: rgba(30, 30, 30, 0.95);
-            --glass-border: rgba(255, 255, 255, 0.1);
-            --text-color: #eee;
-            --text-secondary: #aaa;
+            /* Deep Midnight Gradient */
+            --bg-gradient: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+            --glass-bg: rgba(22, 22, 27, 0.95); /* Much darker glass */
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --text-color: #e0e0e0;
+            --text-secondary: #a0a0a0;
             --primary: #ff8c00;
             --chat-bg: rgba(0, 0, 0, 0.3);
+            --msg-other-bg: #2d2d3a; /* Dark gray for other messages */
+            --msg-other-text: #e0e0e0;
+            --input-bg: rgba(255, 255, 255, 0.08);
             --ai-color: #a29bfe;
+            --shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
@@ -58,6 +66,10 @@
         .background-shape { position: absolute; border-radius: 50%; filter: blur(80px); z-index: -1; opacity: 0.6; pointer-events: none; }
         .shape-1 { width: 300px; height: 300px; background: #ffe259; top: -50px; left: -50px; }
         .shape-2 { width: 400px; height: 400px; background: #ffa751; bottom: -100px; right: -100px; }
+        
+        /* Dark mode shapes adjustment */
+        body.dark-mode .shape-1 { background: #4e54c8; opacity: 0.2; }
+        body.dark-mode .shape-2 { background: #8f94fb; opacity: 0.2; }
 
         /* --- LOGIN SCREEN --- */
         #login-screen {
@@ -81,11 +93,15 @@
 
         .input-group { position: relative; margin-bottom: 1.5rem; }
         .input-icon { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--text-secondary); width: 18px; }
+        
         input {
             width: 100%; padding: 14px 14px 14px 45px; border: 2px solid transparent; border-radius: 12px;
             background: rgba(0,0,0,0.05); font-size: 1rem; transition: 0.3s; outline: none; color: var(--text-color);
         }
+        body.dark-mode input { background: rgba(255,255,255,0.1); }
+        
         input:focus { background: rgba(255, 255, 255, 0.8); border-color: var(--primary); box-shadow: 0 0 0 4px rgba(255, 102, 0, 0.1); }
+        body.dark-mode input:focus { background: rgba(255,255,255,0.15); }
 
         .primary-btn, .secondary-btn {
             width: 100%; padding: 14px; border-radius: 12px; border: none; cursor: pointer;
@@ -98,9 +114,9 @@
 
         .login-footer {
             position: absolute; bottom: 20px; width: 100%; text-align: center;
-            font-size: 0.8rem; color: #000; font-weight: 500; pointer-events: none;
+            font-size: 0.8rem; color: var(--text-color); font-weight: 500; pointer-events: none; opacity: 0.8;
         }
-        .login-footer a { color: #000; font-weight: 700; text-decoration: none; pointer-events: auto; }
+        .login-footer a { color: var(--text-color); font-weight: 700; text-decoration: none; pointer-events: auto; }
 
         /* --- CHAT SCREEN --- */
         #chat-screen { 
@@ -112,6 +128,7 @@
             background: var(--glass-bg); backdrop-filter: blur(10px); padding: 12px 15px;
             display: flex; justify-content: space-between; align-items: center;
             box-shadow: 0 2px 10px rgba(0,0,0,0.05); z-index: 20; flex-shrink: 0;
+            border-bottom: 1px solid var(--glass-border);
         }
         .header-info { display: flex; align-items: center; gap: 10px; }
         .avatar { width: 38px; height: 38px; background: rgba(255, 102, 0, 0.15); color: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; }
@@ -126,7 +143,7 @@
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             text-align: center; width: 85%; pointer-events: none; z-index: 0; opacity: 0.6;
         }
-        .welcome-icon-wrapper svg { width: 50px; height: 50px; stroke-width: 1.5px; opacity: 0.5; margin-bottom: 10px;}
+        .welcome-icon-wrapper svg { width: 50px; height: 50px; stroke-width: 1.5px; opacity: 0.5; margin-bottom: 10px; color: var(--text-secondary);}
         .welcome-watermark p { color: var(--text-secondary); font-size: 0.95rem; font-weight: 500; opacity: 0.7; }
         .welcome-watermark .hint { font-size: 0.75rem; margin-top: 5px; opacity: 0.5; }
 
@@ -134,103 +151,102 @@
             flex: 1; overflow-y: auto; padding: 15px; background: transparent; 
             display: flex; flex-direction: column; gap: 12px; z-index: 10; 
             scroll-behavior: smooth; overscroll-behavior-y: contain;
+            overflow-x: hidden;
         }
         #messages-container::-webkit-scrollbar { width: 4px; }
         #messages-container::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 10px; }
+        body.dark-mode #messages-container::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); }
 
-        .message-wrapper { width: 100%; display: flex; flex-direction: column; position: relative; }
+        .message-wrapper { width: 100%; display: flex; flex-direction: column; position: relative; transition: transform 0.2s cubic-bezier(0.25, 0.8, 0.25, 1); }
         
         .message { 
             padding: 10px 14px; border-radius: 14px; max-width: 85%; font-size: 0.95rem; line-height: 1.4; 
             animation: popUp 0.3s ease; position: relative; z-index: 11; user-select: none;
-            transition: transform 0.1s;
+            touch-action: pan-y; /* Important for swipe */
         }
-        .message:active { transform: scale(0.98); }
 
         .my-message { align-self: flex-end; background: var(--primary); color: white; border-bottom-right-radius: 2px; }
-        .other-message { align-self: flex-start; background: white; color: #333; border-bottom-left-radius: 2px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         
-        /* --- AI BOT MESSAGE STYLES --- */
+        /* Updated Other Message Style for better Dark Mode */
+        .other-message { 
+            align-self: flex-start; 
+            background: var(--msg-other-bg); 
+            color: var(--msg-other-text); 
+            border-bottom-left-radius: 2px; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05); 
+        }
+        
+        /* AI Message */
         .message.ai-message {
             background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%);
-            color: white;
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white; border: 1px solid rgba(255, 255, 255, 0.2);
             box-shadow: 0 4px 12px rgba(108, 92, 231, 0.25);
         }
         
-        /* --- SPECIAL ADMIN STYLES --- */
-        .message.admin-special {
-            border: 2px solid var(--admin-gold);
-            box-shadow: 0 0 8px rgba(255, 215, 0, 0.4);
-        }
-        .verified-badge {
-            display: inline-flex; vertical-align: middle; margin-left: 4px; color: var(--verified-blue);
-        }
+        /* Admin Special */
+        .message.admin-special { border: 2px solid var(--admin-gold); box-shadow: 0 0 8px rgba(255, 215, 0, 0.4); }
+        .verified-badge { display: inline-flex; vertical-align: middle; margin-left: 4px; color: var(--verified-blue); }
 
-        /* --- DELETED MESSAGE STYLE --- */
+        /* Deleted Message */
         .message.deleted-message {
-            background-color: #f0f0f0;
-            color: #888;
-            font-style: italic;
-            border: 1px solid #ddd;
-            box-shadow: none;
-            background: rgba(0,0,0,0.05);
+            background-color: #f0f0f0; color: #888; font-style: italic;
+            border: 1px solid #ddd; box-shadow: none; background: rgba(0,0,0,0.05);
         }
-        body.dark-mode .message.deleted-message {
-            background-color: #333;
-            color: #aaa;
-            border: 1px solid #444;
-        }
+        body.dark-mode .message.deleted-message { background-color: rgba(255,255,255,0.05); color: #aaa; border: 1px solid #444; }
 
-        /* --- ADMIN DELETE BUTTON --- */
+        /* Admin Delete Button */
         .admin-delete-btn {
-            position: absolute;
-            top: 50%; transform: translateY(-50%);
-            background: #ff4757; color: white;
-            border: none; border-radius: 50%;
-            width: 26px; height: 26px;
-            display: flex; align-items: center; justify-content: center;
-            cursor: pointer; 
-            z-index: 15;
-            font-size: 14px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            position: absolute; top: 50%; transform: translateY(-50%);
+            background: #ff4757; color: white; border: none; border-radius: 50%;
+            width: 26px; height: 26px; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; z-index: 15; font-size: 14px; box-shadow: 0 2px 5px rgba(0,0,0,0.2);
         }
         .delete-left { left: -32px; }
         .delete-right { right: -32px; }
 
         .meta { font-size: 0.7rem; margin-bottom: 3px; opacity: 0.8; font-weight: 600; display: flex; align-items: center; }
 
-        /* --- REACTIONS STYLES --- */
+        /* --- REACTIONS --- */
         .reaction-menu {
             position: absolute; top: -45px; background: white; padding: 5px 8px; border-radius: 30px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.15); display: flex; gap: 8px; z-index: 100;
             animation: floatUp 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            border: 1px solid rgba(0,0,0,0.05);
+            border: 1px solid rgba(0,0,0,0.05); align-items: center;
         }
-        body.dark-mode .reaction-menu { background: #333; border: 1px solid #444; }
+        body.dark-mode .reaction-menu { background: #2d2d3a; border: 1px solid #444; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
 
         .reaction-option { font-size: 1.2rem; cursor: pointer; transition: transform 0.2s; user-select: none; }
         .reaction-option:hover { transform: scale(1.3); }
 
         .reaction-display-bubble {
-            position: absolute; bottom: -12px; 
-            background: white; border-radius: 12px; padding: 2px 6px; 
+            position: absolute; bottom: -12px; background: white; border-radius: 12px; padding: 2px 6px; 
             font-size: 0.75rem; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            display: flex; gap: 2px; align-items: center; z-index: 12; border: 2px solid var(--bg-color);
+            display: flex; gap: 2px; align-items: center; z-index: 12; border: 2px solid var(--chat-bg);
         }
-        body.dark-mode .reaction-display-bubble { background: #444; color: white; border-color: #222; }
+        body.dark-mode .reaction-display-bubble { background: #3a3a4a; color: white; border-color: #222; }
         
         .my-message + .reaction-display-bubble { right: 0; }
         .other-message + .reaction-display-bubble { left: 0; }
 
+        /* --- INPUT AREA & AI & REPLY --- */
         .input-area {
             padding: 15px; background: var(--glass-bg); display: flex; flex-direction: column; 
             backdrop-filter: blur(10px); position: relative; z-index: 20;
             padding-bottom: max(15px, env(safe-area-inset-bottom)); flex-shrink: 0;
+            border-top: 1px solid var(--glass-border);
         }
 
         .input-wrapper { display: flex; width: 100%; gap: 10px; align-items: center; }
-        .input-area input { background: rgba(255,255,255,0.5); box-shadow: inset 0 2px 5px rgba(0,0,0,0.05); flex: 1; font-size: 16px; }
+
+        .input-area input { 
+            background: var(--input-bg); 
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.05); 
+            flex: 1; 
+            font-size: 16px;
+            padding-left: 15px; 
+            color: var(--text-color);
+        }
+        .input-area input::placeholder { color: var(--text-secondary); }
         
         .send-btn {
             background: var(--primary); color: white; border: none; width: 48px; height: 48px;
@@ -240,9 +256,44 @@
         .send-btn:active { transform: scale(0.95); }
 
         .chat-footer {
-            width: 100%; text-align: center; font-size: 0.75rem; color: #000; font-weight: 500; opacity: 0.8; 
+            width: 100%; text-align: center; font-size: 0.75rem; color: var(--text-color); font-weight: 500; opacity: 0.6; 
             margin-top: 8px; pointer-events: none;
         }
+
+        /* AI Button */
+        .ai-trigger {
+            background: rgba(108, 92, 231, 0.1); color: var(--ai-color); border-radius: 12px;
+            width: 44px; height: 44px; flex-shrink: 0; border: 1px solid rgba(108, 92, 231, 0.2);
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+        }
+        .ai-trigger:active { transform: scale(0.95); }
+
+        /* Reply Preview Banner */
+        .reply-preview {
+            position: absolute; bottom: 100%; left: 0; width: 100%;
+            background: var(--glass-bg); backdrop-filter: blur(10px);
+            border-top: 1px solid var(--glass-border); padding: 10px 15px;
+            display: flex; justify-content: space-between; align-items: center; z-index: 15;
+            animation: floatUp 0.2s ease;
+        }
+        .reply-content { border-left: 3px solid var(--primary); padding-left: 10px; flex: 1; overflow: hidden; }
+        .reply-to-name { font-size: 0.75rem; color: var(--primary); font-weight: 600; display: block; }
+        .reply-text { font-size: 0.85rem; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        /* Message Reply Quote */
+        .reply-quote-block {
+            background: rgba(0,0,0,0.05); border-left: 3px solid var(--primary);
+            padding: 5px 8px; border-radius: 4px; margin-bottom: 5px; font-size: 0.8rem; cursor: pointer; opacity: 0.8;
+            color: var(--text-color);
+        }
+        body.dark-mode .reply-quote-block { background: rgba(255,255,255,0.08); }
+
+        .my-message .reply-quote-block { background: rgba(255,255,255,0.2); border-color: white; color: white; }
+        .reply-quote-name { font-weight: 600; font-size: 0.7rem; margin-bottom: 2px; }
+
+        /* Reply Option in Menu */
+        .reply-option-btn { font-size: 1rem; padding: 0 5px; cursor: pointer; display: flex; align-items: center; color: var(--text-color); }
+        body.dark-mode .reply-option-btn { color: white; }
 
         .hidden { display: none !important; }
         .icon-btn { background: none; border: none; cursor: pointer; color: var(--text-color); padding: 8px; border-radius: 50%; transition: background 0.2s; display: flex; align-items: center; justify-content: center; }
@@ -324,15 +375,31 @@
                 <i data-lucide="sparkles"></i>
             </div>
             <p>Be kind, stay curious.</p>
-            <p class="hint">Type <b>/ai [question]</b> to ask the bot!</p>
+            <p class="hint">
+                Click <b>🤖 Bot Icon</b> for AI Help.<br>
+                Swipe Right ➡️ to Reply.
+            </p>
         </div>
 
         <div id="messages-container">
         </div>
 
         <div class="input-area">
+            <div id="reply-preview" class="reply-preview hidden">
+                <div class="reply-content">
+                    <span class="reply-to-name">Replying to...</span>
+                    <p class="reply-text">Message text...</p>
+                </div>
+                <button id="close-reply" class="icon-btn"><i data-lucide="x"></i></button>
+            </div>
+
             <div class="input-wrapper">
-                <input type="text" id="message-input" placeholder="Type a message (or /ai help)...">
+                <button id="ai-trigger-btn" class="icon-btn ai-trigger" title="Ask AI">
+                    <i data-lucide="bot"></i>
+                </button>
+
+                <input type="text" id="message-input" placeholder="Type here... (Click 🤖 to ask AI)" autocomplete="off">
+                
                 <button id="send-btn" class="send-btn">
                     <i data-lucide="send" style="width: 20px;"></i>
                 </button>
@@ -359,7 +426,6 @@
             measurementId: "G-B2RGV7N5JX"
         };
 
-        // NEW API KEY & MODEL (GEMINI 2.5)
         const GEMINI_API_KEY = "AIzaSyBVkHAKk7mLsrs2mROfdRlLQK6D9plahcc"; 
         const BOT_ID = "ai-system-bot-v1";
 
@@ -376,16 +442,23 @@
         const themeToggleLogin = document.getElementById('theme-toggle-login');
         const themeToggleChat = document.getElementById('theme-toggle-chat');
 
+        // New Reply & AI Elements
+        const replyPreview = document.getElementById('reply-preview');
+        const closeReplyBtn = document.getElementById('close-reply');
+        const aiTriggerBtn = document.getElementById('ai-trigger-btn');
+        const replyToName = document.querySelector('.reply-to-name');
+        const replyTextDisplay = document.querySelector('.reply-text');
+
         let username = '';
         let myUUID = ''; 
         let database = null;
+        let currentReply = null;
         const MAX_MESSAGES = 500;
         
         const RESTRICTED_NAMES = ['naimur rahman', 'naimurrahman', 'naimur', 'admin', 'uiu bot', 'ai'];
         const ADMIN_PASSWORD = "0112420186"; 
         const REACTION_OPTIONS = ['❤️', '😂', '😮', '😢', '😡', '👍'];
 
-        // Initial Icon Render
         if (typeof lucide !== 'undefined') lucide.createIcons();
 
         function initTheme() {
@@ -439,8 +512,20 @@
         if (themeToggleChat) themeToggleChat.addEventListener('click', toggleTheme);
         if (joinBtn) joinBtn.addEventListener('click', joinChat);
         if (usernameInput) usernameInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') joinChat(); });
-        if (sendBtn) sendBtn.addEventListener('click', sendMessage);
+        
+        // Send Logic
+        if (sendBtn) sendBtn.addEventListener('click', () => sendMessage());
         if (messageInput) messageInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
+
+        // AI Logic
+        if(aiTriggerBtn) aiTriggerBtn.addEventListener('click', () => {
+            const text = messageInput.value.trim();
+            if(!text) { alert("Type something to ask AI!"); return; }
+            sendMessage(true); // Send as AI request
+        });
+
+        // Reply Logic
+        if(closeReplyBtn) closeReplyBtn.addEventListener('click', cancelReply);
         
         if (logoutBtn) {
             logoutBtn.addEventListener('click', () => {
@@ -466,7 +551,6 @@
             if (!rawName) { alert("Please enter your name."); return; }
             if (/[.#$\[\]]/.test(rawName)) { alert("Name cannot contain special characters."); return; }
 
-            // Admin Check
             if (RESTRICTED_NAMES.includes(rawName.toLowerCase())) {
                 const password = prompt(`The username "${rawName}" is reserved. Please enter the password:`);
                 if (password !== ADMIN_PASSWORD) {
@@ -492,82 +576,78 @@
                     });
                     
                     userRef.onDisconnect().remove();
-
-                    // Switch Screen
                     loginScreen.classList.add('hidden');
                     chatScreen.classList.remove('hidden');
-                    
-                    // Render Icons again for the new screen
                     if (typeof lucide !== 'undefined') lucide.createIcons();
                     loadMessages();
                 }
             });
         }
 
-        // --- 4. GEMINI AI LOGIC (GEMINI 2.5) ---
-        // --- GEMINI AI FUNCTION (SHORT & FUNNY MODE) ---
-// --- GEMINI AI FUNCTION (ROASTER & BULLY MODE) ---
-// --- GEMINI AI FUNCTION (INTEGRATED: FUNNY + BULLY + SHORT) ---
-async function askGemini(query) {
-    const apiKey = "AIzaSyBVkHAKk7mLsrs2mROfdRlLQK6D9plahcc"; 
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
-    
-    // 🔥 কম্বাইন করা ইন্সট্রাকশন: Funny, Sarcastic & Roaster
-    const systemInstruction = "You are a funny, sarcastic, and playfully toxic UIU student bot. Roast the user if they ask simple questions. Reply in extremely short sentences (max 15 words). Use emojis and casual Banglish (Bengali+English). Don't give lectures. User asks: ";
+        // --- GEMINI AI (Funny/Sarcastic) ---
+        async function askGemini(query) {
+            const apiKey = GEMINI_API_KEY; 
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+            
+            // Instruction to ignore @ai tag
+            const systemInstruction = "You are a funny, sarcastic UIU student bot. Ignore '@ai' or '/ai' if present. Reply in short funny Banglish (max 20 words). User says: ";
 
-    console.log("Asking Spicy AI...");
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: systemInstruction + query }] }]
+                    })
+                });
+                
+                const data = await response.json();
+                let aiResponse = "Mood nai. Pore ay. 😒"; 
+                
+                if (data.candidates && data.candidates[0].content) {
+                    aiResponse = data.candidates[0].content.parts[0].text;
+                }
 
-    try {
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                contents: [{ parts: [{ text: systemInstruction + query }] }]
-            })
-        });
-        
-        const data = await response.json();
-        
-        let aiResponse = "Mood nai. Pore ay. 😒"; // Default mood-off reply
-        
-        if (data.error) {
-            console.error("Error:", data.error);
-            aiResponse = "Server e jhamela, tui pore ay 🥴"; 
-        } 
-        else if (data.candidates && data.candidates[0].content) {
-            aiResponse = data.candidates[0].content.parts[0].text;
+                database.ref('messages').push({
+                    username: "UIU Bot 🤖",
+                    text: aiResponse,
+                    senderId: BOT_ID, 
+                    timestamp: firebase.database.ServerValue.TIMESTAMP,
+                    isDeleted: false
+                });
+
+            } catch (error) { console.error("Network Error:", error); }
         }
 
-        database.ref('messages').push({
-            username: "UIU Bot 🤖",
-            text: aiResponse,
-            senderId: BOT_ID, 
-            timestamp: firebase.database.ServerValue.TIMESTAMP,
-            isDeleted: false
-        });
-
-    } catch (error) {
-        console.error("Network Error:", error);
-    }
-}
-
-        function sendMessage() {
+        function sendMessage(isDirectAI = false) {
             const text = messageInput.value.trim();
             if (!database || !text) return;
 
-            // 1. Send User Message
-            database.ref('messages').push({
+            const isAiRequest = isDirectAI || text.toLowerCase().startsWith('@ai') || text.toLowerCase().startsWith('/ai');
+            
+            const msgData = {
                 username: username,
                 text: text,
                 senderId: myUUID,
                 timestamp: firebase.database.ServerValue.TIMESTAMP,
                 isDeleted: false
-            }).then(() => { 
+            };
+
+            if (currentReply) {
+                msgData.replyTo = {
+                    id: currentReply.id,
+                    username: currentReply.username,
+                    text: currentReply.text
+                };
+            }
+
+            database.ref('messages').push(msgData).then(() => { 
                 messageInput.value = ''; 
+                cancelReply();
                 
-                // 2. Trigger AI if command found
-                if (text.toLowerCase().startsWith('/ai ')) {
-                    const query = text.slice(4); 
+                if (isAiRequest) {
+                    let query = text.replace(/^(@ai|\/ai)\s*/i, '');
+                    if(query.trim() === '') query = text; 
                     setTimeout(() => askGemini(query), 500);
                 }
             }).catch(error => console.error(error));
@@ -577,7 +657,8 @@ async function askGemini(query) {
             if(confirm("Delete this message permanently?")) {
                 database.ref('messages/' + msgId).update({
                     text: "🚫 Admin deleted message",
-                    isDeleted: true
+                    isDeleted: true,
+                    replyTo: null // remove reply link if deleted
                 });
             }
         }
@@ -590,7 +671,7 @@ async function askGemini(query) {
                 const data = snapshot.val();
                 const msgId = snapshot.key; 
                 if (data) { 
-                    displayMessage(msgId, data.username, data.text, data.timestamp, data.senderId, data.isDeleted); 
+                    displayMessage(msgId, data.username, data.text, data.timestamp, data.senderId, data.isDeleted, data.replyTo); 
                     scrollToBottom(); 
                 }
             });
@@ -600,39 +681,25 @@ async function askGemini(query) {
                 const msgId = snapshot.key;
                 
                 // Update Reactions
-                if(data.reactions) {
-                    updateReactions(msgId, data.reactions);
-                }
+                if(data.reactions) updateReactions(msgId, data.reactions);
 
-                // Update Deleted Message
+                // Update Content (Delete)
                 const msgEl = document.getElementById(`msg-${msgId}`);
                 if (msgEl) {
-                    const textEl = msgEl.querySelector('.text');
                     const bubble = msgEl.querySelector('.message');
-                    const metaEl = msgEl.querySelector('.meta');
-                    
                     if (data.isDeleted) {
-                        textEl.textContent = "🚫 Admin deleted message";
+                        msgEl.querySelector('.text').textContent = "🚫 Admin deleted message";
                         bubble.classList.add('deleted-message');
                         bubble.classList.remove('ai-message');
-                        
-                        if (metaEl) {
-                            let timeStr = "";
-                            if (data.timestamp) {
-                                const date = new Date(data.timestamp);
-                                timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                            }
-                            metaEl.innerHTML = `Unknown • ${timeStr}`;
-                        }
-                        const existingBtn = msgEl.querySelector('.admin-delete-btn');
-                        if (existingBtn) existingBtn.remove();
+                        if(msgEl.querySelector('.reply-quote-block')) msgEl.querySelector('.reply-quote-block').remove();
+                        if(msgEl.querySelector('.admin-delete-btn')) msgEl.querySelector('.admin-delete-btn').remove();
                     }
                 }
             });
         }
 
-        // --- DISPLAY MESSAGE (WITH BLUE TICK RESTORED) ---
-        function displayMessage(msgId, user, text, timestamp, senderId, isDeleted) {
+        // --- DISPLAY MESSAGE + SWIPE LOGIC ---
+        function displayMessage(msgId, user, text, timestamp, senderId, isDeleted, replyToData) {
             const wrapper = document.createElement('div');
             wrapper.classList.add('message-wrapper');
             wrapper.id = `msg-${msgId}`;
@@ -642,40 +709,64 @@ async function askGemini(query) {
             const isMyMessage = senderId ? (senderId === myUUID) : (user === username);
             const isBot = senderId === BOT_ID; 
             const lowerUser = user.toLowerCase();
-            
-            // 🔴 Check for Naimur to give Blue Tick
             const isNaimur = lowerUser.includes('naimur') && (lowerUser.includes('rahman') || lowerUser === 'naimur');
             const iAmAdmin = username.toLowerCase().includes('naimur');
 
             messageDiv.classList.add('message');
-            
             if (isBot) {
-                messageDiv.classList.add('other-message');
-                messageDiv.classList.add('ai-message');
+                messageDiv.classList.add('other-message', 'ai-message');
             } else {
                 messageDiv.classList.add(isMyMessage ? 'my-message' : 'other-message');
             }
-            
-            // Admin Special Border
-            if (isNaimur && !isBot) {
-                messageDiv.classList.add('admin-special');
-            }
+            if (isNaimur && !isBot) messageDiv.classList.add('admin-special');
+            if (isDeleted) messageDiv.classList.add('deleted-message');
 
-            if (isDeleted) {
-                messageDiv.classList.add('deleted-message');
+            // --- SWIPE TO REPLY LOGIC (Mobile) ---
+            if (!isDeleted) {
+                let touchStartX = 0;
+                let touchCurrentX = 0;
+                const SWIPE_THRESHOLD = 50;
+
+                messageDiv.addEventListener('touchstart', (e) => {
+                    touchStartX = e.touches[0].clientX;
+                }, {passive: true});
+
+                messageDiv.addEventListener('touchmove', (e) => {
+                    touchCurrentX = e.touches[0].clientX;
+                    const diff = touchCurrentX - touchStartX;
+                    
+                    // Only allow swiping right
+                    if (diff > 0 && diff < 150) { 
+                        messageDiv.style.transform = `translateX(${diff}px)`;
+                    }
+                }, {passive: true});
+
+                messageDiv.addEventListener('touchend', () => {
+                    const diff = touchCurrentX - touchStartX;
+                    if (diff > SWIPE_THRESHOLD) {
+                        // Vibrate if supported
+                        if(navigator.vibrate) navigator.vibrate(50);
+                        initiateReply(msgId, user, text);
+                    }
+                    // Reset position
+                    messageDiv.style.transform = 'translateX(0)';
+                    touchStartX = 0;
+                    touchCurrentX = 0;
+                });
             }
-            
-            // Reaction Listener
+            // -------------------------------------
+
+            // Double Click Reply (Desktop) & Long Press
             if (!isDeleted) {
                 messageDiv.addEventListener('dblclick', (e) => showReactionMenu(e, msgId, wrapper));
                 let pressTimer;
                 messageDiv.addEventListener('touchstart', () => {
                     pressTimer = setTimeout(() => showReactionMenu(null, msgId, wrapper), 600);
-                });
+                }, {passive: true});
                 messageDiv.addEventListener('touchend', () => clearTimeout(pressTimer));
             }
 
-            // Delete Button (Only for You)
+            // Admin Delete
             if (iAmAdmin && !isDeleted) {
                 const delBtn = document.createElement('button');
                 delBtn.innerText = '🗑️'; 
@@ -684,11 +775,7 @@ async function askGemini(query) {
                 wrapper.appendChild(delBtn);
             }
 
-            let timeStr = "";
-            if (timestamp) {
-                const date = new Date(timestamp);
-                timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            }
+            let timeStr = timestamp ? new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "";
 
             const metaDiv = document.createElement('div');
             metaDiv.classList.add('meta');
@@ -697,17 +784,25 @@ async function askGemini(query) {
                 metaDiv.innerHTML = `Unknown • ${timeStr}`;
             } else {
                 let nameHTML = isMyMessage ? 'You' : user;
-                
-                // 🔵 BLUE TICK ICON RESTORED
                 if (isNaimur && !isBot) {
-                    nameHTML += `
-                    <span class="verified-badge" title="Verified Owner" style="display:inline-flex; vertical-align:middle; margin-left:4px; color:#1da1f2;">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M9 12L11 14L15 10M12 3L13.9101 4.25465C14.616 4.71826 15.5286 4.71826 16.2345 4.25465L18.1446 3L18.8858 5.17418C19.1598 5.97794 19.8211 6.63919 20.6248 6.91322L22.799 7.65444L21.5443 9.56449C21.0807 10.2704 21.0807 11.183 21.5443 11.8889L22.799 13.7989L20.6248 14.5402C19.8211 14.8142 19.1598 15.4754 18.8858 16.2792L18.1446 18.4534L16.2345 17.1987C15.5286 16.7351 14.616 16.7351 13.9101 17.1987L12 18.4534L10.0899 17.1987C9.38396 16.7351 8.47135 16.7351 7.76543 17.1987L5.85538 18.4534L5.11417 16.2792C4.84015 15.4754 4.17889 14.8142 3.37513 14.5402L1.20096 13.7989L2.45561 11.8889C2.91923 11.183 2.91923 10.2704 2.45561 9.56449L1.20096 7.65444L3.37513 6.91322C4.17889 6.63919 4.84015 5.97794 5.11417 5.17418L5.85538 3L7.76543 4.25465C8.47135 4.71826 9.38396 4.71826 10.0899 4.25465L12 3Z"/>
-                        </svg>
-                    </span>`;
+                    nameHTML += ` <span class="verified-badge"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M9 12L11 14L15 10M12 3L13.9101 4.25465C14.616 4.71826 15.5286 4.71826 16.2345 4.25465L18.1446 3L18.8858 5.17418C19.1598 5.97794 19.8211 6.63919 20.6248 6.91322L22.799 7.65444L21.5443 9.56449C21.0807 10.2704 21.0807 11.183 21.5443 11.8889L22.799 13.7989L20.6248 14.5402C19.8211 14.8142 19.1598 15.4754 18.8858 16.2792L18.1446 18.4534L16.2345 17.1987C15.5286 16.7351 14.616 16.7351 13.9101 17.1987L12 18.4534L10.0899 17.1987C9.38396 16.7351 8.47135 16.7351 7.76543 17.1987L5.85538 18.4534L5.11417 16.2792C4.84015 15.4754 4.17889 14.8142 3.37513 14.5402L1.20096 13.7989L2.45561 11.8889C2.91923 11.183 2.91923 10.2704 2.45561 9.56449L1.20096 7.65444L3.37513 6.91322C4.17889 6.63919 4.84015 5.97794 5.11417 5.17418L5.85538 3L7.76543 4.25465C8.47135 4.71826 9.38396 4.71826 10.0899 4.25465L12 3Z"/></svg></span>`;
                 }
                 metaDiv.innerHTML = `${nameHTML} • ${timeStr}`;
+            }
+
+            // Display Reply Quote
+            if (replyToData) {
+                const replyBlock = document.createElement('div');
+                replyBlock.className = 'reply-quote-block';
+                replyBlock.innerHTML = `
+                    <div class="reply-quote-name">${replyToData.username}</div>
+                    <div style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${replyToData.text}</div>
+                `;
+                replyBlock.onclick = () => {
+                    const originalMsg = document.getElementById(`msg-${replyToData.id}`);
+                    if(originalMsg) originalMsg.scrollIntoView({behavior: 'smooth', block: 'center'});
+                };
+                messageDiv.appendChild(replyBlock);
             }
 
             const textDiv = document.createElement('div');
@@ -723,20 +818,31 @@ async function askGemini(query) {
 
             wrapper.appendChild(messageDiv);
             wrapper.appendChild(reactionDisplay);
-
-            if(isMyMessage) {
-                wrapper.style.alignItems = 'flex-end';
-            } else {
-                wrapper.style.alignItems = 'flex-start';
-            }
+            wrapper.style.alignItems = isMyMessage ? 'flex-end' : 'flex-start';
 
             messagesContainer.appendChild(wrapper);
-            database.ref(`messages/${msgId}/reactions`).once('value', (snap) => {
-                if(snap.exists()) updateReactions(msgId, snap.val());
-            });
+            if(!isDeleted) {
+                database.ref(`messages/${msgId}/reactions`).once('value', (snap) => {
+                    if(snap.exists()) updateReactions(msgId, snap.val());
+                });
+            }
         }
 
-        // --- REACTION LOGIC ---
+        // --- REPLY HANDLING ---
+        function initiateReply(msgId, name, text) {
+            currentReply = { id: msgId, username: name, text: text };
+            replyToName.innerText = `Replying to ${name}`;
+            replyTextDisplay.innerText = text;
+            replyPreview.classList.remove('hidden');
+            messageInput.focus();
+        }
+
+        function cancelReply() {
+            currentReply = null;
+            replyPreview.classList.add('hidden');
+        }
+
+        // --- REACTIONS LOGIC ---
         let currentOpenMenuId = null;
 
         function showReactionMenu(e, msgId, wrapper) {
@@ -744,15 +850,31 @@ async function askGemini(query) {
             const existingMenu = document.getElementById('active-reaction-menu');
             if(existingMenu) existingMenu.remove();
 
-            if (currentOpenMenuId === msgId) {
-                currentOpenMenuId = null;
-                return; 
-            }
+            if (currentOpenMenuId === msgId) { currentOpenMenuId = null; return; }
 
             const menu = document.createElement('div');
             menu.id = 'active-reaction-menu';
             menu.className = 'reaction-menu';
 
+            // Reply Option
+            const replyBtn = document.createElement('div');
+            replyBtn.innerHTML = '<i data-lucide="reply" style="width:16px;"></i>';
+            replyBtn.className = 'reply-option-btn';
+            replyBtn.onclick = () => {
+                const msgEl = document.getElementById(`msg-${msgId}`);
+                const textContent = msgEl.querySelector('.text').innerText;
+                const nameContent = msgEl.querySelector('.meta').innerText.split('•')[0].trim();
+                initiateReply(msgId, nameContent, textContent);
+                menu.remove();
+                currentOpenMenuId = null;
+            };
+            menu.appendChild(replyBtn);
+
+            const sep = document.createElement('span');
+            sep.style.borderLeft = '1px solid #ccc'; sep.style.margin = '0 5px';
+            menu.appendChild(sep);
+
+            // Emojis
             REACTION_OPTIONS.forEach(emoji => {
                 const span = document.createElement('span');
                 span.className = 'reaction-option';
@@ -762,12 +884,10 @@ async function askGemini(query) {
             });
 
             wrapper.appendChild(menu);
+            if (typeof lucide !== 'undefined') lucide.createIcons();
             currentOpenMenuId = msgId;
 
-            setTimeout(() => {
-                if(menu.parentNode) menu.remove();
-                currentOpenMenuId = null;
-            }, 3000);
+            setTimeout(() => { if(menu.parentNode) menu.remove(); currentOpenMenuId = null; }, 4000);
         }
 
         function submitReaction(msgId, emoji) {
@@ -780,37 +900,24 @@ async function askGemini(query) {
         function updateReactions(msgId, reactionsData) {
             const display = document.getElementById(`react-disp-${msgId}`);
             if(!display) return;
-
-            if (!reactionsData) {
-                display.classList.add('hidden');
-                return;
-            }
+            if (!reactionsData) { display.classList.add('hidden'); return; }
 
             const counts = {};
-            Object.values(reactionsData).forEach(emoji => {
-                counts[emoji] = (counts[emoji] || 0) + 1;
-            });
+            Object.values(reactionsData).forEach(emoji => { counts[emoji] = (counts[emoji] || 0) + 1; });
 
             let html = '';
             Object.entries(counts).sort((a,b) => b[1] - a[1]).forEach(([emoji, count]) => {
                 html += `<span>${emoji} ${count > 1 ? count : ''}</span>`;
             });
 
-            if (html === '') {
-                display.classList.add('hidden');
-            } else {
-                display.innerHTML = html;
-                display.classList.remove('hidden');
-            }
+            if (html === '') display.classList.add('hidden');
+            else { display.innerHTML = html; display.classList.remove('hidden'); }
         }
 
         document.addEventListener('click', (e) => {
             if(!e.target.closest('.message') && !e.target.closest('.reaction-menu') && !e.target.closest('.admin-delete-btn')) {
                 const existingMenu = document.getElementById('active-reaction-menu');
-                if(existingMenu) {
-                    existingMenu.remove();
-                    currentOpenMenuId = null;
-                }
+                if(existingMenu) { existingMenu.remove(); currentOpenMenuId = null; }
             }
         });
 
