@@ -586,7 +586,7 @@
 
         // --- GEMINI AI (Funny/Sarcastic) ---
         async function askGemini(query) {
-            const apiKey = GEMINI_API_KEY; 
+            const apiKey = "AIzaSyAehihzQXr0AF3FkECvyHCKy-I8VLNbmP4"; 
             const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
             
             // Instruction to ignore @ai tag
@@ -623,7 +623,10 @@
             const text = messageInput.value.trim();
             if (!database || !text) return;
 
-            const isAiRequest = isDirectAI || text.toLowerCase().startsWith('@ai') || text.toLowerCase().startsWith('/ai');
+            // 🔥 CHECK IF REPLYING TO BOT
+            const isReplyingToBot = currentReply && currentReply.username === "UIU Bot 🤖";
+
+            const isAiRequest = isDirectAI || text.toLowerCase().startsWith('@ai') || text.toLowerCase().startsWith('/ai') || isReplyingToBot;
             
             const msgData = {
                 username: username,
