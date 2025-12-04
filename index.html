@@ -3,10 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, interactive-widget=resizes-content">
-    <title>UIU Incognito Chat</title>
+    <title>UIU Incognito Chat + AI</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 
     <style>
         /* --- CSS VARIABLES --- */
@@ -24,6 +25,7 @@
             --status-red: #ff4757;
             --verified-blue: #1da1f2;
             --admin-gold: #ffd700;
+            --ai-color: #6c5ce7;
         }
 
         body.dark-mode {
@@ -34,6 +36,7 @@
             --text-secondary: #aaa;
             --primary: #ff8c00;
             --chat-bg: rgba(0, 0, 0, 0.3);
+            --ai-color: #a29bfe;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
@@ -125,6 +128,7 @@
         }
         .welcome-icon-wrapper svg { width: 50px; height: 50px; stroke-width: 1.5px; opacity: 0.5; margin-bottom: 10px;}
         .welcome-watermark p { color: var(--text-secondary); font-size: 0.95rem; font-weight: 500; opacity: 0.7; }
+        .welcome-watermark .hint { font-size: 0.75rem; margin-top: 5px; opacity: 0.5; }
 
         #messages-container { 
             flex: 1; overflow-y: auto; padding: 15px; background: transparent; 
@@ -146,6 +150,14 @@
         .my-message { align-self: flex-end; background: var(--primary); color: white; border-bottom-right-radius: 2px; }
         .other-message { align-self: flex-start; background: white; color: #333; border-bottom-left-radius: 2px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         
+        /* --- AI BOT MESSAGE STYLES --- */
+        .message.ai-message {
+            background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 4px 12px rgba(108, 92, 231, 0.25);
+        }
+        
         /* --- SPECIAL ADMIN STYLES --- */
         .message.admin-special {
             border: 2px solid var(--admin-gold);
@@ -162,6 +174,7 @@
             font-style: italic;
             border: 1px solid #ddd;
             box-shadow: none;
+            background: rgba(0,0,0,0.05);
         }
         body.dark-mode .message.deleted-message {
             background-color: #333;
@@ -169,7 +182,7 @@
             border: 1px solid #444;
         }
 
-        /* --- ADMIN DELETE BUTTON (FIXED VISIBILITY) --- */
+        /* --- ADMIN DELETE BUTTON --- */
         .admin-delete-btn {
             position: absolute;
             top: 50%; transform: translateY(-50%);
@@ -182,7 +195,6 @@
             font-size: 14px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.2);
         }
-        /* Removed Opacity: Button is always visible for Admin now */
         .delete-left { left: -32px; }
         .delete-right { right: -32px; }
 
@@ -239,7 +251,6 @@
             .login-card { padding: 2rem 1.5rem; width: 90%; }
             .message { font-size: 0.9rem; }
             .welcome-watermark { width: 90%; }
-            /* FORCE DELETE BUTTON VISIBLE ON MOBILE */
             .admin-delete-btn { opacity: 1 !important; } 
         }
     </style>
@@ -312,7 +323,8 @@
             <div class="welcome-icon-wrapper">
                 <i data-lucide="sparkles"></i>
             </div>
-            <p>Be kind, stay curious, and enjoy the randomness.</p>
+            <p>Be kind, stay curious.</p>
+            <p class="hint">Type <b>/ai [question]</b> to ask the bot!</p>
         </div>
 
         <div id="messages-container">
@@ -320,7 +332,7 @@
 
         <div class="input-area">
             <div class="input-wrapper">
-                <input type="text" id="message-input" placeholder="Type a message...">
+                <input type="text" id="message-input" placeholder="Type a message (or /ai help)...">
                 <button id="send-btn" class="send-btn">
                     <i data-lucide="send" style="width: 20px;"></i>
                 </button>
@@ -335,6 +347,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
     <script>
+        // --- 1. CONFIGURATION ---
         const firebaseConfig = {
             apiKey: "AIzaSyBx260kRaZe010DhaTxD7vPHER1ZIcQuxI",
             authDomain: "uiu-incognito-chat.firebaseapp.com",
@@ -346,6 +359,11 @@
             measurementId: "G-B2RGV7N5JX"
         };
 
+        // NEW API KEY & MODEL
+        const GEMINI_API_KEY = "AIzaSyBVkHAKk7mLsrs2mROfdRlLQK6D9plahcc"; 
+        const BOT_ID = "ai-system-bot-v1";
+
+        // --- 2. INITIALIZATION ---
         const loginScreen = document.getElementById('login-screen');
         const chatScreen = document.getElementById('chat-screen');
         const usernameInput = document.getElementById('username-input');
@@ -363,13 +381,12 @@
         let database = null;
         const MAX_MESSAGES = 500;
         
-        // --- RESTRICTED USERNAMES ---
-        const RESTRICTED_NAMES = ['naimur rahman', 'naimurrahman', 'naimur', 'admin'];
+        const RESTRICTED_NAMES = ['naimur rahman', 'naimurrahman', 'naimur', 'admin', 'uiu bot', 'ai'];
         const ADMIN_PASSWORD = "0112420186"; 
-
         const REACTION_OPTIONS = ['❤️', '😂', '😮', '😢', '😡', '👍'];
 
-        lucide.createIcons();
+        // Initial Icon Render
+        if (typeof lucide !== 'undefined') lucide.createIcons();
 
         function initTheme() {
             const savedTheme = localStorage.getItem('theme');
@@ -392,12 +409,12 @@
             const iconName = isDark ? 'sun' : 'moon';
             if (themeToggleLogin) themeToggleLogin.innerHTML = `<i data-lucide="${iconName}"></i>`;
             if (themeToggleChat) themeToggleChat.innerHTML = `<i data-lucide="${iconName}"></i>`;
-            lucide.createIcons();
+            if (typeof lucide !== 'undefined') lucide.createIcons();
         }
 
         function initFirebase() {
             if (typeof firebase === 'undefined') {
-                alert("Critical Error: Firebase SDK not loaded.");
+                console.error("Firebase SDK not loaded.");
                 return;
             }
             try {
@@ -411,13 +428,13 @@
                         activeUsersText.innerText = `${count} Online`;
                     }
                 });
-
             } catch (error) { console.error("Firebase Init Error:", error); }
         }
 
         initTheme();
         initFirebase();
 
+        // --- 3. EVENT LISTENERS ---
         if (themeToggleLogin) themeToggleLogin.addEventListener('click', toggleTheme);
         if (themeToggleChat) themeToggleChat.addEventListener('click', toggleTheme);
         if (joinBtn) joinBtn.addEventListener('click', joinChat);
@@ -449,7 +466,7 @@
             if (!rawName) { alert("Please enter your name."); return; }
             if (/[.#$\[\]]/.test(rawName)) { alert("Name cannot contain special characters."); return; }
 
-            // --- RESTRICTED USERNAME CHECK ---
+            // Admin Check
             if (RESTRICTED_NAMES.includes(rawName.toLowerCase())) {
                 const password = prompt(`The username "${rawName}" is reserved. Please enter the password:`);
                 if (password !== ADMIN_PASSWORD) {
@@ -476,25 +493,81 @@
                     
                     userRef.onDisconnect().remove();
 
+                    // Switch Screen
                     loginScreen.classList.add('hidden');
                     chatScreen.classList.remove('hidden');
                     
-                    lucide.createIcons();
+                    // Render Icons again for the new screen
+                    if (typeof lucide !== 'undefined') lucide.createIcons();
                     loadMessages();
                 }
             });
         }
 
+        // --- 4. GEMINI AI LOGIC (WITH NEW KEY) ---
+        // --- GEMINI AI FUNCTION (UPDATED FOR GEMINI 2.5) ---
+async function askGemini(query) {
+    const apiKey = "AIzaSyBVkHAKk7mLsrs2mROfdRlLQK6D9plahcc"; // আপনার নতুন কি
+    
+    // 👇 ফিক্স: এখানে '1.5' এর বদলে '2.5' দেওয়া হয়েছে (আপনার স্ক্রিনশট অনুযায়ী)
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+    
+    console.log("Asking Gemini 2.5...");
+
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contents: [{ parts: [{ text: query }] }]
+            })
+        });
+        
+        const data = await response.json();
+        
+        let aiResponse = "I am tired right now.";
+        
+        if (data.error) {
+            console.error("Error:", data.error);
+            aiResponse = `Error: ${data.error.message}`; 
+        } 
+        else if (data.candidates && data.candidates[0].content) {
+            aiResponse = data.candidates[0].content.parts[0].text;
+        }
+
+        database.ref('messages').push({
+            username: "UIU Bot 🤖",
+            text: aiResponse,
+            senderId: BOT_ID, 
+            timestamp: firebase.database.ServerValue.TIMESTAMP,
+            isDeleted: false
+        });
+
+    } catch (error) {
+        console.error("Network Error:", error);
+    }
+}
+
         function sendMessage() {
             const text = messageInput.value.trim();
             if (!database || !text) return;
+
+            // 1. Send User Message
             database.ref('messages').push({
                 username: username,
                 text: text,
                 senderId: myUUID,
                 timestamp: firebase.database.ServerValue.TIMESTAMP,
                 isDeleted: false
-            }).then(() => { messageInput.value = ''; }).catch(error => console.error(error));
+            }).then(() => { 
+                messageInput.value = ''; 
+                
+                // 2. Trigger AI if command found
+                if (text.toLowerCase().startsWith('/ai ')) {
+                    const query = text.slice(4); 
+                    setTimeout(() => askGemini(query), 500);
+                }
+            }).catch(error => console.error(error));
         }
 
         function deleteMessage(msgId) {
@@ -519,17 +592,16 @@
                 }
             });
 
-            // Handle Changes (Reactions & Deletions)
             messagesRef.limitToLast(MAX_MESSAGES).on('child_changed', (snapshot) => {
                 const data = snapshot.val();
                 const msgId = snapshot.key;
                 
-                // 1. Update Reactions
+                // Update Reactions
                 if(data.reactions) {
                     updateReactions(msgId, data.reactions);
                 }
 
-                // 2. Update Text (if deleted)
+                // Update Deleted Message
                 const msgEl = document.getElementById(`msg-${msgId}`);
                 if (msgEl) {
                     const textEl = msgEl.querySelector('.text');
@@ -539,8 +611,8 @@
                     if (data.isDeleted) {
                         textEl.textContent = "🚫 Admin deleted message";
                         bubble.classList.add('deleted-message');
+                        bubble.classList.remove('ai-message');
                         
-                        // Hide username
                         if (metaEl) {
                             let timeStr = "";
                             if (data.timestamp) {
@@ -549,8 +621,6 @@
                             }
                             metaEl.innerHTML = `Unknown • ${timeStr}`;
                         }
-
-                        // Remove Delete Button if exists
                         const existingBtn = msgEl.querySelector('.admin-delete-btn');
                         if (existingBtn) existingBtn.remove();
                     }
@@ -564,15 +634,23 @@
             wrapper.id = `msg-${msgId}`;
 
             const messageDiv = document.createElement('div');
+            
             const isMyMessage = senderId ? (senderId === myUUID) : (user === username);
+            const isBot = senderId === BOT_ID; 
             const lowerUser = user.toLowerCase();
             const isNaimur = lowerUser === 'naimur rahman';
             const iAmAdmin = username.toLowerCase() === 'naimur rahman';
 
             messageDiv.classList.add('message');
-            messageDiv.classList.add(isMyMessage ? 'my-message' : 'other-message');
             
-            if (isNaimur) {
+            if (isBot) {
+                messageDiv.classList.add('other-message');
+                messageDiv.classList.add('ai-message');
+            } else {
+                messageDiv.classList.add(isMyMessage ? 'my-message' : 'other-message');
+            }
+            
+            if (isNaimur && !isBot) {
                 messageDiv.classList.add('admin-special');
             }
 
@@ -580,7 +658,6 @@
                 messageDiv.classList.add('deleted-message');
             }
             
-            // --- EVENT LISTENERS FOR REACTIONS ---
             if (!isDeleted) {
                 messageDiv.addEventListener('dblclick', (e) => showReactionMenu(e, msgId, wrapper));
                 let pressTimer;
@@ -590,7 +667,6 @@
                 messageDiv.addEventListener('touchend', () => clearTimeout(pressTimer));
             }
 
-            // --- ADMIN DELETE BUTTON (EMOJI) ---
             if (iAmAdmin && !isDeleted) {
                 const delBtn = document.createElement('button');
                 delBtn.innerText = '🗑️'; 
@@ -608,19 +684,12 @@
             const metaDiv = document.createElement('div');
             metaDiv.classList.add('meta');
             
-            // IF DELETED, HIDE NAME
             if (isDeleted) {
                 metaDiv.innerHTML = `Unknown • ${timeStr}`;
             } else {
                 let nameHTML = isMyMessage ? 'You' : user;
-                
-                if (isNaimur) {
-                    nameHTML += `
-                    <span class="verified-badge" title="Verified Owner">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none">
-                            <path d="M9 12L11 14L15 10M12 3L13.9101 4.25465C14.616 4.71826 15.5286 4.71826 16.2345 4.25465L18.1446 3L18.8858 5.17418C19.1598 5.97794 19.8211 6.63919 20.6248 6.91322L22.799 7.65444L21.5443 9.56449C21.0807 10.2704 21.0807 11.183 21.5443 11.8889L22.799 13.7989L20.6248 14.5402C19.8211 14.8142 19.1598 15.4754 18.8858 16.2792L18.1446 18.4534L16.2345 17.1987C15.5286 16.7351 14.616 16.7351 13.9101 17.1987L12 18.4534L10.0899 17.1987C9.38396 16.7351 8.47135 16.7351 7.76543 17.1987L5.85538 18.4534L5.11417 16.2792C4.84015 15.4754 4.17889 14.8142 3.37513 14.5402L1.20096 13.7989L2.45561 11.8889C2.91923 11.183 2.91923 10.2704 2.45561 9.56449L1.20096 7.65444L3.37513 6.91322C4.17889 6.63919 4.84015 5.97794 5.11417 5.17418L5.85538 3L7.76543 4.25465C8.47135 4.71826 9.38396 4.71826 10.0899 4.25465L12 3Z"/>
-                        </svg>
-                    </span>`;
+                if (isNaimur && !isBot) {
+                    nameHTML += `<span class="verified-badge" title="Verified Owner">●</span>`; 
                 }
                 metaDiv.innerHTML = `${nameHTML} • ${timeStr}`;
             }
@@ -646,7 +715,6 @@
             }
 
             messagesContainer.appendChild(wrapper);
-
             database.ref(`messages/${msgId}/reactions`).once('value', (snap) => {
                 if(snap.exists()) updateReactions(msgId, snap.val());
             });
@@ -657,7 +725,6 @@
 
         function showReactionMenu(e, msgId, wrapper) {
             if(e) e.preventDefault(); 
-            
             const existingMenu = document.getElementById('active-reaction-menu');
             if(existingMenu) existingMenu.remove();
 
@@ -691,7 +758,6 @@
             const existingMenu = document.getElementById('active-reaction-menu');
             if(existingMenu) existingMenu.remove();
             currentOpenMenuId = null;
-
             database.ref(`messages/${msgId}/reactions/${myUUID}`).set(emoji);
         }
 
