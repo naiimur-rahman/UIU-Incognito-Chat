@@ -602,7 +602,7 @@
                 });
                 
                 const data = await response.json();
-                let aiResponse = "Mood nai. Pore ay. 😒"; 
+                let aiResponse = "Server e jhamela. Naimur ke janan taratari... 😒"; 
                 
                 if (data.candidates && data.candidates[0].content) {
                     aiResponse = data.candidates[0].content.parts[0].text;
