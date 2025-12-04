@@ -359,7 +359,7 @@
             measurementId: "G-B2RGV7N5JX"
         };
 
-        // NEW API KEY & MODEL
+        // NEW API KEY & MODEL (GEMINI 2.5)
         const GEMINI_API_KEY = "AIzaSyBVkHAKk7mLsrs2mROfdRlLQK6D9plahcc"; 
         const BOT_ID = "ai-system-bot-v1";
 
@@ -504,49 +504,48 @@
             });
         }
 
-        // --- 4. GEMINI AI LOGIC (WITH NEW KEY) ---
-        // --- GEMINI AI FUNCTION (UPDATED FOR GEMINI 2.5) ---
-async function askGemini(query) {
-    const apiKey = "AIzaSyBVkHAKk7mLsrs2mROfdRlLQK6D9plahcc"; // আপনার নতুন কি
-    
-    // 👇 ফিক্স: এখানে '1.5' এর বদলে '2.5' দেওয়া হয়েছে (আপনার স্ক্রিনশট অনুযায়ী)
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
-    
-    console.log("Asking Gemini 2.5...");
+        // --- 4. GEMINI AI LOGIC (GEMINI 2.5) ---
+        async function askGemini(query) {
+            const apiKey = "AIzaSyBVkHAKk7mLsrs2mROfdRlLQK6D9plahcc"; 
+            
+            // Using Gemini 2.5 Flash as per your system
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+            
+            console.log("Asking Gemini 2.5...");
 
-    try {
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                contents: [{ parts: [{ text: query }] }]
-            })
-        });
-        
-        const data = await response.json();
-        
-        let aiResponse = "I am tired right now.";
-        
-        if (data.error) {
-            console.error("Error:", data.error);
-            aiResponse = `Error: ${data.error.message}`; 
-        } 
-        else if (data.candidates && data.candidates[0].content) {
-            aiResponse = data.candidates[0].content.parts[0].text;
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: query }] }]
+                    })
+                });
+                
+                const data = await response.json();
+                
+                let aiResponse = "I am tired right now.";
+                
+                if (data.error) {
+                    console.error("Error:", data.error);
+                    aiResponse = `Error: ${data.error.message}`; 
+                } 
+                else if (data.candidates && data.candidates[0].content) {
+                    aiResponse = data.candidates[0].content.parts[0].text;
+                }
+
+                database.ref('messages').push({
+                    username: "UIU Bot 🤖",
+                    text: aiResponse,
+                    senderId: BOT_ID, 
+                    timestamp: firebase.database.ServerValue.TIMESTAMP,
+                    isDeleted: false
+                });
+
+            } catch (error) {
+                console.error("Network Error:", error);
+            }
         }
-
-        database.ref('messages').push({
-            username: "UIU Bot 🤖",
-            text: aiResponse,
-            senderId: BOT_ID, 
-            timestamp: firebase.database.ServerValue.TIMESTAMP,
-            isDeleted: false
-        });
-
-    } catch (error) {
-        console.error("Network Error:", error);
-    }
-}
 
         function sendMessage() {
             const text = messageInput.value.trim();
@@ -628,6 +627,7 @@ async function askGemini(query) {
             });
         }
 
+        // --- DISPLAY MESSAGE (WITH BLUE TICK RESTORED) ---
         function displayMessage(msgId, user, text, timestamp, senderId, isDeleted) {
             const wrapper = document.createElement('div');
             wrapper.classList.add('message-wrapper');
@@ -638,8 +638,10 @@ async function askGemini(query) {
             const isMyMessage = senderId ? (senderId === myUUID) : (user === username);
             const isBot = senderId === BOT_ID; 
             const lowerUser = user.toLowerCase();
-            const isNaimur = lowerUser === 'naimur rahman';
-            const iAmAdmin = username.toLowerCase() === 'naimur rahman';
+            
+            // 🔴 Check for Naimur to give Blue Tick
+            const isNaimur = lowerUser.includes('naimur') && (lowerUser.includes('rahman') || lowerUser === 'naimur');
+            const iAmAdmin = username.toLowerCase().includes('naimur');
 
             messageDiv.classList.add('message');
             
@@ -650,6 +652,7 @@ async function askGemini(query) {
                 messageDiv.classList.add(isMyMessage ? 'my-message' : 'other-message');
             }
             
+            // Admin Special Border
             if (isNaimur && !isBot) {
                 messageDiv.classList.add('admin-special');
             }
@@ -658,6 +661,7 @@ async function askGemini(query) {
                 messageDiv.classList.add('deleted-message');
             }
             
+            // Reaction Listener
             if (!isDeleted) {
                 messageDiv.addEventListener('dblclick', (e) => showReactionMenu(e, msgId, wrapper));
                 let pressTimer;
@@ -667,6 +671,7 @@ async function askGemini(query) {
                 messageDiv.addEventListener('touchend', () => clearTimeout(pressTimer));
             }
 
+            // Delete Button (Only for You)
             if (iAmAdmin && !isDeleted) {
                 const delBtn = document.createElement('button');
                 delBtn.innerText = '🗑️'; 
@@ -688,8 +693,15 @@ async function askGemini(query) {
                 metaDiv.innerHTML = `Unknown • ${timeStr}`;
             } else {
                 let nameHTML = isMyMessage ? 'You' : user;
+                
+                // 🔵 BLUE TICK ICON RESTORED
                 if (isNaimur && !isBot) {
-                    nameHTML += `<span class="verified-badge" title="Verified Owner">●</span>`; 
+                    nameHTML += `
+                    <span class="verified-badge" title="Verified Owner" style="display:inline-flex; vertical-align:middle; margin-left:4px; color:#1da1f2;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M9 12L11 14L15 10M12 3L13.9101 4.25465C14.616 4.71826 15.5286 4.71826 16.2345 4.25465L18.1446 3L18.8858 5.17418C19.1598 5.97794 19.8211 6.63919 20.6248 6.91322L22.799 7.65444L21.5443 9.56449C21.0807 10.2704 21.0807 11.183 21.5443 11.8889L22.799 13.7989L20.6248 14.5402C19.8211 14.8142 19.1598 15.4754 18.8858 16.2792L18.1446 18.4534L16.2345 17.1987C15.5286 16.7351 14.616 16.7351 13.9101 17.1987L12 18.4534L10.0899 17.1987C9.38396 16.7351 8.47135 16.7351 7.76543 17.1987L5.85538 18.4534L5.11417 16.2792C4.84015 15.4754 4.17889 14.8142 3.37513 14.5402L1.20096 13.7989L2.45561 11.8889C2.91923 11.183 2.91923 10.2704 2.45561 9.56449L1.20096 7.65444L3.37513 6.91322C4.17889 6.63919 4.84015 5.97794 5.11417 5.17418L5.85538 3L7.76543 4.25465C8.47135 4.71826 9.38396 4.71826 10.0899 4.25465L12 3Z"/>
+                        </svg>
+                    </span>`;
                 }
                 metaDiv.innerHTML = `${nameHTML} • ${timeStr}`;
             }
