@@ -429,9 +429,10 @@
         
         const BOT_ID = "ai-system-bot-v1";
         
-        // 🔒 SECURE ADMIN SETUP
-        const ADMIN_HASH = "e6c3898950482594665e8a56f265f284e963c6214342795cce27d9d00938f36a";
-        // ✅ Naimur Rahma Added to Restricted List
+        // 🔒 ADMIN SETUP (Plain Text Comparison)
+        const ADMIN_PASSWORD = "0112420186"; 
+        
+        // ✅ RESTRICTED NAMES (These require the ADMIN_PASSWORD)
         const RESTRICTED_NAMES = ['naimur rahman', 'naimur rahma', 'naimur', 'admin', 'uiu bot', 'ai'];
 
         // --- 2. INITIALIZATION ---
@@ -543,16 +544,8 @@
             return Date.now().toString(36) + Math.random().toString(36).substr(2);
         }
 
-        // --- HELPER: PASSWORD HASHING ---
-        async function hashPassword(string) {
-            const utf8 = new TextEncoder().encode(string);
-            const hashBuffer = await crypto.subtle.digest('SHA-256', utf8);
-            const hashArray = Array.from(new Uint8Array(hashBuffer));
-            return hashArray.map(bytes => bytes.toString(16).padStart(2, '0')).join('');
-        }
-
-        // --- JOIN LOGIC ---
-        async function joinChat() {
+        // --- JOIN LOGIC (SYNCHRONOUS CHECK) ---
+        function joinChat() {
             if (!database) { alert("Connecting to server... Please check your internet."); return; }
             
             const rawName = usernameInput.value.trim();
@@ -564,8 +557,8 @@
                 const password = prompt(`The username "${rawName}" is reserved. Please enter the password:`);
                 if (!password) return; 
 
-                const hashedPassword = await hashPassword(password);
-                if (hashedPassword !== ADMIN_HASH) {
+                // Checking directly against the stored plain text password
+                if (password !== ADMIN_PASSWORD) {
                     alert("Access Denied: Incorrect Password.");
                     return;
                 }
@@ -596,7 +589,7 @@
             });
         }
 
-        // --- AI LOGIC (FIXED) ---
+        // --- AI LOGIC (FINAL) ---
         async function askGemini(currentQuery) {
             // ✅ Fix 1: Correct Model URL
             const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
@@ -629,7 +622,7 @@
             
             5. ⚠️ IMPORTANT EXCEPTIONS:
                - Emotional/Sad/Serious Topic -> DO NOT BULLY. Act like a supportive friend.
-               - Question about Creator/Developer -> Reply with respect: "My developer is Naimur Rahman".
+               - Question about Creator/Developer -> Reply with respect: "My developer is Naimur Rahman (CSE 242) 😎".
             
             6. Triggers (Only if user is chill/joking):
                - Exams/CGPA -> Roast about UIU struggle.
@@ -642,7 +635,7 @@
             Your Reply:`;
 
             try {
-                // ✅ Fix 2: Removed generationConfig completely as requested
+                // ✅ Fix 2: Removed generationConfig completely
                 const response = await fetch(url, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -704,15 +697,22 @@
             }).catch(error => console.error(error));
         }
 
-        function deleteMessage(msgId) {
-            if(confirm("Delete this message permanently?")) {
-                database.ref('messages/' + msgId).update({
-                    text: "🚫 Admin deleted message",
-                    isDeleted: true,
-                    replyTo: null 
-                });
-            }
-        }
+        // --- FIXED DELETE MESSAGE FUNCTION ---
+function deleteMessage(msgId) {
+    if(confirm("Delete this message permanently?")) {
+        database.ref('messages/' + msgId).update({
+            text: "🚫 Admin deleted message",
+            isDeleted: true,
+            replyTo: null,
+            // 🆕 New Fix: Username is also hidden
+            username: "Unknown" 
+        }).catch(error => {
+            // Error handling remains here in case Firebase update fails
+            console.error("Error deleting message:", error);
+            alert("Error deleting message: " + error.message);
+        });
+    }
+}
 
         function loadMessages() {
             if (!database) return;
@@ -757,12 +757,14 @@
             const isMyMessage = senderId ? (senderId === myUUID) : (user === username);
             const isBot = senderId === BOT_ID; 
             const lowerUser = user.toLowerCase().trim();
+            const cleanMyName = username.toLowerCase().trim();
+
             
-            // ✅ Badge Logic: Only EXACT MATCH gets badge
+            // ✅ Badge Logic: Only EXACT MATCH gets verified badge
             const isNaimur = lowerUser === 'naimur rahman';
             
             // ✅ Strict Delete Power: Only 'Naimur Rahman' gets delete button
-            const iAmAdmin = lowerUser === 'naimur rahman';
+            const iAmAdmin = cleanMyName === 'naimur rahman';
 
             messageDiv.classList.add('message');
             if (isBot) {
@@ -819,7 +821,16 @@
                 const delBtn = document.createElement('button');
                 delBtn.innerText = '🗑️'; 
                 delBtn.className = isMyMessage ? 'admin-delete-btn delete-left' : 'admin-delete-btn delete-right';
-                delBtn.onclick = () => deleteMessage(msgId);
+                
+                // Stop bubbling to prevent interference with other events
+                delBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    deleteMessage(msgId);
+                };
+                delBtn.ontouchstart = (e) => {
+                    e.stopPropagation(); 
+                };
+
                 wrapper.appendChild(delBtn);
             }
 
