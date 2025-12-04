@@ -1,130 +1,111 @@
 <div align="center">
 
-  <img src="https://upload.wikimedia.org/wikipedia/en/c/c5/United_International_University_Monogram.png" alt="UIU Logo" width="100" />
+  <img src="https://img.icons8.com/fluency/96/chat-message.png" alt="logo" width="80" height="80" />
 
-  # 🍊 UIU Student Chat
+  # 👻 UIU Incognito Chat + AI
   
-  **The Anonymous Pulse of the UIU Community**
-  
-  <p>
-    <a href="https://github.com/naiimur-rahman">
-      <img src="https://img.shields.io/badge/Developer-Naimur_Rahman-orange?style=for-the-badge&logo=github" />
-    </a>
-    <a href="#">
-      <img src="https://img.shields.io/badge/Status-Live-success?style=for-the-badge" />
-    </a>
-    <a href="#">
-      <img src="https://img.shields.io/badge/Tech-Glassmorphism-blue?style=for-the-badge" />
-    </a>
-  </p>
+  **A Real-time Anonymous Chat Platform for UIU Students** *Powered by Firebase & Google Gemini AI*
 
-  <h3>
-    <a href="https://naiimur-rahman.github.io/UIU-CGPA-Calculator/">🔗 Visit CGPA Calculator</a>
-    <span> | </span>
-    <a href="#">🔴 Live Demo (Coming Soon)</a>
-  </h3>
-</div>
+  <br>
+
+  ![HTML5](https://img.shields.io/badge/html5-%23E34F26.svg?style=for-the-badge&logo=html5&logoColor=white)
+  ![CSS3](https://img.shields.io/badge/css3-%231572B6.svg?style=for-the-badge&logo=css3&logoColor=white)
+  ![JavaScript](https://img.shields.io/badge/javascript-%23323330.svg?style=for-the-badge&logo=javascript&logoColor=%23F7DF1E)
+  ![Firebase](https://img.shields.io/badge/firebase-%23039BE5.svg?style=for-the-badge&logo=firebase)
+  ![Gemini AI](https://img.shields.io/badge/Google%20Gemini-8E75B2?style=for-the-badge&logo=google&logoColor=white)
+
+  [View Live Demo](https://naiimur-rahman.github.io/UIU-Incognito-Chat/) </div>
 
 ---
 
-## 🚀 About The Project
+## 📖 About The Project
 
-**UIU Student Chat** is a real-time, anonymous messaging platform designed exclusively for United International University students. Built to foster open communication, it combines a sleek, modern **Glassmorphism UI** with robust real-time technology.
+**UIU Incognito Chat** is a web-based messaging platform designed for students of **United International University (UIU)** to connect anonymously. It features a modern **Glassmorphism UI**, smooth animations, and a sarcastic AI assistant named **"BhodAi"** (powered by Google Gemini).
 
-Whether you want to discuss courses, share memes, or just vent about finals, this is your space. No sign-ups, no passwords—just pick a name and join the conversation.
+Whether you want to discuss courses, share memes, or just rant about life—this is the place. No sign-up required, just pick a name and join!
+
+---
 
 ## ✨ Key Features
 
-### 🎨 **Smart & Modern UI**
-* **Glassmorphism Design:** A trendy, frosted-glass aesthetic using backdrop filters and semi-transparent layers.
-* **Fluid Animations:** Smooth entry animations (`popUp`, `fadeIn`) and floating background elements make the site feel alive.
-* **Lucide Icons:** crisp, lightweight vector icons for a polished look.
+### 🚀 Core Functionality
+- **Real-time Messaging:** Powered by Firebase Realtime Database for instant communication.
+- **Anonymous Login:** No email/password required. Just pick a username.
+- **Live User Counter:** See how many students are online in real-time.
+- **Secure Admin System:** Reserved usernames (e.g., *Naimur*) are password-protected with Admin Badges and Delete privileges.
 
-### 🛡️ **Secure & Smart Logic**
-* **Identity Protection:** Real-time duplicate name detection. If "Sohan" is online, no one else can login as "Sohan" (case-insensitive protection!).
-* **Live User Count:** See exactly how many students are online instantly in the header.
-* **Auto-Cleanup:** Users are automatically removed from the "Active" list when they close the tab or lose internet connection.
+### 🎨 UI/UX Design
+- **Glassmorphism Interface:** A modern, frosted-glass aesthetic.
+- **Dark/Light Mode:** Fully functional theme toggle with local storage memory.
+- **Responsive:** Works perfectly on Mobile, Tablet, and Desktop.
+- **Smooth Animations:** Entry animations, floating elements, and message pop-ups.
 
-### 🌗 **User Experience**
-* **Dark/Light Mode:** A fully persistent theme toggle that remembers your preference.
-* **Responsive:** Works perfectly on Mobile, Tablet, and Desktop.
-* **Welcome Watermark:** A stylish background watermark that ensures the chat never feels empty.
+### 🤖 AI Integration (BhodAi)
+- **Sarcastic Bot:** An AI bot that replies with funny, short, and sarcastic Banglish responses.
+- **Trigger:** Mention `@ai` or click the 🤖 Robot icon to summon the bot.
+- **Context Aware:** The bot understands the context of the chat.
+
+### 💬 Interactive Chat Features
+- **Swipe to Reply:** Mobile users can swipe right on a message to reply (WhatsApp style).
+- **Message Reactions:** Double-tap (or long press) to react with emojis (❤️, 😂, 😮, etc.).
+- **Direct Replies:** Clickable reply quotes to jump to the original message.
 
 ---
 
-## 📸 Snapshots
+## 📸 Screenshots
 
-<div align="center">
-  <img src="image_00e499.jpg" alt="Login Screen" width="45%" />
-  <img src="image_00d55b.png" alt="Chat Screen" width="45%" />
-</div>
+| Login Screen (Light) | Chat Interface (Dark) |
+|:---:|:---:|
+| <img src="https://via.placeholder.com/300x600?text=Login+Screen" alt="Login" width="250"> | <img src="https://via.placeholder.com/300x600?text=Chat+Interface" alt="Chat" width="250"> |
+
+> *Note: Replace the placeholder links above with actual screenshots of your project.*
 
 ---
 
 ## 🛠️ Tech Stack
 
-This project works without a backend server logic file because it leverages **Firebase-as-a-Backend (BaaS)**.
-
-| Component | Technology |
-| :--- | :--- |
-| **Structure** | HTML5 Semantic |
-| **Styling** | CSS3 (Variables, Flexbox, Glassmorphism) |
-| **Scripting** | Vanilla JavaScript (ES6+) |
-| **Database** | Firebase Realtime Database |
-| **Icons** | Lucide Icons |
-| **Fonts** | Google Fonts (Poppins) |
+* **Frontend:** HTML5, CSS3 (Custom Properties), Vanilla JavaScript.
+* **Backend:** Firebase Realtime Database (v9.23.0).
+* **AI Engine:** Google Gemini API (Gemini 2.5 Flash Model).
+* **Icons:** Lucide Icons.
 
 ---
 
-## ⚡ How to Run Locally
+## ⚙️ Installation & Setup
+
+If you want to run this project locally:
 
 1.  **Clone the repository**
     ```bash
-    git clone [https://github.com/your-username/uiu-student-chat.git](https://github.com/your-username/uiu-student-chat.git)
+    git clone [https://github.com/naiimur-rahman/UIU-Incognito-Chat.git](https://github.com/naiimur-rahman/UIU-Incognito-Chat.git)
     ```
 
-2.  **Navigate to the folder**
-    ```bash
-    cd uiu-student-chat
-    ```
-
-3.  **Launch**
+2.  **Open the project**
     Simply open `index.html` in your browser.
-    * *Note: For the best experience, use a local server (like Live Server in VS Code) to ensure no CORS issues with modules.*
+
+3.  **Setup API Keys (Crucial)**
+    * Create a project in [Firebase Console](https://console.firebase.google.com/).
+    * Create an API Key in [Google AI Studio](https://aistudio.google.com/).
+    * Update the `firebaseConfig` and `GEMINI_API_KEY` variables in the `<script>` tag inside `index.html`.
 
 ---
 
-## ⚙️ Configuration
+## 🛡️ Security Note
 
-The project uses **Firebase** for real-time data. The current configuration is included in `index.html`.
-
-If you wish to fork this project, create your own project at [Firebase Console](https://console.firebase.google.com/):
-1.  Create a **Realtime Database**.
-2.  Set Rules to `read/write: true` (for testing) or set up Authentication.
-3.  Replace the `firebaseConfig` object in the script tag with your own credentials.
+The Gemini API Key in this project is split into two parts within the code to prevent automatic revocation by GitHub bots. However, for a production-level application, it is recommended to use a backend server (Proxy) to hide the API keys completely.
 
 ---
 
-## 🤝 Contributing
+## 👨‍💻 Author
 
-Contributions are what make the open-source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
+**Naimur Rahman** *CSE Student, United International University (Batch 242)*
 
-1.  Fork the Project
-2.  Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-3.  Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
-4.  Push to the Branch (`git push origin feature/AmazingFeature`)
-5.  Open a Pull Request
+* **GitHub:** [@naiimur-rahman](https://github.com/naiimur-rahman)
+* **Facebook:** [Naimur Rahman](https://www.facebook.com/naiimurr/)
+* **Other Projects:** [UIU CGPA Calculator](https://naiimur-rahman.github.io/UIU-CGPA-Calculator/)
 
 ---
-
-## ❤️ Credits
-
-Developed with love by **Naimur Rahman** (CSE 242) for the students of UIU.
-
-* **Icons:** [Lucide](https://lucide.dev)
-* **Font:** [Poppins](https://fonts.google.com/specimen/Poppins)
 
 <div align="center">
-  <br />
-  <i>"Be kind, stay curious, and enjoy the randomness."</i>
+  Made with ❤️ for UIUians
 </div>
