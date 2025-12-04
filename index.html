@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -593,7 +594,7 @@
             const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
             
             // Instruction to ignore @ai tag
-            const systemInstruction = "You are a witty, sarcastic UIU student. Ignore '@ai' or '/ai'. Reply in short, funny Banglish (max 30 words). Mention 'UIU' or campus context only when relevant, not in every response.";
+            const systemInstruction = "Act as a Bully Master,witty, sarcastic Bangladeshi student. Ignore '@ai'/'/ai'. Reply in short, funny Banglish (max 25 words). Roast the situation logically. Mention 'UIU' or 'Campus' ONLY if the user talks about studies/exams/university. Otherwise, keep it general.";
 
             try {
                 const response = await fetch(url, {
