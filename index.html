@@ -72,32 +72,37 @@
         body.dark-mode .shape-1 { background: #4e54c8; opacity: 0.2; }
         body.dark-mode .shape-2 { background: #8f94fb; opacity: 0.2; }
 
-        /* --- LOGIN SCREEN --- */
+        /* --- LOGIN SCREEN (FIXED POSITIONING) --- */
         #login-screen {
-            height: 100%; width: 100%; 
-            display: flex; flex-direction: column; 
+            height: 100dvh; /* Full dynamic height */
+            width: 100%; 
+            display: flex; 
+            flex-direction: column; 
             align-items: center; 
             position: relative; 
-            padding: 20px 20px 60px 20px; /* Extra padding bottom for small screens */
-            animation: fadeIn 0.5s ease-out; 
-            overflow-y: auto; /* Enable scrolling */
+            overflow-y: auto; 
+            /* IMPORTANT: padding-top moves the box down, padding-bottom creates space */
+            padding: 12vh 20px 30px 20px; 
             -webkit-overflow-scrolling: touch;
         }
 
         .theme-toggle-container { position: absolute; top: 20px; right: 20px; z-index: 50; }
 
         .login-card {
-            margin: auto 0; /* Centers vertically but allows scroll */
             background: rgba(255, 255, 255, 0.65);
             backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.6);
-            padding: 2.2rem 1.8rem; border-radius: 28px;
+            padding: 2.5rem 2rem; 
+            border-radius: 28px;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
-            width: 100%; max-width: 360px; text-align: center;
+            width: 100%; max-width: 380px; text-align: center;
             animation: popUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
-            position: relative; flex-shrink: 0;
+            position: relative;
+            flex-shrink: 0;
+            margin-bottom: 30px; /* Space between card and footer */
         }
 
+        /* Shine Effect */
         .login-card::before {
             content: ''; position: absolute; top: 0; left: -50%; width: 100%; height: 100%;
             background: linear-gradient(to right, transparent, rgba(255,255,255,0.3), transparent);
@@ -105,24 +110,24 @@
         }
         @keyframes shine { 0% { left: -100%; } 20% { left: 200%; } 100% { left: 200%; } }
 
-        .logo-area { margin-bottom: 1.2rem; position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; }
+        .logo-area { margin-bottom: 1.5rem; position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; }
         .logo-icon { 
-            width: 52px; height: 52px; color: white; background: var(--primary);
+            width: 56px; height: 56px; color: white; background: var(--primary);
             display: flex; align-items: center; justify-content: center;
-            border-radius: 16px; box-shadow: 0 8px 20px rgba(255, 102, 0, 0.4);
+            border-radius: 18px; box-shadow: 0 8px 20px rgba(255, 102, 0, 0.4);
             margin-bottom: 12px; animation: floatLogo 3s ease-in-out infinite;
         }
         @keyframes floatLogo { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
 
-        .login-card h1 { font-size: 1.5rem; font-weight: 700; color: var(--text-color); margin-bottom: 4px; letter-spacing: -0.5px; }
-        .subtitle { font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1.8rem; font-weight: 400; }
+        .login-card h1 { font-size: 1.6rem; font-weight: 700; color: var(--text-color); margin-bottom: 4px; letter-spacing: -0.5px; }
+        .subtitle { font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 2rem; font-weight: 400; }
 
-        .input-group { position: relative; margin-bottom: 1.2rem; z-index: 2; }
+        .input-group { position: relative; margin-bottom: 1.5rem; z-index: 2; }
         .input-icon { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--primary); width: 18px; transition: 0.3s; }
         
         .login-card input {
-            width: 100%; padding: 14px 14px 14px 45px; border: 2px solid transparent; border-radius: 14px;
-            background: rgba(255, 255, 255, 0.8); font-size: 0.95rem; font-weight: 500;
+            width: 100%; padding: 15px 15px 15px 45px; border: 2px solid transparent; border-radius: 14px;
+            background: rgba(255, 255, 255, 0.8); font-size: 1rem; font-weight: 500;
             transition: all 0.3s ease; color: var(--text-color); outline: none;
         }
         .login-card input:focus {
@@ -130,9 +135,9 @@
         }
 
         .primary-btn {
-            width: 100%; padding: 14px; border-radius: 14px; border: none; cursor: pointer;
+            width: 100%; padding: 15px; border-radius: 14px; border: none; cursor: pointer;
             background: linear-gradient(90deg, var(--primary) 0%, #ff8c00 100%); color: white;
-            font-size: 1rem; font-weight: 600; display: flex; justify-content: center; align-items: center; gap: 8px;
+            font-size: 1.05rem; font-weight: 600; display: flex; justify-content: center; align-items: center; gap: 8px;
             box-shadow: 0 10px 30px rgba(255, 102, 0, 0.4); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative; z-index: 2;
         }
@@ -140,23 +145,27 @@
         .primary-btn:active { transform: scale(0.98); }
 
         .secondary-btn {
-            width: 100%; padding: 12px; border-radius: 14px; 
+            width: 100%; padding: 14px; border-radius: 14px; 
             border: 2px solid rgba(0,0,0,0.08); background: rgba(255, 255, 255, 0.6);
             color: var(--text-color); font-size: 0.95rem;
             font-weight: 600; display: flex; justify-content: center; align-items: center; gap: 8px; 
-            text-decoration: none; transition: 0.3s; position: relative; z-index: 10; margin-top: 0.8rem;
+            text-decoration: none; transition: 0.3s; position: relative; z-index: 10; margin-top: 1rem;
         }
         .secondary-btn:hover { border-color: var(--primary); color: var(--primary); background: #fff; transform: translateY(-2px); }
 
         .divider {
-            margin: 1.2rem 0; display: flex; align-items: center; gap: 10px;
-            color: var(--text-secondary); font-size: 0.75rem; font-weight: 500; opacity: 0.6;
+            margin: 1.5rem 0; display: flex; align-items: center; gap: 10px;
+            color: var(--text-secondary); font-size: 0.8rem; font-weight: 500; opacity: 0.6;
         }
         .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: currentColor; opacity: 0.3; }
 
+        /* FOOTER FIXED TO BOTTOM */
         .login-footer {
-            margin-top: 20px; width: 100%; text-align: center;
-            font-size: 0.75rem; color: var(--text-color); font-weight: 500; opacity: 0.8; flex-shrink: 0;
+            margin-top: auto; /* Pushes footer to the absolute bottom of flex container */
+            width: 100%; text-align: center;
+            font-size: 0.75rem; color: var(--text-color); font-weight: 500; opacity: 0.8;
+            padding-bottom: 20px;
+            flex-shrink: 0;
         }
         .login-footer a { color: var(--text-color); font-weight: 700; text-decoration: none; }
 
@@ -298,7 +307,7 @@
         .my-message + .reaction-display-bubble { right: 0; }
         .other-message + .reaction-display-bubble { left: 0; }
 
-        /* --- MODERN INPUT AREA (FIXED FOR MOBILE) --- */
+        /* --- MODERN INPUT AREA --- */
         .input-area {
             padding: 15px; background: var(--glass-bg); display: flex; flex-direction: column; 
             backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
@@ -313,15 +322,13 @@
             width: 100%; 
             gap: 10px; 
             align-items: center; 
-            box-sizing: border-box; /* Ensures width includes padding */
+            box-sizing: border-box;
         }
 
         /* FIXED INPUT EXPANSION ON MOBILE */
         .input-area input { 
             background: var(--input-bg); box-shadow: inset 0 2px 5px rgba(0,0,0,0.02); 
-            flex: 1; /* Takes available space */
-            min-width: 0; /* CRITICAL: Prevents input from forcing parent wider */
-            width: 0; /* Double safety to force flex shrink */
+            flex: 1; min-width: 0; width: 0;
             font-size: 1rem; padding-left: 18px; color: var(--text-color);
             padding: 14px 18px; border: 1px solid rgba(255,255,255,0.1); border-radius: 24px; outline: none;
             transition: all 0.3s;
@@ -403,11 +410,12 @@
         
         /* --- MOBILE TWEAKS --- */
         @media (max-width: 480px) {
+            #login-screen { padding-top: 15vh; } /* Push card down more on mobile */
+            
             .login-card { 
                 padding: 2rem 1.5rem; width: 90%; 
                 margin: auto 0; /* Important for centering */
             }
-            #login-screen { padding-bottom: 60px; } /* Ensure space for scroll */
             
             .message { font-size: 0.9rem; }
             .welcome-watermark { width: 90%; }
@@ -415,7 +423,7 @@
             .emoji-picker { width: 90%; left: 5%; bottom: 90px; }
             
             /* FIXED MOBILE INPUT */
-            .input-area { padding: 10px 10px 15px 10px; }
+            .input-area { padding: 10px 10px 25px 10px; }
             .input-wrapper { gap: 6px; }
             .ai-trigger, .emoji-trigger { width: 38px; height: 38px; }
             .send-btn { width: 38px; height: 38px; }
