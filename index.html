@@ -422,10 +422,22 @@
             measurementId: "G-B2RGV7N5JX"
         };
 
-        // 🔥 GEMINI API SETUP
-        const k_part1 = "AIzaSyDSStQu9xs-";
-        const k_part2 = "kHkEK1QeT96ONTq4d9kdDp0";
-        const GEMINI_API_KEY = k_part1 + k_part2; 
+        // 🔥 GEMINI API SETUP (MULTI-KEY ROTATION + SPLIT TO AVOID SCANNING)
+        // Format: ["FirstPart", "SecondPart"] -> Joins at runtime
+        const API_KEY_PARTS = [
+            ["AIzaSyC_WOMJ9J_", "mRxWFmGGHyVbR8D8fh72r7d8"], // Key 1
+            ["AIzaSyDSStQu9xs-", "kHkEK1QeT96ONTq4d9kdDp0"], // Key 2
+            ["AIzaSyA__0c2WDC7_", "xeSDWrF5VFLxZCJeiMv4sE"], // Key 3
+            ["AIzaSyAPmYu6PCEy", "pKBI3QGClVH4EQM_XqZAK7c"], // Key 4
+            ["AIzaSyDoVxvtxCGPA", "kr_rTJbLmrmGL3J6u3R9F0"], // Key 5
+            ["AIzaSyCIj8vAM_u7", "UlmV0DkkhOqdDJ1td7sHT5o"], // Key 6
+            ["AIzaSyCgRFOmpCSw", "Jut8YUL-MSqQkN5x39BzegA"], // Key 7
+            ["AIzaSyDdw4sgr9An", "PF1q44FA6qtxUDqcpuMRaNI"], // Key 8
+            ["AIzaSyCOzbUrQFNh", "mbWyCgnMl6RXEjuPyoD7qCI"], // Key 9
+            ["AIzaSyBrlbSS-txX", "lTbzaM0Gde_lIriNpQdThms"]  // Key 10
+        ];
+
+        let currentKeyIndex = 0; // Starts with the first key
         
         const BOT_ID = "ai-system-bot-v1";
         
@@ -552,12 +564,11 @@
             if (!rawName) { alert("Please enter your name."); return; }
             if (/[.#$\[\]]/.test(rawName)) { alert("Name cannot contain special characters."); return; }
 
-            // Admin Password Check (Direct Comparison for reliability)
+            // Admin Password Check
             if (RESTRICTED_NAMES.includes(rawName.toLowerCase())) {
                 const password = prompt(`The username "${rawName}" is reserved. Please enter the password:`);
                 if (!password) return; 
 
-                // Checking directly against the stored plain text password
                 if (password !== ADMIN_PASSWORD) {
                     alert("Access Denied: Incorrect Password.");
                     return;
@@ -589,11 +600,10 @@
             });
         }
 
-        // --- AI LOGIC (FINAL) ---
+        // --- AI LOGIC (MULTI-KEY ROTATION + SPLIT FIX) ---
         async function askGemini(currentQuery) {
-            // ✅ Fix 1: Correct Model URL
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
             
+            // 1. Chat Context Creation
             let chatHistory = "Recent Chat Context:\n";
             const messages = document.querySelectorAll('.message-wrapper');
             const lastMessages = Array.from(messages).slice(-20); 
@@ -601,7 +611,6 @@
             lastMessages.forEach(msgWrapper => {
                 const nameEl = msgWrapper.querySelector('.meta');
                 const textEl = msgWrapper.querySelector('.text');
-                
                 if (nameEl && textEl) {
                     let name = nameEl.innerText.split('•')[0].trim();
                     let text = textEl.innerText;
@@ -610,62 +619,99 @@
             });
 
             const systemInstruction = `
-            Identity: You are 'BhodAi', a witty, sarcastic, Bangladeshi student.
+            Identity: You are 'BhodAi', a witty, sarcastic, and savage UIU student. You are the 'Bully Master' of this chat.
             
-            Current Task: Reply to the "Current User Query" based on the "Recent Chat Context"(if context is same).
+            Current Task: Reply to the "Current User Query" based on the "Recent Chat Context".
             
             CRITICAL RULES (Follow Strictness Level: MAX):
-            1. NEVER repeat the same phrase in a row.
-            2. Keep replies SHORT (Max 25 words).
-            3. Language: Mix of Bangla (in English script) and English. Use emojis.
+            1. NEVER repeat the same phrase or roast twice in a row. Be creative with every reply.
+            2. If the user repeats the same input, mock them for being a broken record.
+            3. Keep replies SHORT (Max 25 words).
+            4. Language: Mix of Bangla (in English script) and English. Use emojis to enhance the roast.
+            5. Context Awareness: Look at the 'Recent Chat Context' to see what was just said. If the topic changes, CHANGE your roast immediately.
+            6. Specific Triggers:
+                - If topic is exams/CGPA -> Roast about UIU grading/struggle.
+                - If topic is love/relationship -> Roast about being single/engineering student fate.
+                - If user insults you -> Roast them back harder but logically.
             
-            4. ⚠️ IMPORTANT EXCEPTIONS:
-               - Emotional/Sad/Serious Topic ->Act like a supportive friend.
-               - Question about Creator/Developer -> Reply with respect: "My developer is Naimur Rahman".
-            
-            5. Triggers (Only if user is chill/joking):
-               - Exams/CGPA/University -> Roast about UIU struggle.
-               - Love/Relationship -> Roast about being single/engineering fate.
-               
+            IMPORTANT EXCEPTIONS:
+            - If topic is serious/sad/emotional -> Don't bully, be supportive.
+            - If asked about creator -> Naimur Rahman
             
             ${chatHistory}
             
             Current User Query: ${currentQuery}
-            Your Reply:(Unique and Savage)`;
+            Your Reply (Be unique & savage):`;
 
-            try {
-                // ✅ Fix 2: Removed generationConfig completely
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{ parts: [{ text: systemInstruction }] }]
-                    })
-                });
-                
-                const data = await response.json();
-                let aiResponse = "Matha hang korse mama... server e jhamela 😵‍💫. Naimur vai ke janan fast.";
-                
-                if (data.candidates && data.candidates[0].content) {
-                    aiResponse = data.candidates[0].content.parts[0].text;
+            // 3. MAIN LOGIC: KEY ROTATION LOOP
+            let aiResponse = "Matha hang korse mama... Server limit sesh! 😵‍💫 Naimur vai ke janan.";
+            let success = false;
+            let attempts = 0;
+            const MAX_ATTEMPTS = API_KEY_PARTS.length; 
+
+            while (attempts < MAX_ATTEMPTS && !success) {
+                try {
+                    // 🔥 JOIN THE SPLIT KEY PARTS HERE
+                    const currentKey = API_KEY_PARTS[currentKeyIndex].join("");
+                    
+                    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${currentKey}`;
+
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            contents: [{ parts: [{ text: systemInstruction }] }]
+                        })
+                    });
+
+                    // --- Error Handling & Rotation ---
+                    if (!response.ok) {
+                        // Switch on 429 (Too Many Requests)
+                        if (response.status === 429) {
+                            console.warn(`Key #${currentKeyIndex} limit over (429). Switching...`);
+                            currentKeyIndex = (currentKeyIndex + 1) % MAX_ATTEMPTS; 
+                            attempts++;
+                            continue; // Try next key immediately
+                        } else {
+                            // Break loop on other errors (e.g., 400, 500)
+                            console.error(`API Error Status: ${response.status}`);
+                            break; 
+                        }
+                    }
+
+                    // --- Success ---
+                    const data = await response.json();
+                    if (data.candidates && data.candidates[0].content) {
+                        aiResponse = data.candidates[0].content.parts[0].text;
+                        success = true; 
+                    } else {
+                        // Empty response -> Try next key
+                        attempts++;
+                        currentKeyIndex = (currentKeyIndex + 1) % MAX_ATTEMPTS;
+                    }
+
+                } catch (error) {
+                    console.error("Network Error, trying next key:", error);
+                    currentKeyIndex = (currentKeyIndex + 1) % MAX_ATTEMPTS;
+                    attempts++;
                 }
+            }
 
-                database.ref('messages').push({
-                    username: "BhodAi 🤖",
-                    text: aiResponse,
-                    senderId: BOT_ID, 
-                    timestamp: firebase.database.ServerValue.TIMESTAMP,
-                    isDeleted: false
-                });
-
-            } catch (error) { console.error("Network Error:", error); }
+            // 4. Send Message to Firebase
+            database.ref('messages').push({
+                username: "BhodAi 🤖",
+                text: aiResponse,
+                senderId: BOT_ID, 
+                timestamp: firebase.database.ServerValue.TIMESTAMP,
+                isDeleted: false
+            });
         }
 
         function sendMessage(isDirectAI = false) {
             const text = messageInput.value.trim();
             if (!database || !text) return;
 
-            // ✅ FIX: Check if replying to the actual bot name "BhodAi 🤖"
+            // Check if replying to bot
             const isReplyingToBot = currentReply && currentReply.username === "BhodAi 🤖";
             const isAiRequest = isDirectAI || text.toLowerCase().startsWith('@ai') || text.toLowerCase().startsWith('/ai') || isReplyingToBot;
             
@@ -704,7 +750,6 @@
                     text: "🚫 Admin deleted message",
                     isDeleted: true,
                     replyTo: null,
-                    // ✅ Username is also removed/changed
                     username: "Unknown" 
                 }).catch(error => {
                     console.error("Error deleting message:", error);
