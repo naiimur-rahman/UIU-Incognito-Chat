@@ -487,18 +487,7 @@
             opacity: 1; /* Fixes disabled-look transparency */
         }
 
-        /* 4. Fix Glassmorphism on Safari */
-        /* Safari sometimes needs a slightly more opaque background to render blur correctly */
-        @supports (-webkit-touch-callout: none) {
-            .login-card, .glass-header, .input-area {
-                background: rgba(255, 255, 255, 0.85); /* Slightly more solid for Safari */
-            }
-            body.dark-mode .login-card, 
-            body.dark-mode .glass-header, 
-            body.dark-mode .input-area {
-                background: rgba(30, 30, 40, 0.85);
-            }
-        }
+        /* 4. Fix Glassmorphism on Safari (REMOVED: Caused inconsistent opacity on iOS vs Android) */
     </style>
 </head>
 <body>
