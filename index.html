@@ -72,34 +72,36 @@
         body.dark-mode .shape-1 { background: #4e54c8; opacity: 0.2; }
         body.dark-mode .shape-2 { background: #8f94fb; opacity: 0.2; }
 
-        /* --- LOGIN SCREEN (FIXED & CENTERED) --- */
+        /* --- LOGIN SCREEN FIXED (NO SCROLL) --- */
         #login-screen {
-            position: fixed; /* Ensures no scroll */
-            inset: 0;
             height: 100dvh; 
             width: 100%; 
             display: flex; 
             flex-direction: column; 
-            justify-content: center; /* Center Card Vertically */
+            justify-content: center; /* Vertically Center the Card */
             align-items: center; 
+            position: relative; 
+            overflow: hidden; /* DISALBE SCROLL */
             padding: 20px;
-            overflow: hidden; /* Force hide scrollbar */
         }
 
         .theme-toggle-container { position: absolute; top: 20px; right: 20px; z-index: 50; }
 
+        /* --- COMPACT LOGIN CARD --- */
         .login-card {
             background: rgba(255, 255, 255, 0.65);
             backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.6);
-            padding: 2.2rem 1.8rem; border-radius: 28px;
+            /* REDUCED PADDING */
+            padding: 2rem 1.5rem; 
+            border-radius: 24px; /* Slightly smaller radius */
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
-            width: 100%; max-width: 360px; text-align: center;
+            width: 100%; 
+            /* SMALLER MAX-WIDTH */
+            max-width: 340px; 
+            text-align: center;
             animation: popUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
             position: relative;
-            
-            /* Visual Adjustment: Move card slightly up from dead center so footer has space */
-            transform: translateY(-20px); 
         }
 
         /* Shine Effect */
@@ -112,21 +114,26 @@
 
         .logo-area { margin-bottom: 1.2rem; position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; }
         .logo-icon { 
-            width: 52px; height: 52px; color: white; background: var(--primary);
+            /* SMALLER LOGO SIZE */
+            width: 48px; height: 48px; 
+            color: white; background: var(--primary);
             display: flex; align-items: center; justify-content: center;
-            border-radius: 16px; box-shadow: 0 8px 20px rgba(255, 102, 0, 0.4);
-            margin-bottom: 12px; animation: floatLogo 3s ease-in-out infinite;
+            border-radius: 14px; box-shadow: 0 8px 20px rgba(255, 102, 0, 0.4);
+            margin-bottom: 10px; animation: floatLogo 3s ease-in-out infinite;
         }
         @keyframes floatLogo { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
 
-        .login-card h1 { font-size: 1.5rem; font-weight: 700; color: var(--text-color); margin-bottom: 4px; letter-spacing: -0.5px; }
-        .subtitle { font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1.8rem; font-weight: 400; }
+        .login-card h1 { font-size: 1.4rem; font-weight: 700; color: var(--text-color); margin-bottom: 4px; letter-spacing: -0.5px; }
+        .subtitle { font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1.5rem; font-weight: 400; }
 
         .input-group { position: relative; margin-bottom: 1.2rem; z-index: 2; }
-        .input-icon { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--primary); width: 18px; transition: 0.3s; }
+        .input-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--primary); width: 18px; transition: 0.3s; }
         
         .login-card input {
-            width: 100%; padding: 14px 14px 14px 45px; border: 2px solid transparent; border-radius: 14px;
+            width: 100%; 
+            /* COMPACT INPUT PADDING */
+            padding: 12px 12px 12px 40px; 
+            border: 2px solid transparent; border-radius: 12px;
             background: rgba(255, 255, 255, 0.8); font-size: 0.95rem; font-weight: 500;
             transition: all 0.3s ease; color: var(--text-color); outline: none;
         }
@@ -135,7 +142,10 @@
         }
 
         .primary-btn {
-            width: 100%; padding: 14px; border-radius: 14px; border: none; cursor: pointer;
+            width: 100%; 
+            /* COMPACT BUTTON PADDING */
+            padding: 12px; 
+            border-radius: 12px; border: none; cursor: pointer;
             background: linear-gradient(90deg, var(--primary) 0%, #ff8c00 100%); color: white;
             font-size: 1rem; font-weight: 600; display: flex; justify-content: center; align-items: center; gap: 8px;
             box-shadow: 0 10px 30px rgba(255, 102, 0, 0.4); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -145,9 +155,12 @@
         .primary-btn:active { transform: scale(0.98); }
 
         .secondary-btn {
-            width: 100%; padding: 12px; border-radius: 14px; 
+            width: 100%; 
+            /* COMPACT SECONDARY BTN PADDING */
+            padding: 10px; 
+            border-radius: 12px; 
             border: 2px solid rgba(0,0,0,0.08); background: rgba(255, 255, 255, 0.6);
-            color: var(--text-color); font-size: 0.95rem;
+            color: var(--text-color); font-size: 0.9rem;
             font-weight: 600; display: flex; justify-content: center; align-items: center; gap: 8px; 
             text-decoration: none; transition: 0.3s; position: relative; z-index: 10; margin-top: 0.8rem;
         }
@@ -159,17 +172,13 @@
         }
         .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: currentColor; opacity: 0.3; }
 
-        /* ABSOLUTE BOTTOM FOOTER */
+        /* FOOTER FIXED TO BOTTOM */
         .login-footer {
-            position: absolute; 
-            bottom: 25px; 
-            left: 0; 
+            position: absolute;
+            bottom: 20px;
             width: 100%; 
             text-align: center;
-            font-size: 0.75rem; 
-            color: var(--text-color); 
-            font-weight: 500; 
-            opacity: 0.8;
+            font-size: 0.75rem; color: var(--text-color); font-weight: 500; opacity: 0.8;
             pointer-events: none;
         }
         .login-footer a { color: var(--text-color); font-weight: 700; text-decoration: none; pointer-events: auto; }
@@ -873,7 +882,7 @@
             2. Keep replies SHORT (Max 30 words).
             3. Language: Mix of Bangla (English script) and English. Use emojis.
             4. Don't repeat "UIU" again and again. 
-            5. Use InshaAllah, Alhamdulillah very rarely (only if context strictly requires it).
+            5. Use "InshaAllah", "Alhamdulillah" very rarely (only if context strictly requires it).
             6. Specific Triggers:
                 - University -> tell about UIU struggle.
                 - Love/Relationship -> Roast about being single/engineering student fate.
