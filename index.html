@@ -338,7 +338,7 @@
         </div>
 
         <div class="login-footer">
-            Developed by <a href="https://www.facebook.com/naiimurr/" target="_blank">Naimur Rahman</a> (CSE 242) for UIU ❤️
+            Developed by Naimur Rahman (CSE 242) ❤️
         </div>
     </div>
 
@@ -552,7 +552,7 @@
             if (!rawName) { alert("Please enter your name."); return; }
             if (/[.#$\[\]]/.test(rawName)) { alert("Name cannot contain special characters."); return; }
 
-            // Admin Password Check
+            // Admin Password Check (Direct Comparison for reliability)
             if (RESTRICTED_NAMES.includes(rawName.toLowerCase())) {
                 const password = prompt(`The username "${rawName}" is reserved. Please enter the password:`);
                 if (!password) return; 
@@ -610,29 +610,28 @@
             });
 
             const systemInstruction = `
-            Identity: You are 'BhodAi', a witty, sarcastic, and savage UIU student (Batch 242). You are the 'Bully Master' of this chat.
+            Identity: You are 'BhodAi', a witty, sarcastic, Bangladeshi student.
             
-            Current Task: Reply to the "Current User Query" based on the "Recent Chat Context".
+            Current Task: Reply to the "Current User Query" based on the "Recent Chat Context"(if context is same).
             
             CRITICAL RULES (Follow Strictness Level: MAX):
-            1. NEVER repeat the same phrase or roast twice in a row. Be creative.
-            2. If the user repeats the same input, mock them.
-            3. Keep replies SHORT (Max 25 words).
-            4. Language: Mix of Bangla (in English script) and English. Use emojis.
+            1. NEVER repeat the same phrase in a row.
+            2. Keep replies SHORT (Max 25 words).
+            3. Language: Mix of Bangla (in English script) and English. Use emojis.
             
-            5. ⚠️ IMPORTANT EXCEPTIONS:
-               - Emotional/Sad/Serious Topic -> DO NOT BULLY. Act like a supportive friend.
-               - Question about Creator/Developer -> Reply with respect: "My developer is Naimur Rahman (CSE 242) 😎".
+            4. ⚠️ IMPORTANT EXCEPTIONS:
+               - Emotional/Sad/Serious Topic ->Act like a supportive friend.
+               - Question about Creator/Developer -> Reply with respect: "My developer is Naimur Rahman".
             
-            6. Triggers (Only if user is chill/joking):
-               - Exams/CGPA -> Roast about UIU struggle.
+            5. Triggers (Only if user is chill/joking):
+               - Exams/CGPA/University -> Roast about UIU struggle.
                - Love/Relationship -> Roast about being single/engineering fate.
-               - Insults -> Roast back harder.
+               
             
             ${chatHistory}
             
             Current User Query: ${currentQuery}
-            Your Reply:`;
+            Your Reply:(Unique and Savage)`;
 
             try {
                 // ✅ Fix 2: Removed generationConfig completely
@@ -666,7 +665,8 @@
             const text = messageInput.value.trim();
             if (!database || !text) return;
 
-            const isReplyingToBot = currentReply && currentReply.username === "UIU Bot 🤖";
+            // ✅ FIX: Check if replying to the actual bot name "BhodAi 🤖"
+            const isReplyingToBot = currentReply && currentReply.username === "BhodAi 🤖";
             const isAiRequest = isDirectAI || text.toLowerCase().startsWith('@ai') || text.toLowerCase().startsWith('/ai') || isReplyingToBot;
             
             const msgData = {
@@ -697,22 +697,21 @@
             }).catch(error => console.error(error));
         }
 
-        // --- FIXED DELETE MESSAGE FUNCTION ---
-function deleteMessage(msgId) {
-    if(confirm("Delete this message permanently?")) {
-        database.ref('messages/' + msgId).update({
-            text: "🚫 Admin deleted message",
-            isDeleted: true,
-            replyTo: null,
-            // 🆕 New Fix: Username is also hidden
-            username: "Unknown" 
-        }).catch(error => {
-            // Error handling remains here in case Firebase update fails
-            console.error("Error deleting message:", error);
-            alert("Error deleting message: " + error.message);
-        });
-    }
-}
+        // --- DELETION LOGIC (FINAL FIX) ---
+        function deleteMessage(msgId) {
+            if(confirm("Delete this message permanently?")) {
+                database.ref('messages/' + msgId).update({
+                    text: "🚫 Admin deleted message",
+                    isDeleted: true,
+                    replyTo: null,
+                    // ✅ Username is also removed/changed
+                    username: "Unknown" 
+                }).catch(error => {
+                    console.error("Error deleting message:", error);
+                    alert("Error deleting message: " + error.message);
+                });
+            }
+        }
 
         function loadMessages() {
             if (!database) return;
@@ -758,7 +757,6 @@ function deleteMessage(msgId) {
             const isBot = senderId === BOT_ID; 
             const lowerUser = user.toLowerCase().trim();
             const cleanMyName = username.toLowerCase().trim();
-
             
             // ✅ Badge Logic: Only EXACT MATCH gets verified badge
             const isNaimur = lowerUser === 'naimur rahman';
