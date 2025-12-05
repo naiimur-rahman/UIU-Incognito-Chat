@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, interactive-widget=resizes-content">
     <title>Incognito Chat</title>
     
+    <meta name="theme-color" content="#ff9966">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 
@@ -56,6 +59,8 @@
         body {
             background: var(--bg-gradient);
             display: flex; flex-direction: column; color: var(--text-color); transition: background 0.5s ease;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
 
         /* --- ANIMATIONS --- */
@@ -136,6 +141,8 @@
             border: 2px solid transparent; border-radius: 12px;
             background: rgba(255, 255, 255, 0.8); font-size: 0.95rem; font-weight: 500;
             transition: all 0.3s ease; color: var(--text-color); outline: none;
+            -webkit-appearance: none;
+            appearance: none;
         }
         .login-card input:focus {
             background: #fff; border-color: var(--primary); box-shadow: 0 8px 25px rgba(255, 102, 0, 0.15); transform: translateY(-2px);
@@ -150,6 +157,8 @@
             font-size: 1rem; font-weight: 600; display: flex; justify-content: center; align-items: center; gap: 8px;
             box-shadow: 0 10px 30px rgba(255, 102, 0, 0.4); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative; z-index: 2;
+            -webkit-appearance: none;
+            appearance: none;
         }
         .primary-btn:hover { transform: translateY(-3px); box-shadow: 0 15px 35px rgba(255, 102, 0, 0.5); }
         .primary-btn:active { transform: scale(0.98); }
@@ -163,6 +172,8 @@
             color: var(--text-color); font-size: 0.9rem;
             font-weight: 600; display: flex; justify-content: center; align-items: center; gap: 8px; 
             text-decoration: none; transition: 0.3s; position: relative; z-index: 10; margin-top: 0.8rem;
+            -webkit-appearance: none;
+            appearance: none;
         }
         .secondary-btn:hover { border-color: var(--primary); color: var(--primary); background: #fff; transform: translateY(-2px); }
 
@@ -348,6 +359,10 @@
             font-size: 1rem; padding-left: 18px; color: var(--text-color);
             padding: 14px 18px; border: 1px solid rgba(255,255,255,0.1); border-radius: 24px; outline: none;
             transition: all 0.3s;
+            -webkit-appearance: none;
+            appearance: none;
+            -webkit-text-fill-color: var(--text-color);
+            opacity: 1;
         }
         .input-area input::placeholder { color: var(--text-secondary); opacity: 0.7; }
         .input-area input:focus { 
@@ -361,6 +376,8 @@
             color: white; border: none; width: 48px; height: 48px;
             border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center;
             transition: 0.3s; box-shadow: 0 4px 15px rgba(255, 102, 0, 0.3); flex-shrink: 0;
+            -webkit-appearance: none;
+            appearance: none;
         }
         .send-btn:hover { transform: scale(1.05); box-shadow: 0 6px 20px rgba(255, 102, 0, 0.4); }
         .send-btn:active { transform: scale(0.95); }
@@ -374,6 +391,8 @@
             background: rgba(108, 92, 231, 0.1); color: var(--ai-color); border-radius: 50%;
             width: 44px; height: 44px; flex-shrink: 0; border: 1px solid rgba(108, 92, 231, 0.2);
             cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.3s;
+            -webkit-appearance: none;
+            appearance: none;
         }
         .ai-trigger:hover { background: rgba(108, 92, 231, 0.2); transform: translateY(-2px); }
 
@@ -381,6 +400,8 @@
             background: rgba(0,0,0,0.05); color: #f39c12; border-radius: 50%;
             width: 44px; height: 44px; flex-shrink: 0; border: 1px solid rgba(0,0,0,0.1);
             cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.3s;
+            -webkit-appearance: none;
+            appearance: none;
         }
         .emoji-trigger:hover { background: rgba(0,0,0,0.1); transform: translateY(-2px); }
         body.dark-mode .emoji-trigger { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2); }
@@ -442,6 +463,41 @@
             .ai-trigger, .emoji-trigger { width: 38px; height: 38px; }
             .send-btn { width: 38px; height: 38px; }
             .input-area input { font-size: 16px; padding: 10px 12px; } 
+        }
+
+        /* --- SAFARI / iOS SPECIFIC FIXES --- */
+        /* 1. Reset Default iOS Form Styles */
+        input, button, .primary-btn, .secondary-btn, .ai-trigger, .emoji-trigger, .send-btn {
+            -webkit-appearance: none; /* Remove iOS default shadows/rounding */
+            appearance: none;
+            border-radius: 0; /* Reset radius before applying custom */
+        }
+
+        /* 2. Re-apply Custom Border Radius because iOS removes it with appearance:none */
+        .login-card input { border-radius: 12px; }
+        .primary-btn { border-radius: 12px; }
+        .secondary-btn { border-radius: 12px; }
+        .input-area input { border-radius: 24px; }
+        .ai-trigger, .emoji-trigger, .send-btn { border-radius: 50%; }
+
+        /* 3. Fix Input Text Color on Safari (Sometimes it becomes gray) */
+        input {
+            color: var(--text-color);
+            -webkit-text-fill-color: var(--text-color);
+            opacity: 1; /* Fixes disabled-look transparency */
+        }
+
+        /* 4. Fix Glassmorphism on Safari */
+        /* Safari sometimes needs a slightly more opaque background to render blur correctly */
+        @supports (-webkit-touch-callout: none) {
+            .login-card, .glass-header, .input-area {
+                background: rgba(255, 255, 255, 0.85); /* Slightly more solid for Safari */
+            }
+            body.dark-mode .login-card, 
+            body.dark-mode .glass-header, 
+            body.dark-mode .input-area {
+                background: rgba(30, 30, 40, 0.85);
+            }
         }
     </style>
 </head>
@@ -882,7 +938,7 @@
             2. Keep replies SHORT (Max 30 words).
             3. Language: Mix of Bangla (English script) and English. Use emojis.
             4. Don't repeat "UIU" again and again. 
-            5. Use "InshaAllah", "Alhamdulillah" very rarely (only if context strictly requires it).
+            5. Use InshaAllah, Alhamdulillah very rarely (only if context strictly requires it).
             6. Specific Triggers:
                 - University -> tell about UIU struggle.
                 - Love/Relationship -> Roast about being single/engineering student fate.
