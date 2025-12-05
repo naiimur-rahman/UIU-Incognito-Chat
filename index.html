@@ -488,12 +488,67 @@
         }
 
         /* 4. Fix Glassmorphism on Safari (REMOVED: Caused inconsistent opacity on iOS vs Android) */
+
+        /* --- AVATAR MODAL --- */
+        #avatar-modal {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(5px);
+            z-index: 200; display: flex; align-items: center; justify-content: center;
+            animation: fadeIn 0.3s;
+        }
+        .modal-content {
+            background: var(--glass-bg); padding: 20px; border-radius: 20px;
+            width: 90%; max-width: 400px; text-align: center;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3); border: 1px solid var(--glass-border);
+            animation: popUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .modal-content h3 { color: var(--text-color); margin-bottom: 15px; }
+
+        .avatar-preview-container {
+            width: 100px; height: 100px; margin: 0 auto 20px auto;
+            border-radius: 50%; overflow: hidden; position: relative;
+            background: rgba(0,0,0,0.05); border: 2px solid var(--primary);
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .avatar-preview-container img { width: 100%; height: 100%; object-fit: cover; }
+        #avatar-placeholder { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; }
+
+        body.dark-mode .avatar-preview-container { background: rgba(255,255,255,0.1); border-color: var(--primary); }
+
     </style>
 </head>
 <body>
 
     <div class="background-shape shape-1"></div>
     <div class="background-shape shape-2"></div>
+
+    <div id="avatar-modal" class="hidden">
+        <div class="modal-content">
+            <h3>Update Profile Picture</h3>
+
+            <div class="avatar-preview-container">
+                <img id="avatar-preview" src="" alt="Avatar Preview" class="hidden">
+                <div id="avatar-placeholder">
+                    <i data-lucide="user" style="width: 40px; height: 40px; opacity: 0.5;"></i>
+                </div>
+            </div>
+
+            <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 15px;">
+                Upload a photo to be recognized.<br>Max 5MB (JPG, PNG)
+            </p>
+
+            <button id="choose-avatar-btn" class="primary-btn" style="margin-bottom: 10px;">
+                <i data-lucide="camera"></i> Choose Photo
+            </button>
+            <input type="file" id="avatar-upload-input" accept="image/png, image/jpeg, image/jpg, image/heic" class="hidden">
+
+            <div id="avatar-upload-progress" class="hidden" style="margin: 10px 0; font-size: 0.8rem; font-weight: 600; color: var(--primary);">
+                Uploading... 0%
+            </div>
+
+            <button id="close-avatar-modal" class="secondary-btn">Close</button>
+        </div>
+    </div>
 
     <div id="login-screen">
         <div class="theme-toggle-container">
@@ -603,6 +658,11 @@
                     <i data-lucide="smile"></i>
                 </button>
 
+                <button id="image-btn" class="icon-btn emoji-trigger" title="Send Image" style="margin-right:4px;">
+                    <i data-lucide="image"></i>
+                </button>
+                <input type="file" id="image-input" accept="image/png, image/jpeg, image/jpg, image/heic" class="hidden">
+
                 <input type="text" id="message-input" placeholder="@ai or (Click 🤖 to ask BhodAi)" autocomplete="off">
                 
                 <button id="send-btn" class="send-btn">
@@ -617,6 +677,8 @@
 
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+    <script src="https://unpkg.com/heic2any"></script>
 
     <script>
         // --- 1. CONFIGURATION ---
@@ -676,14 +738,27 @@
         const emojiBtn = document.getElementById('emoji-btn');
         const emojiPicker = document.getElementById('emoji-picker');
 
+        const imageBtn = document.getElementById('image-btn');
+        const fileInput = document.getElementById('image-input');
+
+        const avatarModal = document.getElementById('avatar-modal');
+        const closeAvatarModalBtn = document.getElementById('close-avatar-modal');
+        const chooseAvatarBtn = document.getElementById('choose-avatar-btn');
+        const avatarUploadInput = document.getElementById('avatar-upload-input');
+        const avatarPreview = document.getElementById('avatar-preview');
+        const avatarPlaceholder = document.getElementById('avatar-placeholder');
+        const avatarUploadProgress = document.getElementById('avatar-upload-progress');
+        const headerAvatar = document.querySelector('.header-info .avatar');
+
         let username = '';
         let myUUID = ''; 
         let database = null;
         let currentReply = null;
         const MAX_MESSAGES = 500;
-        
+        let myAvatar = null; // Default null (will show placeholder if not set)
+
         const REACTION_OPTIONS = ['❤️', '😂', '😮', '😢', '😡', '👍'];
-        
+
         const EMOJI_LIST = [
             '😀','😃','😄','😁','😆','😅','🤣','😂','🙂','🙃','😉','😊','😇',
             '🥰','😍','🤩','😘','😗','😚','😙','😋','😛','😜','🤪','😝','🤑',
@@ -708,6 +783,116 @@
                 updateThemeIcon(true);
             } else {
                 updateThemeIcon(false);
+            }
+        }
+
+        function initAvatar() {
+            const savedAvatar = localStorage.getItem('myAvatar');
+            if(savedAvatar) myAvatar = savedAvatar;
+            updateHeaderAvatar();
+            updateAvatarPreview();
+        }
+
+        function updateHeaderAvatar() {
+            if(!headerAvatar) return;
+            headerAvatar.style.cursor = 'pointer';
+            headerAvatar.style.overflow = 'hidden';
+
+            if(myAvatar && myAvatar.startsWith('http')) {
+                headerAvatar.innerHTML = `<img src="${myAvatar}" style="width:100%; height:100%; object-fit:cover;">`;
+            } else {
+                headerAvatar.innerHTML = '<i data-lucide="graduation-cap"></i>';
+                if(typeof lucide !== 'undefined') lucide.createIcons();
+            }
+        }
+
+        function updateAvatarPreview() {
+            if(!avatarPreview || !avatarPlaceholder) return;
+            if(myAvatar && myAvatar.startsWith('http')) {
+                avatarPreview.src = myAvatar;
+                avatarPreview.classList.remove('hidden');
+                avatarPlaceholder.classList.add('hidden');
+            } else {
+                avatarPreview.classList.add('hidden');
+                avatarPlaceholder.classList.remove('hidden');
+            }
+        }
+
+        async function uploadFile(file, path, progressCallback) {
+            return new Promise((resolve, reject) => {
+                const storageRef = firebase.storage().ref();
+                const fileRef = storageRef.child(path);
+                const uploadTask = fileRef.put(file);
+
+                uploadTask.on('state_changed',
+                    (snapshot) => {
+                        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                        if(progressCallback) progressCallback(progress);
+                    },
+                    (error) => {
+                        console.error("Upload Error:", error);
+                        reject(error);
+                    },
+                    () => {
+                        uploadTask.snapshot.ref.getDownloadURL().then((downloadURL) => {
+                            resolve(downloadURL);
+                        });
+                    }
+                );
+            });
+        }
+
+        async function handleAvatarUpload(e) {
+            const file = e.target.files[0];
+            if(!file) return;
+
+            if(file.size > 5 * 1024 * 1024) { alert("File too large. Max 5MB."); return; }
+
+            let fileToUpload = file;
+            let fileName = file.name;
+
+            // Simple HEIC check
+            if(fileName.toLowerCase().endsWith('.heic') && typeof heic2any !== 'undefined') {
+                try {
+                    const blob = await heic2any({ blob: file, toType: "image/jpeg", quality: 0.8 });
+                    fileToUpload = new File([blob], fileName.replace(/\.heic$/i, ".jpg"), { type: "image/jpeg" });
+                    fileName = fileToUpload.name;
+                } catch(err) { console.warn("HEIC conversion failed", err); }
+            }
+
+            avatarUploadProgress.innerText = "Uploading... 0%";
+            avatarUploadProgress.classList.remove('hidden');
+            chooseAvatarBtn.disabled = true;
+
+            const path = `user_avatars/${myUUID}/${Date.now()}_${fileName}`;
+
+            try {
+                const url = await uploadFile(fileToUpload, path, (progress) => {
+                    avatarUploadProgress.innerText = `Uploading... ${Math.round(progress)}%`;
+                });
+
+                myAvatar = url;
+                localStorage.setItem('myAvatar', url);
+                updateHeaderAvatar();
+                updateAvatarPreview();
+
+                if(database && username) {
+                     const userKey = username.toLowerCase().replace(/[^a-z0-9]/g, '_');
+                     database.ref('active_users/' + userKey).update({ avatar: myAvatar });
+                }
+
+                avatarUploadProgress.innerText = "Upload Complete!";
+                setTimeout(() => {
+                    avatarUploadProgress.classList.add('hidden');
+                    avatarModal.classList.add('hidden');
+                }, 1500);
+
+            } catch (error) {
+                alert("Avatar upload failed: " + error.message);
+                avatarUploadProgress.innerText = "Error!";
+            } finally {
+                chooseAvatarBtn.disabled = false;
+                avatarUploadInput.value = '';
             }
         }
 
@@ -743,12 +928,28 @@
         }
 
         initTheme();
+        initAvatar();
         initFirebase();
         initEmojiPicker();
 
         // --- 3. EVENT LISTENERS ---
         if (themeToggleLogin) themeToggleLogin.addEventListener('click', toggleTheme);
         if (themeToggleChat) themeToggleChat.addEventListener('click', toggleTheme);
+
+        if(headerAvatar) {
+            headerAvatar.addEventListener('click', () => {
+                avatarModal.classList.remove('hidden');
+            });
+        }
+        if(closeAvatarModalBtn) {
+            closeAvatarModalBtn.addEventListener('click', () => {
+                avatarModal.classList.add('hidden');
+            });
+        }
+        if(chooseAvatarBtn && avatarUploadInput) {
+            chooseAvatarBtn.addEventListener('click', () => avatarUploadInput.click());
+            avatarUploadInput.addEventListener('change', handleAvatarUpload);
+        }
         if (joinBtn) joinBtn.addEventListener('click', joinChat);
         if (usernameInput) usernameInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') joinChat(); });
         
@@ -768,6 +969,11 @@
                 e.stopPropagation();
                 emojiPicker.classList.toggle('hidden');
             });
+        }
+
+        if(imageBtn && fileInput) {
+            imageBtn.addEventListener('click', () => fileInput.click());
+            fileInput.addEventListener('change', handleFileUpload);
         }
         
         document.addEventListener('click', (e) => {
@@ -886,7 +1092,7 @@
                     myUUID = generateUUID(); 
                     
                     userRef.set({
-                        originalName: username, status: "online",
+                        originalName: username, status: "online", avatar: myAvatar,
                         timestamp: firebase.database.ServerValue.TIMESTAMP
                     });
                     
@@ -993,17 +1199,65 @@
             });
         }
 
-        function sendMessage(isDirectAI = false) {
+        async function handleFileUpload(e) {
+            const file = e.target.files[0];
+            if(!file) return;
+
+            // 5MB Limit
+            if(file.size > 5 * 1024 * 1024) { alert("File too large. Max 5MB."); fileInput.value = ''; return; }
+
+            let fileToUpload = file;
+            let fileName = file.name;
+
+            // HEIC Conversion
+            if(file.name.toLowerCase().endsWith('.heic') && typeof heic2any !== 'undefined') {
+                try {
+                    const blob = await heic2any({ blob: file, toType: "image/jpeg", quality: 0.8 });
+                    fileToUpload = new File([blob], fileName.replace(/\.heic$/i, ".jpg"), { type: "image/jpeg" });
+                    fileName = fileToUpload.name;
+                } catch(err) { console.error("HEIC Conversion failed:", err); }
+            }
+
+            const tempId = 'temp-' + Date.now();
+            displayMessage(tempId, username, "📸 Uploading image... 0%", Date.now(), myUUID, false, null);
+
+            const path = `chat_images/${myUUID}/${Date.now()}_${fileName}`;
+
+            try {
+                const url = await uploadFile(fileToUpload, path, (progress) => {
+                     const tempMsg = document.getElementById(`msg-${tempId}`);
+                     if(tempMsg) {
+                         const textEl = tempMsg.querySelector('.text');
+                         if(textEl) textEl.innerText = `📸 Uploading image... ${Math.round(progress)}%`;
+                     }
+                });
+
+                const tempEl = document.getElementById(`msg-${tempId}`);
+                if(tempEl) tempEl.remove();
+
+                sendMessage(false, url);
+            } catch (error) {
+                alert("Upload failed: " + error.message);
+                const tempEl = document.getElementById(`msg-${tempId}`);
+                if(tempEl) tempEl.remove();
+            } finally {
+                fileInput.value = '';
+            }
+        }
+
+        function sendMessage(isDirectAI = false, imageURL = null) {
             const text = messageInput.value.trim();
-            if (!database || !text) return;
+            if (!database || (!text && !imageURL)) return;
 
             const isReplyingToBot = currentReply && currentReply.username === "BhodAi 🤖";
             const isAiRequest = isDirectAI || text.toLowerCase().startsWith('@ai') || text.toLowerCase().startsWith('/ai') || isReplyingToBot;
             
             const msgData = {
-                username: username, text: text, senderId: myUUID,
+                username: username, text: text, senderId: myUUID, avatar: myAvatar,
                 timestamp: firebase.database.ServerValue.TIMESTAMP, isDeleted: false
             };
+
+            if(imageURL) msgData.imageURL = imageURL;
 
             if (currentReply) {
                 msgData.replyTo = { id: currentReply.id, username: currentReply.username, text: currentReply.text };
@@ -1038,7 +1292,7 @@
                 const data = snapshot.val();
                 const msgId = snapshot.key; 
                 if (data) { 
-                    displayMessage(msgId, data.username, data.text, data.timestamp, data.senderId, data.isDeleted, data.replyTo); 
+                    displayMessage(msgId, data.username, data.text, data.timestamp, data.senderId, data.isDeleted, data.replyTo, data.imageURL, data.avatar);
                     scrollToBottom(); 
                 }
             });
@@ -1063,7 +1317,7 @@
             });
         }
 
-        function displayMessage(msgId, user, text, timestamp, senderId, isDeleted, replyToData) {
+        function displayMessage(msgId, user, text, timestamp, senderId, isDeleted, replyToData, imageURL, senderAvatar) {
             const wrapper = document.createElement('div');
             wrapper.classList.add('message-wrapper');
             wrapper.id = `msg-${msgId}`;
@@ -1131,10 +1385,22 @@
                 metaDiv.innerHTML = `Unknown • ${timeStr}`;
             } else {
                 let nameHTML = isMyMessage ? 'You' : user;
+                let avatarHTML = '';
+                if(senderAvatar) {
+                    if(senderAvatar.startsWith('http')) {
+                        avatarHTML = `<img src="${senderAvatar}" style="width:20px; height:20px; border-radius:50%; object-fit:cover; margin-right:6px; vertical-align:middle; border:1px solid rgba(0,0,0,0.1);">`;
+                    } else {
+                        avatarHTML = `<span style="font-size:1.2em; margin-right:4px;">${senderAvatar}</span>`;
+                    }
+                }
+
+                // If it's the bot, add bot icon if needed, but bot name already has emoji
+                if(isBot) avatarHTML = '';
+
                 if (isNaimur && !isBot) {
                     nameHTML += ` <span class="verified-badge"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M9 12L11 14L15 10M12 3L13.9101 4.25465C14.616 4.71826 15.5286 4.71826 16.2345 4.25465L18.1446 3L18.8858 5.17418C19.1598 5.97794 19.8211 6.63919 20.6248 6.91322L22.799 7.65444L21.5443 9.56449C21.0807 10.2704 21.0807 11.183 21.5443 11.8889L22.799 13.7989L20.6248 14.5402C19.8211 14.8142 19.1598 15.4754 18.8858 16.2792L18.1446 18.4534L16.2345 17.1987C15.5286 16.7351 14.616 16.7351 13.9101 17.1987L12 18.4534L10.0899 17.1987C9.38396 16.7351 8.47135 16.7351 7.76543 17.1987L5.85538 18.4534L5.11417 16.2792C4.84015 15.4754 4.17889 14.8142 3.37513 14.5402L1.20096 13.7989L2.45561 11.8889C2.91923 11.183 2.91923 10.2704 2.45561 9.56449L1.20096 7.65444L3.37513 6.91322C4.17889 6.63919 4.84015 5.97794 5.11417 5.17418L5.85538 3L7.76543 4.25465C8.47135 4.71826 9.38396 4.71826 10.0899 4.25465L12 3Z"/></svg></span>`;
                 }
-                metaDiv.innerHTML = `${nameHTML} • ${timeStr}`;
+                metaDiv.innerHTML = `${avatarHTML}${nameHTML} • ${timeStr}`;
             }
 
             if (replyToData) {
@@ -1151,12 +1417,61 @@
                 messageDiv.appendChild(replyBlock);
             }
 
-            const textDiv = document.createElement('div');
-            textDiv.classList.add('text');
-            textDiv.textContent = text;
+            if (imageURL) {
+                const imgContainer = document.createElement('div');
+                imgContainer.style.marginTop = '6px';
+                imgContainer.style.position = 'relative';
 
-            messageDiv.appendChild(metaDiv);
-            messageDiv.appendChild(textDiv);
+                const img = document.createElement('img');
+                img.src = imageURL;
+                img.style.maxWidth = '100%';
+                img.style.borderRadius = '12px';
+                img.style.display = 'block';
+                img.style.cursor = 'pointer';
+                img.alt = 'Shared Image';
+
+                // Lightbox or open in new tab
+                img.onclick = () => window.open(imageURL, '_blank');
+
+                const downloadLink = document.createElement('a');
+                downloadLink.href = imageURL;
+                downloadLink.download = 'uiu-chat-image.jpg';
+                downloadLink.target = '_blank';
+                downloadLink.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-download"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>';
+                downloadLink.className = 'icon-btn';
+                downloadLink.style.position = 'absolute';
+                downloadLink.style.bottom = '10px';
+                downloadLink.style.right = '10px';
+                downloadLink.style.background = 'rgba(0,0,0,0.5)';
+                downloadLink.style.color = 'white';
+                downloadLink.style.backdropFilter = 'blur(5px)';
+                downloadLink.style.padding = '8px';
+                downloadLink.style.borderRadius = '50%';
+
+                // Prevent bubbling to message touch events
+                downloadLink.onclick = (e) => e.stopPropagation();
+
+                imgContainer.appendChild(img);
+                imgContainer.appendChild(downloadLink);
+                messageDiv.appendChild(metaDiv);
+
+                // If there is text, show it too
+                if(text) {
+                    const textDiv = document.createElement('div');
+                    textDiv.classList.add('text');
+                    textDiv.textContent = text;
+                    textDiv.style.marginBottom = '8px';
+                    messageDiv.appendChild(textDiv);
+                }
+
+                messageDiv.appendChild(imgContainer);
+            } else {
+                const textDiv = document.createElement('div');
+                textDiv.classList.add('text');
+                textDiv.textContent = text;
+                messageDiv.appendChild(metaDiv);
+                messageDiv.appendChild(textDiv);
+            }
             
             const reactionDisplay = document.createElement('div');
             reactionDisplay.id = `react-disp-${msgId}`;
