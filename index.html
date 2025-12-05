@@ -690,6 +690,7 @@
         }
 
         // --- PIN LOGIC ---
+        // --- PIN LOGIC (UPDATED FIX) ---
         function initPinListener() {
             if(!database) return;
             database.ref('pinned_message').on('value', (snapshot) => {
@@ -701,9 +702,34 @@
                     // Allow clicking to scroll to message
                     pinnedBanner.onclick = (e) => {
                          if(e.target !== unpinBtn && !unpinBtn.contains(e.target)) {
-                             // Optional: Scroll to original message if exists
                              const original = document.getElementById(`msg-${data.id}`);
-                             if(original) original.scrollIntoView({behavior: 'smooth', block: 'center'});
+                             
+                             if(original) {
+                                 // ✅ FIX: Manual Scroll (পুরো পেজ নড়বে না, শুধু চ্যাট বক্স স্ক্রল হবে)
+                                 const container = document.getElementById('messages-container');
+                                 
+                                 // অংক করে পজিশন বের করা হচ্ছে যাতে মেসেজটা মাঝখানে আসে
+                                 const targetPosition = original.offsetTop - container.offsetTop - (container.clientHeight / 2) + (original.clientHeight / 2);
+                                 
+                                 container.scrollTo({
+                                     top: targetPosition,
+                                     behavior: 'smooth'
+                                 });
+
+                                 // একটু এনিমেশন যাতে ইউজার বোঝে কোন মেসেজটা
+                                 const bubble = original.querySelector('.message');
+                                 bubble.style.transition = "box-shadow 0.3s, transform 0.3s";
+                                 bubble.style.boxShadow = "0 0 20px var(--primary)";
+                                 bubble.style.transform = "scale(1.02)";
+                                 
+                                 setTimeout(() => {
+                                     bubble.style.boxShadow = "0 2px 5px rgba(0,0,0,0.05)";
+                                     bubble.style.transform = "scale(1)";
+                                 }, 1000);
+
+                             } else {
+                                 alert("Message is too old or not currently loaded.");
+                             }
                          }
                     };
 
