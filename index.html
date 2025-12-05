@@ -27,6 +27,7 @@
             --verified-blue: #1da1f2;
             --admin-gold: #ffd700;
             --ai-color: #6c5ce7;
+            --pin-bg: rgba(255, 245, 230, 0.95);
         }
 
         /* --- DARK MODE --- */
@@ -43,6 +44,7 @@
             --input-bg: rgba(255, 255, 255, 0.08);
             --ai-color: #a29bfe;
             --shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+            --pin-bg: rgba(45, 45, 58, 0.95);
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
@@ -135,6 +137,21 @@
         .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; background-color: var(--status-green); box-shadow: 0 0 5px var(--status-green); }
         .header-controls { display: flex; gap: 5px; }
 
+        /* --- PINNED MESSAGE BANNER --- */
+        #pinned-banner {
+            background: var(--pin-bg); backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--glass-border); padding: 8px 15px;
+            display: flex; justify-content: space-between; align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05); z-index: 18; cursor: pointer;
+            animation: floatUp 0.3s ease;
+        }
+        .pinned-content { display: flex; align-items: center; gap: 10px; flex: 1; overflow: hidden; }
+        .pin-icon { color: var(--primary); transform: rotate(45deg); flex-shrink: 0; }
+        .pinned-text-area { display: flex; flex-direction: column; overflow: hidden; }
+        .pinned-label { font-size: 0.65rem; color: var(--primary); font-weight: 700; text-transform: uppercase; }
+        .pinned-text { font-size: 0.85rem; color: var(--text-color); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .unpin-btn { background: none; border: none; cursor: pointer; color: var(--text-secondary); padding: 5px; }
+
         .welcome-watermark {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
             display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -158,7 +175,9 @@
         
         .message { 
             padding: 10px 14px; border-radius: 14px; max-width: 85%; font-size: 0.95rem; line-height: 1.4; 
-            animation: popUp 0.3s ease; position: relative; z-index: 11; user-select: none;
+            animation: popUp 0.3s ease; position: relative; z-index: 11;
+            /* FIXED: ALLOW TEXT SELECTION FOR COPYING */
+            user-select: text !important; 
             touch-action: pan-y;
         }
 
@@ -187,6 +206,7 @@
         .message.deleted-message {
             background-color: #f0f0f0; color: #888; font-style: italic;
             border: 1px solid #ddd; box-shadow: none; background: rgba(0,0,0,0.05);
+            user-select: none !important;
         }
         body.dark-mode .message.deleted-message { background-color: rgba(255,255,255,0.05); color: #aaa; border: 1px solid #444; }
 
@@ -200,7 +220,7 @@
         .delete-left { left: -32px; }
         .delete-right { right: -32px; }
 
-        .meta { font-size: 0.7rem; margin-bottom: 3px; opacity: 0.8; font-weight: 600; display: flex; align-items: center; }
+        .meta { font-size: 0.7rem; margin-bottom: 3px; opacity: 0.8; font-weight: 600; display: flex; align-items: center; user-select: none; }
 
         /* --- REACTIONS --- */
         .reaction-menu {
@@ -218,6 +238,7 @@
             position: absolute; bottom: -12px; background: white; border-radius: 12px; padding: 2px 6px; 
             font-size: 0.75rem; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
             display: flex; gap: 2px; align-items: center; z-index: 12; border: 2px solid var(--chat-bg);
+            user-select: none;
         }
         body.dark-mode .reaction-display-bubble { background: #3a3a4a; color: white; border-color: #222; }
         
@@ -232,7 +253,7 @@
             border-top: 1px solid var(--glass-border);
         }
 
-        .input-wrapper { display: flex; width: 100%; gap: 10px; align-items: center; }
+        .input-wrapper { display: flex; width: 100%; gap: 8px; align-items: center; }
 
         .input-area input { 
             background: var(--input-bg); 
@@ -245,7 +266,7 @@
         .input-area input::placeholder { color: var(--text-secondary); }
         
         .send-btn {
-            background: var(--primary); color: white; border: none; width: 48px; height: 48px;
+            background: var(--primary); color: white; border: none; width: 44px; height: 44px;
             border-radius: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center;
             transition: 0.2s; box-shadow: 0 4px 10px rgba(255, 102, 0, 0.3); flex-shrink: 0;
         }
@@ -263,6 +284,32 @@
             cursor: pointer; display: flex; align-items: center; justify-content: center;
         }
         .ai-trigger:active { transform: scale(0.95); }
+
+        /* EMOJI Button */
+        .emoji-trigger {
+            background: rgba(0,0,0,0.05); color: #f39c12; border-radius: 12px;
+            width: 44px; height: 44px; flex-shrink: 0; border: 1px solid rgba(0,0,0,0.1);
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+        }
+        body.dark-mode .emoji-trigger { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2); }
+        .emoji-trigger:active { transform: scale(0.95); }
+
+        /* Emoji Picker Popover */
+        .emoji-picker {
+            position: absolute; bottom: 85px; left: 15px; width: 280px; height: 200px;
+            background: var(--glass-bg); backdrop-filter: blur(15px);
+            border-radius: 16px; border: 1px solid var(--glass-border);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+            display: grid; grid-template-columns: repeat(6, 1fr);
+            padding: 10px; gap: 5px; overflow-y: auto; z-index: 100;
+            animation: floatUp 0.2s ease;
+        }
+        .emoji-item {
+            font-size: 1.5rem; cursor: pointer; text-align: center; padding: 5px;
+            border-radius: 8px; transition: background 0.2s; user-select: none;
+        }
+        .emoji-item:hover { background: rgba(0,0,0,0.1); }
+        body.dark-mode .emoji-item:hover { background: rgba(255,255,255,0.1); }
 
         /* Reply Preview Banner */
         .reply-preview {
@@ -288,8 +335,8 @@
         .reply-quote-name { font-weight: 600; font-size: 0.7rem; margin-bottom: 2px; }
 
         /* Reply Option in Menu */
-        .reply-option-btn { font-size: 1rem; padding: 0 5px; cursor: pointer; display: flex; align-items: center; color: var(--text-color); }
-        body.dark-mode .reply-option-btn { color: white; }
+        .reply-option-btn, .pin-option-btn { font-size: 1rem; padding: 0 5px; cursor: pointer; display: flex; align-items: center; color: var(--text-color); }
+        body.dark-mode .reply-option-btn, body.dark-mode .pin-option-btn { color: white; }
 
         .hidden { display: none !important; }
         .icon-btn { background: none; border: none; cursor: pointer; color: var(--text-color); padding: 8px; border-radius: 50%; transition: background 0.2s; display: flex; align-items: center; justify-content: center; }
@@ -299,6 +346,7 @@
             .message { font-size: 0.9rem; }
             .welcome-watermark { width: 90%; }
             .admin-delete-btn { opacity: 1 !important; } 
+            .emoji-picker { width: 90%; left: 5%; bottom: 85px; }
         }
     </style>
 </head>
@@ -366,6 +414,17 @@
             </div>
         </header>
 
+        <div id="pinned-banner" class="hidden">
+            <div class="pinned-content">
+                <div class="pin-icon"><i data-lucide="pin" style="width: 16px;"></i></div>
+                <div class="pinned-text-area">
+                    <span class="pinned-label">Pinned Message</span>
+                    <span id="pinned-msg-text" class="pinned-text">Loading...</span>
+                </div>
+            </div>
+            <button id="unpin-btn" class="unpin-btn hidden"><i data-lucide="x" style="width: 16px;"></i></button>
+        </div>
+
         <div class="welcome-watermark">
             <div class="welcome-icon-wrapper">
                 <i data-lucide="sparkles"></i>
@@ -388,10 +447,16 @@
                 </div>
                 <button id="close-reply" class="icon-btn"><i data-lucide="x"></i></button>
             </div>
+            
+            <div id="emoji-picker" class="emoji-picker hidden"></div>
 
             <div class="input-wrapper">
                 <button id="ai-trigger-btn" class="icon-btn ai-trigger" title="Ask AI">
                     <i data-lucide="bot"></i>
+                </button>
+
+                <button id="emoji-btn" class="icon-btn emoji-trigger" title="Emojis">
+                    <i data-lucide="smile"></i>
                 </button>
 
                 <input type="text" id="message-input" placeholder="@ai or (Click 🤖 to ask BhodAi)" autocomplete="off">
@@ -465,6 +530,13 @@
         const aiTriggerBtn = document.getElementById('ai-trigger-btn');
         const replyToName = document.querySelector('.reply-to-name');
         const replyTextDisplay = document.querySelector('.reply-text');
+        
+        // New UI Elements
+        const pinnedBanner = document.getElementById('pinned-banner');
+        const pinnedMsgText = document.getElementById('pinned-msg-text');
+        const unpinBtn = document.getElementById('unpin-btn');
+        const emojiBtn = document.getElementById('emoji-btn');
+        const emojiPicker = document.getElementById('emoji-picker');
 
         let username = '';
         let myUUID = ''; 
@@ -473,6 +545,22 @@
         const MAX_MESSAGES = 500;
         
         const REACTION_OPTIONS = ['❤️', '😂', '😮', '😢', '😡', '👍'];
+        
+        // Emoji List
+        const EMOJI_LIST = [
+            '😀','😃','😄','😁','😆','😅','🤣','😂','🙂','🙃','😉','😊','😇',
+            '🥰','😍','🤩','😘','😗','😚','😙','😋','😛','😜','🤪','😝','🤑',
+            '🤗','🤭','🤫','🤔','🤐','🤨','😐','😑','😶','😏','😒','🙄','😬',
+            '🤥','😌','😔','😪','🤤','😴','😷','🤒','🤕','🤢','🤮','🤧','🥵',
+            '🥶','🥴','😵','🤯','🤠','🥳','😎','🤓','🧐','😕','😟','🙁','☹️',
+            '😮','😯','😲','😳','🥺','😦','😧','😨','😰','😥','😢','😭','😱',
+            '😖','😣','😞','😓','😩','😫','🥱','😤','😡','😠','🤬','😈','👿',
+            '💀','☠️','💩','🤡','👹','👺','👻','👽','👾','🤖','👋','🤚','🖐',
+            '✋','🖖','👌','🤏','✌️','🤞','🤟','🤘','🤙','👈','👉','👆','🖕',
+            '👇','☝️','👍','👎','✊','👊','🤛','🤜','👏','🙌','👐','🤲','🤝',
+            '🙏','✍️','💅','🤳','💪','🦾','🦿','🦵','🦶','👂','🦻','👃','🧠',
+            '🦷','🦴','👀','👁','👅','👄','💋','🩸'
+        ];
 
         if (typeof lucide !== 'undefined') lucide.createIcons();
 
@@ -516,11 +604,16 @@
                         activeUsersText.innerText = `${count} Online`;
                     }
                 });
+                
+                // Initialize Pin Listener
+                initPinListener();
+                
             } catch (error) { console.error("Firebase Init Error:", error); }
         }
 
         initTheme();
         initFirebase();
+        initEmojiPicker();
 
         // --- 3. EVENT LISTENERS ---
         if (themeToggleLogin) themeToggleLogin.addEventListener('click', toggleTheme);
@@ -539,6 +632,31 @@
 
         if(closeReplyBtn) closeReplyBtn.addEventListener('click', cancelReply);
         
+        // Emoji Toggle
+        if(emojiBtn) {
+            emojiBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                emojiPicker.classList.toggle('hidden');
+            });
+        }
+        
+        // Close Emoji picker when clicking outside
+        document.addEventListener('click', (e) => {
+            if(emojiPicker && !emojiPicker.contains(e.target) && !emojiBtn.contains(e.target)) {
+                emojiPicker.classList.add('hidden');
+            }
+        });
+        
+        // Unpin Listener
+        if(unpinBtn) {
+            unpinBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if(confirm("Unpin this message?")) {
+                    database.ref('pinned_message').remove();
+                }
+            });
+        }
+
         if (logoutBtn) {
             logoutBtn.addEventListener('click', () => {
                 if(username && database) {
@@ -554,6 +672,63 @@
 
         function generateUUID() {
             return Date.now().toString(36) + Math.random().toString(36).substr(2);
+        }
+
+        function initEmojiPicker() {
+            if(!emojiPicker) return;
+            EMOJI_LIST.forEach(emoji => {
+                const span = document.createElement('div');
+                span.className = 'emoji-item';
+                span.innerText = emoji;
+                span.onclick = () => {
+                    messageInput.value += emoji;
+                    messageInput.focus();
+                    emojiPicker.classList.add('hidden');
+                };
+                emojiPicker.appendChild(span);
+            });
+        }
+
+        // --- PIN LOGIC ---
+        function initPinListener() {
+            if(!database) return;
+            database.ref('pinned_message').on('value', (snapshot) => {
+                const data = snapshot.val();
+                if(data) {
+                    pinnedBanner.classList.remove('hidden');
+                    pinnedMsgText.innerText = `${data.author}: ${data.text}`;
+                    
+                    // Allow clicking to scroll to message
+                    pinnedBanner.onclick = (e) => {
+                         if(e.target !== unpinBtn && !unpinBtn.contains(e.target)) {
+                             // Optional: Scroll to original message if exists
+                             const original = document.getElementById(`msg-${data.id}`);
+                             if(original) original.scrollIntoView({behavior: 'smooth', block: 'center'});
+                         }
+                    };
+
+                    // Only Naimur can unpin
+                    if(username.toLowerCase() === 'naimur rahman') {
+                        unpinBtn.classList.remove('hidden');
+                    } else {
+                        unpinBtn.classList.add('hidden');
+                    }
+                } else {
+                    pinnedBanner.classList.add('hidden');
+                }
+            });
+        }
+
+        function pinMessage(msgId, text, author) {
+            if(!database) return;
+            if(confirm("Pin this message to the top?")) {
+                database.ref('pinned_message').set({
+                    id: msgId,
+                    text: text,
+                    author: author,
+                    timestamp: firebase.database.ServerValue.TIMESTAMP
+                });
+            }
         }
 
         // --- JOIN LOGIC (SYNCHRONOUS CHECK) ---
@@ -596,6 +771,11 @@
                     chatScreen.classList.remove('hidden');
                     if (typeof lucide !== 'undefined') lucide.createIcons();
                     loadMessages();
+                    
+                    // Re-check unpin button visibility after login
+                    if(username.toLowerCase() === 'naimur rahman') {
+                        unpinBtn.classList.remove('hidden');
+                    }
                 }
             });
         }
@@ -967,6 +1147,23 @@
                 currentOpenMenuId = null;
             };
             menu.appendChild(replyBtn);
+
+            // ADMIN PIN OPTION
+            if(username.toLowerCase() === 'naimur rahman') {
+                const pinBtn = document.createElement('div');
+                pinBtn.innerHTML = '<i data-lucide="pin" style="width:16px;"></i>';
+                pinBtn.className = 'pin-option-btn';
+                pinBtn.style.marginLeft = '8px';
+                pinBtn.onclick = () => {
+                    const msgEl = document.getElementById(`msg-${msgId}`);
+                    const textContent = msgEl.querySelector('.text').innerText;
+                    const nameContent = msgEl.querySelector('.meta').innerText.split('•')[0].trim();
+                    pinMessage(msgId, textContent, nameContent);
+                    menu.remove();
+                    currentOpenMenuId = null;
+                };
+                menu.appendChild(pinBtn);
+            }
 
             const sep = document.createElement('span');
             sep.style.borderLeft = '1px solid #ccc'; sep.style.margin = '0 5px';
