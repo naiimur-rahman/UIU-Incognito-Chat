@@ -266,7 +266,8 @@
         }
         .msg-avatar img { width: 100%; height: 100%; object-fit: cover; }
         
-        .msg-content { display: flex; flex-direction: column; max-width: 80%; }
+        /* Updated: msg-content relative for reaction placement */
+        .msg-content { display: flex; flex-direction: column; max-width: 80%; position: relative; }
 
         .msg-name {
             font-size: 0.7rem; color: var(--text-secondary); margin-left: 4px;
@@ -278,6 +279,8 @@
             position: relative; z-index: 11; user-select: text !important; touch-action: pan-y;
             box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid rgba(255,255,255,0.1);
             word-wrap: break-word;
+            /* For smooth swipe snap-back */
+            transform: translateX(0);
         }
 
         .my-message { 
@@ -334,14 +337,20 @@
         .reaction-option { font-size: 1.3rem; cursor: pointer; transition: transform 0.2s; user-select: none; }
         .reaction-option:hover { transform: scale(1.3); }
 
+        /* Updated Reaction Display positioning */
         .reaction-display-bubble {
-            position: absolute; bottom: -14px; background: white; border-radius: 12px; padding: 2px 8px; 
-            font-size: 0.75rem; box-shadow: 0 4px 10px rgba(0,0,0,0.1); display: flex; gap: 3px; align-items: center; z-index: 12; border: 2px solid var(--chat-bg); user-select: none;
+            position: absolute; 
+            bottom: -10px; /* Adjusted to overlap slightly */
+            background: white; border-radius: 12px; padding: 2px 8px; 
+            font-size: 0.75rem; box-shadow: 0 4px 10px rgba(0,0,0,0.1); 
+            display: flex; gap: 3px; align-items: center; z-index: 12; 
+            border: 2px solid var(--chat-bg); user-select: none;
         }
         body.dark-mode .reaction-display-bubble { background: #3a3a4a; color: white; border-color: #222; }
         
-        .my-message + .reaction-display-bubble { right: 0; }
-        .other-message + .reaction-display-bubble { left: 0; }
+        /* Positioning based on parent container context */
+        .message-wrapper > .reaction-display-bubble { right: 0; } /* For my messages */
+        .msg-content > .reaction-display-bubble { left: 0; right: auto; } /* For others (aligns with text) */
 
         /* --- MODERN INPUT AREA (FIXED FOR MOBILE) --- */
         .input-area {
@@ -1446,15 +1455,37 @@
                     messageBubble.appendChild(delBtn);
                 }
 
-                // Interactions
+                // Interactions (Swipe & Double Tap)
                 let touchStartX = 0;
-                messageBubble.addEventListener('touchstart', (e) => { touchStartX = e.touches[0].clientX; }, {passive: true});
+                let currentX = 0;
+
+                // VISUAL SWIPE ANIMATION
+                messageBubble.addEventListener('touchstart', (e) => {
+                    touchStartX = e.touches[0].clientX;
+                    messageBubble.style.transition = 'none'; // Remove transition for direct movement
+                }, {passive: true});
+
+                messageBubble.addEventListener('touchmove', (e) => {
+                    currentX = e.touches[0].clientX;
+                    const diff = currentX - touchStartX;
+                    // Only allow swipe right, capped at 100px visual shift
+                    if (diff > 0 && diff < 150) {
+                        messageBubble.style.transform = `translateX(${diff}px)`;
+                    }
+                }, {passive: true});
+
                 messageBubble.addEventListener('touchend', (e) => {
-                    if (e.changedTouches[0].clientX - touchStartX > 50) {
+                    messageBubble.style.transition = 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)'; // Snap back
+                    messageBubble.style.transform = 'translateX(0)';
+
+                    if (currentX - touchStartX > 50) {
                         if(navigator.vibrate) navigator.vibrate(50);
                         initiateReply(msgId, user, text);
                     }
+                    touchStartX = 0;
+                    currentX = 0;
                 });
+
                 messageBubble.addEventListener('dblclick', (e) => showReactionMenu(e, msgId, wrapper));
                 let pressTimer;
                 messageBubble.addEventListener('touchstart', () => {
@@ -1464,10 +1495,16 @@
             }
 
             // --- Structure Assembly ---
+            const reactionDisplay = document.createElement('div');
+            reactionDisplay.id = `react-disp-${msgId}`;
+            reactionDisplay.className = 'reaction-display-bubble hidden';
+
             if (isMyMessage) {
                 // My Message: Just the bubble aligned right
                 wrapper.style.alignItems = 'flex-end';
                 wrapper.appendChild(messageBubble);
+                // For my messages, append reaction to wrapper (it will align right via CSS)
+                wrapper.appendChild(reactionDisplay);
             } else {
                 // Other Message: Row with Avatar + Column(Name, Bubble)
                 wrapper.style.alignItems = 'flex-start';
@@ -1503,18 +1540,13 @@
 
                 contentCol.appendChild(nameDiv);
                 contentCol.appendChild(messageBubble);
+                // For others, append reaction INSIDE contentCol so it respects avatar indent
+                contentCol.appendChild(reactionDisplay);
 
                 row.appendChild(avatarDiv);
                 row.appendChild(contentCol);
                 wrapper.appendChild(row);
             }
-
-            // Reactions
-            const reactionDisplay = document.createElement('div');
-            reactionDisplay.id = `react-disp-${msgId}`;
-            reactionDisplay.className = 'reaction-display-bubble hidden';
-
-            wrapper.appendChild(reactionDisplay);
 
             messagesContainer.appendChild(wrapper);
 
