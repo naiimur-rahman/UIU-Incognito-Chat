@@ -108,7 +108,50 @@
             display: flex;
             overflow: hidden;
             position: relative;
+            transition: all 0.3s ease;
         }
+
+        /* Mobile Selection Screen */
+        #mobile-login-selection {
+            display: none; /* Hidden on Desktop */
+            flex-direction: column;
+            gap: 15px;
+            width: 100%;
+            max-width: 400px;
+            margin: 0 auto;
+            z-index: 20;
+        }
+        .mobile-select-btn {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            padding: 20px;
+            border-radius: 20px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            text-align: center; gap: 10px;
+            cursor: pointer;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .mobile-select-btn h3 { font-size: 1.2rem; color: var(--primary); margin: 0; }
+        .mobile-select-btn p { font-size: 0.85rem; color: var(--text-secondary); margin: 0; }
+        .mobile-select-btn:active { transform: scale(0.98); }
+
+        body.dark-mode .mobile-select-btn {
+            background: rgba(30, 30, 40, 0.8);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+        body.dark-mode .mobile-select-btn h3 { color: #fff; }
+
+        .back-to-select-btn {
+            display: none; /* Hidden on Desktop */
+            align-items: center; gap: 6px;
+            margin-bottom: 15px;
+            align-self: flex-start;
+            font-size: 0.85rem; color: var(--text-secondary);
+            background: none; border: none; cursor: pointer;
+        }
+        .back-to-select-btn:hover { color: var(--primary); }
 
         /* Shine Effect for Split Card */
         .login-card-split::before {
@@ -215,9 +258,17 @@
         body.dark-mode .secondary-btn:hover { background: rgba(255,255,255,0.05); color: white; border-color: var(--primary); }
 
         @media (max-width: 768px) {
-            .login-card-split { flex-direction: column; }
-            .vertical-divider { width: 100%; height: 1px; margin: 0; }
-            .login-panel { padding: 1.5rem; }
+            /* On mobile, we handle visibility via JS */
+            .login-card-split {
+                flex-direction: column;
+                display: none; /* Hidden initially, controlled by JS */
+            }
+            .vertical-divider { display: none; } /* No divider needed when showing one panel */
+            .login-panel { padding: 1.5rem; display: none; /* Hidden initially */ }
+
+            #mobile-login-selection { display: flex; }
+
+            .back-to-select-btn { display: flex; }
         }
 
         /* --- CHAT SCREEN --- */
@@ -276,7 +327,7 @@
         /* --- UPDATED: TIGHTER SPACING --- */
         #messages-container { 
             flex: 1; overflow-y: auto; 
-            padding: 8px 15px 0 15px; /* Minimized Padding */
+            padding: 8px 10px 0 10px; /* Balanced Padding */
             background: transparent; 
             display: flex; flex-direction: column; 
             gap: 2px; /* Minimized Gap */
@@ -291,7 +342,7 @@
         .message-wrapper {
             width: 100%; display: flex; flex-direction: column; position: relative;
             margin-bottom: 6px; /* Slightly more breathing room */
-            padding: 0 10px;
+            padding: 0 5px; /* Reduced wrapper padding to allow wider bubbles */
         }
 
         .message-row { display: flex; align-items: flex-end; gap: 8px; max-width: 100%; }
@@ -304,38 +355,56 @@
         }
         .msg-avatar img { width: 100%; height: 100%; object-fit: cover; }
 
+        /* --- FIX 1: CAP WIDTH FOR RECEIVER (GREY) --- */
         .msg-content { 
-            display: flex; flex-direction: column; max-width: 75%; position: relative; 
+            display: flex; 
+            flex-direction: column; 
+            max-width: 70%; /* STRICTLY 70% */
+            position: relative;
             align-items: flex-start; 
+            min-width: 0; 
+        }
+
+        /* --- FIX 2: CAP WIDTH FOR SENDER (ORANGE) --- */
+        /* Since sender bubble is direct child of wrapper in JS logic */
+        .message-wrapper > .message {
+            max-width: 70%; /* STRICTLY 70% */
         }
 
         /* The actual bubble */
         .message { 
-            padding: 10px 14px; 
+            padding: 8px 12px;
             border-radius: 20px; 
             font-size: 0.95rem; line-height: 1.4;
             position: relative; z-index: 11; 
             box-shadow: 0 1px 2px rgba(0,0,0,0.05);
             min-width: 80px; /* Ensure space for header */
+            word-wrap: break-word; word-break: break-word; /* Prevent text overflow */
+            user-select: text; 
+            -webkit-user-select: text;
+            cursor: auto;
+            transition: transform 0.1s linear; /* Smooth drag */
+            touch-action: pan-y; /* Allow vertical scroll, handle horizontal in JS */
+            
+            /* UPDATED FOR LONG PRESS TO REACT */
+            -webkit-touch-callout: none; /* Disable native callout menu on iOS */
         }
         
         /* --- DELETED MESSAGE (BUBBLE STYLE) --- */
         .message.deleted-state {
             font-style: italic;
-            background: rgba(0,0,0,0.05) !important;
-            color: var(--text-secondary) !important;
-            border: 1px solid rgba(0,0,0,0.1);
-            box-shadow: none;
+            background: rgba(0,0,0,0.08) !important;
+            color: rgba(0,0,0,0.6) !important;
+            /* removed border/box-shadow override to keep bubble look */
             display: flex; align-items: center; gap: 6px;
+            white-space: nowrap; /* Force single line */
+            padding: 12px 20px !important; /* Bigger padding for deleted msg */
         }
         
         body.dark-mode .message.deleted-state {
-            background: rgba(255,255,255,0.05) !important;
-            border-color: rgba(255,255,255,0.1);
+            background: rgba(255,255,255,0.08) !important;
             color: #aaa !important;
         }
-
-        /* Removed pill style as we are moving to bubble style */
 
         /* Header inside the bubble (Name • Time) */
         .msg-header-inside {
@@ -394,14 +463,50 @@
         .message-wrapper > .reaction-display-bubble { right: 0; } 
         .msg-content > .reaction-display-bubble { right: 0; left: auto; } 
 
+        /* --- FIX 2: REPLY BLOCK STYLING & TEXT SIZE --- */
         .reply-quote-block {
-            background: rgba(0,0,0,0.05); border-left: 3px solid var(--primary);
-            padding: 6px 10px; border-radius: 6px; margin-bottom: 6px; font-size: 0.8rem; cursor: pointer; opacity: 0.9;
+            background: rgba(0,0,0,0.05); 
+            border-left: 3px solid var(--primary);
+            padding: 6px 10px; 
+            border-radius: 6px; 
+            margin-bottom: 6px; 
+            cursor: pointer; 
+            opacity: 0.9;
             color: var(--text-color);
+            width: 100%; /* Ensure it fills the available bubble space */
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            font-size: 0.8rem;
+        }
+
+        .reply-quote-text {
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            font-size: 0.75rem !important; /* Force fixed size */
+            line-height: 1.2;
+            display: block;
+            width: 100%; /* Force width constraints */
         }
         body.dark-mode .reply-quote-block { background: rgba(255,255,255,0.08); }
         .my-message .reply-quote-block { background: rgba(255,255,255,0.2); border-color: white; color: white; }
-        .reply-quote-name { font-weight: 700; font-size: 0.75rem; margin-bottom: 2px; }
+        .reply-quote-name { 
+            font-weight: 700; 
+            font-size: 0.75rem; 
+            margin-bottom: 2px; 
+        }
+
+        /* Visual cue icon behind the message when swiping */
+        .swipe-reply-icon {
+            position: absolute;
+            left: -30px;
+            top: 50%;
+            transform: translateY(-50%) scale(0);
+            color: var(--text-secondary);
+            transition: transform 0.2s;
+            z-index: 0;
+        }
+        .my-message ~ .swipe-reply-icon { display: none; } /* Don't show on own messages usually */
+
 
         .admin-delete-btn {
             background: #ff4757; color: white; border: none; border-radius: 50%;
@@ -418,10 +523,29 @@
             animation: fadeIn 0.3s ease;
         }
         .system-message {
-            font-size: 0.75rem; color: var(--text-secondary); background: rgba(0,0,0,0.05);
+            font-size: 0.75rem; color: var(--text-secondary);
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
             padding: 4px 12px; border-radius: 20px; font-weight: 500;
+            border: 1px solid rgba(255,255,255,0.2);
         }
-        body.dark-mode .system-message { background: rgba(255,255,255,0.1); color: #bbb; }
+        body.dark-mode .system-message {
+            background: rgba(0,0,0,0.3);
+            color: #bbb;
+            border-color: rgba(255,255,255,0.05);
+        }
+
+        /* --- WELCOME MESSAGE --- */
+        .welcome-message {
+            border: 1px solid #ffd700 !important;
+            background: linear-gradient(135deg, #fff5e6 0%, #fff 100%) !important;
+            color: #333 !important;
+        }
+        body.dark-mode .welcome-message {
+            background: linear-gradient(135deg, #4b3d20 0%, #1a1a1a 100%) !important;
+            color: #ffd700 !important;
+            border-color: #bfa100 !important;
+        }
 
         /* --- SCROLL DOWN BUTTON --- */
         .scroll-bottom-btn {
@@ -472,7 +596,7 @@
         .input-area input::placeholder { color: var(--text-secondary); opacity: 0.7; }
         .input-area input:focus { 
             border-color: var(--primary); background: rgba(255,255,255,0.9); 
-            box-shadow: 0 4px 15px rgba(255, 102, 0, 0.1);
+            box-shadow: 0 4px 15px rgba(255, 102, 0, 0.15);
         }
         body.dark-mode .input-area input:focus { background: rgba(255,255,255,0.15); }
         
@@ -579,6 +703,10 @@
             .ai-trigger, .emoji-trigger { width: 38px; height: 38px; }
             .input-wrapper.typing .send-btn { width: 38px; height: 38px; }
             .input-area input { font-size: 16px; padding: 10px 12px; } 
+
+            /* Optimization for replies on mobile */
+            .reply-quote-block { font-size: 0.75rem; padding: 4px 8px; }
+            .reply-quote-text { font-size: 0.75rem; }
         }
 
         /* --- SAFARI / iOS SPECIFIC FIXES --- */
@@ -673,9 +801,24 @@
                 <h1 style="font-size: 1.8rem; font-weight: 700; color: white; margin-bottom: 5px; text-shadow: 0 2px 10px rgba(0,0,0,0.2);">Incognito Chat</h1>
             </div>
 
-            <div class="login-card-split">
-                <!-- LEFT: GUEST LOGIN -->
-                <div class="login-panel left-panel">
+            <div id="mobile-login-selection">
+                <div class="mobile-select-btn" onclick="showMobilePanel('guest')">
+                    <i data-lucide="user" style="width: 32px; height: 32px; color: var(--primary);"></i>
+                    <h3>Guest Login</h3>
+                    <p>Anonymous • Quick Access</p>
+                </div>
+                <div class="mobile-select-btn" onclick="showMobilePanel('member')">
+                    <i data-lucide="shield-check" style="width: 32px; height: 32px; color: #2ecc71;"></i>
+                    <h3>Member Login</h3>
+                    <p>Secure • Save History</p>
+                </div>
+            </div>
+
+            <div class="login-card-split" id="login-card-split-container">
+                <div class="login-panel left-panel" id="panel-guest">
+                    <button class="back-to-select-btn" onclick="showMobileSelection()">
+                        <i data-lucide="arrow-left" style="width:16px;"></i> Back
+                    </button>
                     <h2>Quick Join</h2>
                     <p>Enter a secret name to join anonymously</p>
 
@@ -698,8 +841,10 @@
 
                 <div class="vertical-divider"></div>
 
-                <!-- RIGHT: MEMBER LOGIN -->
-                <div class="login-panel right-panel">
+                <div class="login-panel right-panel" id="panel-member">
+                    <button class="back-to-select-btn" onclick="showMobileSelection()">
+                        <i data-lucide="arrow-left" style="width:16px;"></i> Back
+                    </button>
                     <h2>Member Login</h2>
                     <p>Secure your identity & save history</p>
 
@@ -1079,6 +1224,15 @@
             const isDark = document.body.classList.contains('dark-mode');
             localStorage.setItem('theme', isDark ? 'dark' : 'light');
             updateThemeIcon(isDark);
+            updateMetaThemeColor(isDark);
+        }
+
+        function updateMetaThemeColor(isDark) {
+            const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+            // #0f0c29 is the start of the dark gradient, #ff9966 is light
+            if(metaThemeColor) {
+                metaThemeColor.setAttribute('content', isDark ? '#0f0c29' : '#ff9966');
+            }
         }
 
         function updateThemeIcon(isDark) {
@@ -1106,6 +1260,7 @@
         }
 
         initTheme();
+        updateMetaThemeColor(document.body.classList.contains('dark-mode'));
         initAvatar();
         initFirebase();
         initEmojiPicker();
@@ -1300,22 +1455,22 @@
                     const data = snapshot.val();
                     const now = Date.now();
                     if (data.reservedUntil && data.reservedUntil > now) {
-                        alert(`The name "${rawName}" is reserved by a member. Please choose another.`);
+                        alert(`The name "${rawName}" is reserved for 7 days. Please choose another.`);
                         return;
                     }
                 }
                 // Also check restricted names for Admin
                 if (RESTRICTED_NAMES.includes(rawName.toLowerCase()) && rawName.toLowerCase() !== 'naimur rahman') {
-                     // Allow admin to bypass if they know the password (legacy check or manual override)
-                     // But strictly speaking, Admin should use Member Login now.
-                     // We'll keep the prompt for backward compatibility or direct admin access
-                     const password = prompt(`The username "${rawName}" is restricted. Enter Admin Password:`);
-                     if (password !== ADMIN_PASSWORD) { alert("Access Denied."); return; }
+                      // Allow admin to bypass if they know the password (legacy check or manual override)
+                      // But strictly speaking, Admin should use Member Login now.
+                      // We'll keep the prompt for backward compatibility or direct admin access
+                      const password = prompt(`The username "${rawName}" is restricted. Enter Admin Password:`);
+                      if (password !== ADMIN_PASSWORD) { alert("Access Denied."); return; }
                 } else if (rawName.toLowerCase() === 'naimur rahman') {
-                     // Force admin to use member login ideally, but let's see.
-                     // Let's redirect them or just ask for password here too.
-                     const password = prompt("Admin Login: Enter Password");
-                     if (password !== ADMIN_PASSWORD) { alert("Access Denied."); return; }
+                      // Force admin to use member login ideally, but let's see.
+                      // Let's redirect them or just ask for password here too.
+                      const password = prompt("Admin Login: Enter Password");
+                      if (password !== ADMIN_PASSWORD) { alert("Access Denied."); return; }
                 }
 
                 completeLogin(rawName);
@@ -1465,9 +1620,7 @@
             avatarDiv.innerHTML = '<div style="background:#ffd700; width:100%; height:100%; display:flex; align-items:center; justify-content:center; color:white; font-weight:bold;">N</div>';
 
             const messageBubble = document.createElement('div');
-            messageBubble.classList.add('message', 'other-message');
-            messageBubble.style.border = "1px solid #ffd700";
-            messageBubble.style.background = "linear-gradient(135deg, #fff5e6 0%, #fff 100%)";
+            messageBubble.classList.add('message', 'other-message', 'welcome-message');
 
             const headerDiv = document.createElement('div');
             headerDiv.className = 'msg-header-inside';
@@ -1540,10 +1693,10 @@
             - Creator -> Naimur Rahman (CSE 242, UIU).
             - If topic is about cgpa/gpa down -> Tell about Naimur Rahman's CGPA Calculator.
                 Features-> Calculate trimester GPA and updated CGPA using your course list and grades.
-                            Recalculate results for retaken courses by entering old and new grades.
-                            Use a Target CGPA Planner to see what GPA you need next trimester to reach a goal CGPA.
-                            Track course marks through a Course Grade Calculator.
-                            Monitor your completed and remaining credits with a built-in Credit Tracker.
+                           Recalculate results for retaken courses by entering old and new grades.
+                           Use a Target CGPA Planner to see what GPA you need next trimester to reach a goal CGPA.
+                           Track course marks through a Course Grade Calculator.
+                           Monitor your completed and remaining credits with a built-in Credit Tracker.
             
             ${chatHistory}
             
@@ -1705,7 +1858,6 @@
 
                 const msgEl = document.getElementById(`msg-${msgId}`);
                 if (msgEl) {
-                    const bubble = msgEl.querySelector('.message');
                     // We simply re-render to handle state changes cleanly
                     displayMessage(msgId, data.username, data.text, data.timestamp, data.senderId, data.isDeleted, data.replyTo, data.imageURL, data.avatar);
                 }
@@ -1737,17 +1889,19 @@
 
             const messageBubble = document.createElement('div');
             messageBubble.classList.add('message');
+            
+            // PREVENT CONTEXT MENU (Native long press menu)
+            messageBubble.addEventListener('contextmenu', (e) => { e.preventDefault(); });
 
             if (isDeleted) {
                 messageBubble.classList.add('deleted-state');
-                if (isMyMessage) messageBubble.style.alignSelf = 'flex-end';
-                else messageBubble.classList.add('other-message');
-            } else {
-                if (isBot) messageBubble.classList.add('other-message', 'ai-message');
-                else messageBubble.classList.add(isMyMessage ? 'my-message' : 'other-message');
-
-                if (isNaimur && !isBot) messageBubble.style.border = "1px solid #ffd700";
             }
+
+            // Apply standard classes even if deleted, so it keeps the bubble shape/color
+            if (isBot) messageBubble.classList.add('other-message', 'ai-message');
+            else messageBubble.classList.add(isMyMessage ? 'my-message' : 'other-message');
+
+            if (isNaimur && !isBot) messageBubble.style.border = "1px solid #ffd700";
 
             const headerDiv = document.createElement('div');
             headerDiv.className = 'msg-header-inside';
@@ -1767,11 +1921,11 @@
                 replyBlock.className = 'reply-quote-block';
                 replyBlock.innerHTML = `
                     <div class="reply-quote-name">${replyToData.username}</div>
-                    <div style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${replyToData.text}</div>
+                    <div class="reply-quote-text">${replyToData.text}</div>
                 `;
                 replyBlock.onclick = () => {
-                     const originalMsg = document.getElementById(`msg-${replyToData.id}`);
-                     if(originalMsg) originalMsg.scrollIntoView({behavior: 'smooth', block: 'center'});
+                      const originalMsg = document.getElementById(`msg-${replyToData.id}`);
+                      if(originalMsg) originalMsg.scrollIntoView({behavior: 'smooth', block: 'center'});
                 };
                 messageBubble.appendChild(replyBlock);
             }
@@ -1838,27 +1992,8 @@
 
             messageBubble.addEventListener('dblclick', (e) => showReactionMenu(e, msgId, wrapper));
             
-            let touchStartX = 0;
-            let currentX = 0;
-            messageBubble.addEventListener('touchstart', (e) => {
-                touchStartX = e.touches[0].clientX;
-                messageBubble.style.transition = 'none';
-            }, {passive: true});
-            messageBubble.addEventListener('touchmove', (e) => {
-                currentX = e.touches[0].clientX;
-                const diff = currentX - touchStartX;
-                if (diff > 0 && diff < 150) {
-                    messageBubble.style.transform = `translateX(${diff}px)`;
-                }
-            }, {passive: true});
-            messageBubble.addEventListener('touchend', (e) => {
-                messageBubble.style.transition = 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
-                messageBubble.style.transform = 'translateX(0)';
-                if (currentX - touchStartX > 50) {
-                    initiateReply(msgId, user, text);
-                }
-                touchStartX = 0; currentX = 0;
-            });
+            // --- ENABLE UNIFIED SWIPE TO REPLY (PC & MOBILE) ---
+            enableSwipeToReply(messageBubble, msgId, cleanUser, text, wrapper);
 
             if (existingMsg) {
                 existingMsg.replaceWith(wrapper);
@@ -1870,6 +2005,133 @@
             database.ref(`messages/${msgId}/reactions`).once('value', (snap) => {
                 if(snap.exists()) updateReactions(msgId, snap.val());
             });
+        }
+
+        // --- UPDATED UNIFIED SWIPE & LONG PRESS FUNCTION ---
+        function enableSwipeToReply(element, msgId, user, text, wrapper) {
+            let startX = 0;
+            let startY = 0; // Track vertical position to detect scrolling
+            let currentX = 0;
+            let isDragging = false;
+            let longPressTimer = null; // Variable for the timer
+            const threshold = 60; // Distance to trigger reply
+
+            // Create Reply Icon visual
+            let replyIcon = wrapper.querySelector('.swipe-reply-icon');
+            if (!replyIcon) {
+                replyIcon = document.createElement('div');
+                replyIcon.className = 'swipe-reply-icon';
+                replyIcon.innerHTML = '<i data-lucide="reply" style="width:20px;"></i>';
+                wrapper.style.position = 'relative';
+                wrapper.appendChild(replyIcon);
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+            }
+
+            // --- TOUCH EVENTS (Mobile) ---
+            element.addEventListener('touchstart', (e) => {
+                startX = e.touches[0].clientX;
+                startY = e.touches[0].clientY; // Capture Y to check for scroll
+                isDragging = true;
+                element.style.transition = 'none';
+
+                // --- 1. START LONG PRESS TIMER ---
+                longPressTimer = setTimeout(() => {
+                    // If this runs, it means user held for 600ms without moving
+                    isDragging = false; // Stop swipe logic
+                    if (navigator.vibrate) navigator.vibrate(50); // Haptic feedback
+                    showReactionMenu(e, msgId, wrapper); // Trigger your existing menu
+                }, 600); // 600ms hold time
+
+            }, { passive: true });
+
+            element.addEventListener('touchmove', (e) => {
+                if (!isDragging) return;
+                
+                currentX = e.touches[0].clientX;
+                let currentY = e.touches[0].clientY;
+                const diffX = currentX - startX;
+                const diffY = Math.abs(currentY - startY);
+
+                // --- 2. CANCEL TIMER IF MOVED ---
+                // If user moves finger > 10px (swiping or scrolling), cancel hold
+                if (Math.abs(diffX) > 10 || diffY > 10) {
+                    clearTimeout(longPressTimer);
+                    longPressTimer = null;
+                }
+
+                // Normal Swipe Logic
+                // Only allow dragging to the right and ensure it's not a vertical scroll
+                if (diffX > 0 && diffX < 150 && diffY < 20) {
+                    element.style.transform = `translateX(${diffX}px)`;
+                    
+                    if(diffX > threshold) {
+                        replyIcon.style.transform = 'translateY(-50%) scale(1.2)';
+                        replyIcon.style.color = 'var(--primary)';
+                    } else {
+                        replyIcon.style.transform = `translateY(-50%) scale(${diffX/threshold})`;
+                        replyIcon.style.color = 'var(--text-secondary)';
+                    }
+                }
+            }, { passive: true });
+
+            element.addEventListener('touchend', (e) => {
+                // --- 3. CLEAR TIMER ON RELEASE ---
+                if (longPressTimer) {
+                    clearTimeout(longPressTimer);
+                    longPressTimer = null;
+                }
+                finishDrag();
+            });
+
+            // --- MOUSE EVENTS (PC) ---
+            element.addEventListener('mousedown', (e) => {
+                startX = e.clientX;
+                isDragging = true;
+                element.style.transition = 'none';
+            });
+
+            window.addEventListener('mousemove', (e) => {
+                if (!isDragging) return;
+                currentX = e.clientX;
+                const diff = currentX - startX;
+
+                if (diff > 0 && diff < 150) {
+                    e.preventDefault();
+                    element.style.transform = `translateX(${diff}px)`;
+                    
+                    if(diff > threshold) {
+                        replyIcon.style.transform = 'translateY(-50%) scale(1.2)';
+                        replyIcon.style.color = 'var(--primary)';
+                    } else {
+                        replyIcon.style.transform = `translateY(-50%) scale(${diff/threshold})`;
+                        replyIcon.style.color = 'var(--text-secondary)';
+                    }
+                }
+            });
+
+            window.addEventListener('mouseup', (e) => {
+                if (isDragging) finishDrag();
+            });
+
+            function finishDrag() {
+                if (!isDragging) return;
+                isDragging = false;
+                
+                const diff = currentX - startX;
+                
+                element.style.transition = 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+                element.style.transform = 'translateX(0)';
+                
+                replyIcon.style.transform = 'translateY(-50%) scale(0)';
+
+                if (diff > threshold) {
+                    if (navigator.vibrate) navigator.vibrate(50);
+                    initiateReply(msgId, user, text);
+                }
+                
+                startX = 0;
+                currentX = 0;
+            }
         }
 
         function initiateReply(msgId, name, text) {
@@ -1981,6 +2243,33 @@
             if(isAtBottom || force) {
                 messagesContainer.scrollTop = messagesContainer.scrollHeight; 
             }
+        }
+
+        // --- MOBILE LOGIN NAVIGATION ---
+        function showMobilePanel(type) {
+            const selection = document.getElementById('mobile-login-selection');
+            const container = document.getElementById('login-card-split-container');
+            const guestPanel = document.getElementById('panel-guest');
+            const memberPanel = document.getElementById('panel-member');
+
+            selection.style.display = 'none';
+            container.style.display = 'flex'; // Enable the container
+
+            if(type === 'guest') {
+                guestPanel.style.display = 'flex';
+                memberPanel.style.display = 'none';
+            } else {
+                guestPanel.style.display = 'none';
+                memberPanel.style.display = 'flex';
+            }
+        }
+
+        function showMobileSelection() {
+            const selection = document.getElementById('mobile-login-selection');
+            const container = document.getElementById('login-card-split-container');
+
+            selection.style.display = 'flex';
+            container.style.display = 'none';
         }
     </script>
 </body>
