@@ -327,7 +327,7 @@
         /* --- UPDATED: TIGHTER SPACING --- */
         #messages-container { 
             flex: 1; overflow-y: auto; 
-            padding: 8px 15px 0 15px; /* Minimized Padding */
+            padding: 8px 5px 0 5px; /* Minimized Padding Further */
             background: transparent; 
             display: flex; flex-direction: column; 
             gap: 2px; /* Minimized Gap */
@@ -342,7 +342,7 @@
         .message-wrapper {
             width: 100%; display: flex; flex-direction: column; position: relative;
             margin-bottom: 6px; /* Slightly more breathing room */
-            padding: 0 10px;
+            padding: 0 5px; /* Reduced wrapper padding to allow wider bubbles */
         }
 
         .message-row { display: flex; align-items: flex-end; gap: 8px; max-width: 100%; }
@@ -356,18 +356,19 @@
         .msg-avatar img { width: 100%; height: 100%; object-fit: cover; }
 
         .msg-content { 
-            display: flex; flex-direction: column; max-width: 75%; position: relative; 
+            display: flex; flex-direction: column; max-width: 85%; position: relative;
             align-items: flex-start; 
         }
 
         /* The actual bubble */
         .message { 
-            padding: 10px 14px; 
+            padding: 8px 12px;
             border-radius: 20px; 
             font-size: 0.95rem; line-height: 1.4;
             position: relative; z-index: 11; 
             box-shadow: 0 1px 2px rgba(0,0,0,0.05);
             min-width: 80px; /* Ensure space for header */
+            word-wrap: break-word; word-break: break-word; /* Prevent text overflow */
         }
         
         /* --- DELETED MESSAGE (BUBBLE STYLE) --- */
@@ -378,6 +379,8 @@
             border: 1px solid rgba(0,0,0,0.1);
             box-shadow: none;
             display: flex; align-items: center; gap: 6px;
+            white-space: nowrap; /* Force single line */
+            padding: 12px 20px !important; /* Bigger padding for deleted msg */
         }
         
         body.dark-mode .message.deleted-state {
@@ -447,7 +450,7 @@
 
         .reply-quote-block {
             background: rgba(0,0,0,0.05); border-left: 3px solid var(--primary);
-            padding: 6px 10px; border-radius: 6px; margin-bottom: 6px; font-size: 0.8rem; cursor: pointer; opacity: 0.9;
+            padding: 8px 12px; border-radius: 6px; margin-bottom: 6px; font-size: 0.8rem; cursor: pointer; opacity: 0.9;
             color: var(--text-color);
             max-width: 100%;
         }
