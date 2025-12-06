@@ -643,7 +643,7 @@
             width: 0; height: 0; margin: 0; opacity: 0; padding: 0;
             transform: scale(0.5); pointer-events: none;
         }
-        .input-wrapper.typing .emoji-trigger {
+        .input-wrapper.typing #image-btn {
             width: 0; height: 0; margin: 0; padding: 0; opacity: 0;
             pointer-events: none; transform: scale(0.5); 
         }
@@ -781,6 +781,10 @@
             <div id="avatar-upload-progress" class="hidden" style="margin: 10px 0; font-size: 0.8rem; font-weight: 600; color: var(--primary);">
                 Uploading... 0%
             </div>
+
+            <button id="remove-avatar-btn" class="secondary-btn" style="margin-bottom: 10px; color: #ff4757; border-color: rgba(255, 71, 87, 0.3);">
+                <i data-lucide="trash-2"></i> Remove Photo
+            </button>
 
             <button id="close-avatar-modal" class="secondary-btn">Close</button>
         </div>
@@ -1051,6 +1055,7 @@
         const avatarModal = document.getElementById('avatar-modal');
         const closeAvatarModalBtn = document.getElementById('close-avatar-modal');
         const chooseAvatarBtn = document.getElementById('choose-avatar-btn');
+        const removeAvatarBtn = document.getElementById('remove-avatar-btn');
         const avatarUploadInput = document.getElementById('avatar-upload-input');
         const avatarPreview = document.getElementById('avatar-preview');
         const avatarPlaceholder = document.getElementById('avatar-placeholder');
@@ -1282,6 +1287,34 @@
         if(chooseAvatarBtn && avatarUploadInput) {
             chooseAvatarBtn.addEventListener('click', () => avatarUploadInput.click());
             avatarUploadInput.addEventListener('change', handleAvatarUpload);
+        }
+
+        if(removeAvatarBtn) {
+            removeAvatarBtn.addEventListener('click', () => {
+                if(!confirm("Remove your profile photo?")) return;
+
+                myAvatar = null;
+                localStorage.removeItem('myAvatar');
+
+                updateHeaderAvatar();
+                updateAvatarPreview();
+
+                if (database && username) {
+                    const userKey = username.toLowerCase().replace(/[^a-z0-9]/g, '_');
+                    // Update active session
+                    database.ref('active_users/' + userKey + '/avatar').remove();
+
+                    // Update registered user data if applicable
+                    database.ref('registered_users/' + userKey).once('value', snap => {
+                        if(snap.exists()) {
+                            database.ref('registered_users/' + userKey + '/avatar').remove();
+                        }
+                    });
+                }
+
+                alert("Profile photo removed.");
+                avatarModal.classList.add('hidden');
+            });
         }
 
         // --- NEW LOGIN LISTENERS ---
@@ -2013,7 +2046,9 @@
             let startY = 0; // Track vertical position to detect scrolling
             let currentX = 0;
             let isDragging = false;
+            let hasMoved = false;
             let longPressTimer = null; // Variable for the timer
+            let lastTapTime = 0;
             const threshold = 60; // Distance to trigger reply
 
             // Create Reply Icon visual
@@ -2032,6 +2067,7 @@
                 startX = e.touches[0].clientX;
                 startY = e.touches[0].clientY; // Capture Y to check for scroll
                 isDragging = true;
+                hasMoved = false;
                 element.style.transition = 'none';
 
                 // --- 1. START LONG PRESS TIMER ---
@@ -2057,6 +2093,7 @@
                 if (Math.abs(diffX) > 10 || diffY > 10) {
                     clearTimeout(longPressTimer);
                     longPressTimer = null;
+                    hasMoved = true;
                 }
 
                 // Normal Swipe Logic
@@ -2080,6 +2117,16 @@
                     clearTimeout(longPressTimer);
                     longPressTimer = null;
                 }
+
+                // Double Tap Logic (Custom)
+                const currentTime = new Date().getTime();
+                const tapLength = currentTime - lastTapTime;
+                if (!hasMoved && tapLength < 300 && tapLength > 0) {
+                     if (navigator.vibrate) navigator.vibrate(50);
+                     showReactionMenu(e, msgId, wrapper);
+                }
+                lastTapTime = currentTime;
+
                 finishDrag();
             });
 
