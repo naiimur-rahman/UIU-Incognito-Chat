@@ -91,28 +91,52 @@
 
         .theme-toggle-container { position: absolute; top: 20px; right: 20px; z-index: 50; }
 
-        /* --- COMPACT LOGIN CARD --- */
-        .login-card {
+        /* --- SPLIT LOGIN CONTAINER --- */
+        .login-container {
+            width: 100%;
+            max-width: 900px; /* Wider for split view */
+            animation: popUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+            z-index: 10;
+        }
+
+        .login-card-split {
             background: rgba(255, 255, 255, 0.65);
             backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.6);
-            padding: 2rem 1.5rem; 
             border-radius: 24px;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
-            width: 100%; 
-            max-width: 340px; 
-            text-align: center;
-            animation: popUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+            display: flex;
+            overflow: hidden;
             position: relative;
         }
 
-        /* Shine Effect */
-        .login-card::before {
+        /* Shine Effect for Split Card */
+        .login-card-split::before {
             content: ''; position: absolute; top: 0; left: -50%; width: 100%; height: 100%;
             background: linear-gradient(to right, transparent, rgba(255,255,255,0.3), transparent);
             transform: skewX(-25deg); animation: shine 6s infinite; pointer-events: none;
         }
         @keyframes shine { 0% { left: -100%; } 20% { left: 200%; } 100% { left: 200%; } }
+
+        .login-panel {
+            flex: 1;
+            padding: 2.5rem 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            position: relative; z-index: 2;
+        }
+
+        .vertical-divider {
+            width: 1px;
+            background: rgba(0,0,0,0.1);
+            margin: 20px 0;
+        }
+
+        .login-panel h2 { font-size: 1.5rem; font-weight: 700; color: var(--text-color); margin-bottom: 5px; }
+        .login-panel p { font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 1.5rem; }
 
         .logo-area { margin-bottom: 1.2rem; position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; }
         .logo-icon { 
@@ -124,21 +148,19 @@
         }
         @keyframes floatLogo { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
 
-        .login-card h1 { font-size: 1.4rem; font-weight: 700; color: var(--text-color); margin-bottom: 4px; letter-spacing: -0.5px; }
-        .subtitle { font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1.5rem; font-weight: 400; }
-
-        .input-group { position: relative; margin-bottom: 1.2rem; z-index: 2; }
+        .input-group { position: relative; margin-bottom: 1.2rem; width: 100%; z-index: 2; }
         .input-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--primary); width: 18px; transition: 0.3s; }
         
-        .login-card input {
+        .login-panel input {
             width: 100%; 
             padding: 12px 12px 12px 40px; 
             border: 2px solid transparent; border-radius: 12px;
             background: rgba(255, 255, 255, 0.8); font-size: 0.95rem; font-weight: 500;
             transition: all 0.3s ease; color: var(--text-color); outline: none;
             -webkit-appearance: none; appearance: none;
+            margin-bottom: 10px;
         }
-        .login-card input:focus {
+        .login-panel input:focus {
             background: #fff; border-color: var(--primary); box-shadow: 0 8px 25px rgba(255, 102, 0, 0.15); transform: translateY(-2px);
         }
 
@@ -185,11 +207,18 @@
         .login-footer a { color: var(--text-color); font-weight: 700; text-decoration: none; pointer-events: auto; }
 
         /* Dark Mode Adjustments */
-        body.dark-mode .login-card { background: rgba(30, 30, 40, 0.65); border-color: rgba(255, 255, 255, 0.1); }
-        body.dark-mode .login-card input { background: rgba(0, 0, 0, 0.3); color: white; }
-        body.dark-mode .login-card input:focus { background: rgba(0, 0, 0, 0.5); }
+        body.dark-mode .login-card-split { background: rgba(30, 30, 40, 0.65); border-color: rgba(255, 255, 255, 0.1); }
+        body.dark-mode .login-panel input { background: rgba(0, 0, 0, 0.3); color: white; }
+        body.dark-mode .login-panel input:focus { background: rgba(0, 0, 0, 0.5); }
+        body.dark-mode .vertical-divider { background: rgba(255,255,255,0.1); }
         body.dark-mode .secondary-btn { background: rgba(0,0,0,0.2); border-color: rgba(255,255,255,0.1); color: #ccc; }
         body.dark-mode .secondary-btn:hover { background: rgba(255,255,255,0.05); color: white; border-color: var(--primary); }
+
+        @media (max-width: 768px) {
+            .login-card-split { flex-direction: column; }
+            .vertical-divider { width: 100%; height: 1px; margin: 0; }
+            .login-panel { padding: 1.5rem; }
+        }
 
         /* --- CHAT SCREEN --- */
         #chat-screen { 
@@ -291,13 +320,13 @@
         }
         
         /* --- DELETED MESSAGE (BUBBLE STYLE) --- */
-        /* It looks like a normal bubble but greyed out */
         .message.deleted-state {
             font-style: italic;
-            background: rgba(0,0,0,0.05) !important; /* Force neutral grey */
+            background: rgba(0,0,0,0.05) !important;
             color: var(--text-secondary) !important;
             border: 1px solid rgba(0,0,0,0.1);
             box-shadow: none;
+            display: flex; align-items: center; gap: 6px;
         }
         
         body.dark-mode .message.deleted-state {
@@ -306,33 +335,7 @@
             color: #aaa !important;
         }
 
-        /* --- DELETED MESSAGE PILL STYLE (FOR UN-BUBBLED) --- */
-        .deleted-message-row {
-            width: 100%;
-            display: flex;
-            margin: 5px 0;
-            padding: 0 15px; /* Align with other messages */
-        }
-        .deleted-right { justify-content: flex-end; }
-        .deleted-left { justify-content: flex-start; }
-
-        .deleted-message-pill {
-            font-size: 0.75rem;
-            color: var(--text-secondary);
-            font-style: italic;
-            background: rgba(0,0,0,0.04);
-            border: 1px solid rgba(0,0,0,0.05);
-            padding: 4px 10px; /* REDUCED PADDING */
-            border-radius: 50px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            max-width: fit-content;
-        }
-        body.dark-mode .deleted-message-pill {
-            background: rgba(255,255,255,0.05);
-            border-color: rgba(255,255,255,0.1);
-        }
+        /* Removed pill style as we are moving to bubble style */
 
         /* Header inside the bubble (Name • Time) */
         .msg-header-inside {
@@ -365,9 +368,9 @@
             color: #e4e6eb;
         }
 
-        /* --- BOT MESSAGE BLUE COLOR --- */
+        /* --- BOT MESSAGE PURPLE/LAVENDER COLOR --- */
         .message.ai-message {
-            background: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%) !important; /* Vibrant Blue */
+            background: linear-gradient(135deg, #8a7bff 0%, #ada2ff 100%) !important;
             color: white !important;
             border: none !important;
         }
@@ -662,31 +665,66 @@
             </button>
         </div>
         
-        <div class="login-card">
+        <div class="login-container">
             <div class="logo-area">
                 <div class="logo-icon">
                     <i data-lucide="message-circle" style="width: 32px; height: 32px;"></i>
                 </div>
-                <h1>Incognito Chat</h1>
-                <p class="subtitle">Join the UIU community as anonymous</p>
-            </div>
-            
-            <div class="input-group">
-                <input type="text" id="username-input" placeholder="Enter a secret name..." maxlength="15" autocomplete="off">
-                <i data-lucide="user" class="input-icon"></i>
+                <h1 style="font-size: 1.8rem; font-weight: 700; color: white; margin-bottom: 5px; text-shadow: 0 2px 10px rgba(0,0,0,0.2);">Incognito Chat</h1>
             </div>
 
-            <button id="join-btn" class="primary-btn">
-                <span>Start Chatting</span>
-                <i data-lucide="arrow-right"></i>
-            </button>
+            <div class="login-card-split">
+                <!-- LEFT: GUEST LOGIN -->
+                <div class="login-panel left-panel">
+                    <h2>Quick Join</h2>
+                    <p>Enter a secret name to join anonymously</p>
 
-            <div class="divider">OR</div>
+                    <div class="input-group">
+                        <input type="text" id="guest-username-input" placeholder="Secret Name..." maxlength="15" autocomplete="off">
+                        <i data-lucide="user" class="input-icon"></i>
+                    </div>
 
-            <a href="https://naiimur-rahman.github.io/UIU-CGPA-Calculator/" target="_blank" class="secondary-btn">
-                <i data-lucide="calculator" style="width: 18px;"></i> 
-                Calculate CGPA
-            </a>
+                    <button id="guest-join-btn" class="primary-btn">
+                        <span>Join as Guest</span>
+                        <i data-lucide="arrow-right"></i>
+                    </button>
+
+                    <div class="divider" style="width: 100%; margin-top: 1.5rem;">USEFUL LINKS</div>
+                    <a href="https://naiimur-rahman.github.io/UIU-CGPA-Calculator/" target="_blank" class="secondary-btn" style="margin-top: 0;">
+                        <i data-lucide="calculator" style="width: 18px;"></i>
+                        CGPA Calculator
+                    </a>
+                </div>
+
+                <div class="vertical-divider"></div>
+
+                <!-- RIGHT: MEMBER LOGIN -->
+                <div class="login-panel right-panel">
+                    <h2>Member Login</h2>
+                    <p>Secure your identity & save history</p>
+
+                    <div class="input-group">
+                        <input type="text" id="member-username-input" placeholder="Username" maxlength="15" autocomplete="off">
+                        <i data-lucide="user-check" class="input-icon"></i>
+                    </div>
+
+                    <div class="input-group">
+                        <input type="password" id="member-password-input" placeholder="Password" autocomplete="off">
+                        <i data-lucide="lock" class="input-icon"></i>
+                    </div>
+
+                    <button id="member-avatar-btn" class="secondary-btn" style="margin-bottom: 15px; margin-top: 0;">
+                        <i data-lucide="camera"></i> Upload Avatar
+                    </button>
+                    <input type="file" id="member-avatar-input" accept="image/*" class="hidden">
+                    <p id="member-avatar-status" style="font-size: 0.75rem; color: var(--primary); display: none;">Avatar Selected!</p>
+
+                    <button id="member-login-btn" class="primary-btn">
+                        <span>Login / Register</span>
+                        <i data-lucide="log-in"></i>
+                    </button>
+                </div>
+            </div>
         </div>
 
         <div class="login-footer">
@@ -829,8 +867,18 @@
         // --- 2. INITIALIZATION ---
         const loginScreen = document.getElementById('login-screen');
         const chatScreen = document.getElementById('chat-screen');
-        const usernameInput = document.getElementById('username-input');
-        const joinBtn = document.getElementById('join-btn');
+
+        // --- NEW LOGIN ELEMENTS ---
+        const guestUsernameInput = document.getElementById('guest-username-input');
+        const guestJoinBtn = document.getElementById('guest-join-btn');
+
+        const memberUsernameInput = document.getElementById('member-username-input');
+        const memberPasswordInput = document.getElementById('member-password-input');
+        const memberLoginBtn = document.getElementById('member-login-btn');
+        const memberAvatarBtn = document.getElementById('member-avatar-btn');
+        const memberAvatarInput = document.getElementById('member-avatar-input');
+        const memberAvatarStatus = document.getElementById('member-avatar-status');
+
         const activeUsersText = document.getElementById('active-users-text');
         const logoutBtn = document.getElementById('logout-btn');
         const messagesContainer = document.getElementById('messages-container');
@@ -872,6 +920,7 @@
         let currentReply = null;
         const MAX_MESSAGES = 50;
         let myAvatar = null; 
+        let pendingMemberAvatarFile = null;
         
         let isAtBottom = true; 
         const SCROLL_THRESHOLD = 150; 
@@ -1079,8 +1128,23 @@
             chooseAvatarBtn.addEventListener('click', () => avatarUploadInput.click());
             avatarUploadInput.addEventListener('change', handleAvatarUpload);
         }
-        if (joinBtn) joinBtn.addEventListener('click', joinChat);
-        if (usernameInput) usernameInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') joinChat(); });
+
+        // --- NEW LOGIN LISTENERS ---
+        if (guestJoinBtn) guestJoinBtn.addEventListener('click', joinAsGuest);
+        if (guestUsernameInput) guestUsernameInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') joinAsGuest(); });
+
+        if (memberLoginBtn) memberLoginBtn.addEventListener('click', loginAsMember);
+        if (memberUsernameInput) memberUsernameInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') memberPasswordInput.focus(); });
+        if (memberPasswordInput) memberPasswordInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') loginAsMember(); });
+
+        if (memberAvatarBtn) memberAvatarBtn.addEventListener('click', () => memberAvatarInput.click());
+        if (memberAvatarInput) memberAvatarInput.addEventListener('change', (e) => {
+            if (e.target.files && e.target.files[0]) {
+                pendingMemberAvatarFile = e.target.files[0];
+                memberAvatarStatus.style.display = 'block';
+                memberAvatarStatus.innerText = "Selected: " + pendingMemberAvatarFile.name;
+            }
+        });
         
         if (sendBtn) sendBtn.addEventListener('click', () => sendMessage());
         if (messageInput) messageInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
@@ -1223,37 +1287,132 @@
             }
         }
 
-        function joinChat() {
-            if (!database) { alert("Connecting to server... Please check your internet."); return; }
-            
-            const rawName = usernameInput.value.trim();
-            if (!rawName) { alert("Please enter your name."); return; }
+        function joinAsGuest() {
+            if (!database) { alert("Connecting to server..."); return; }
+            const rawName = guestUsernameInput.value.trim();
+            if (!rawName) { alert("Please enter a name."); return; }
             if (/[.#$\[\]]/.test(rawName)) { alert("Name cannot contain special characters."); return; }
 
-            if (RESTRICTED_NAMES.includes(rawName.toLowerCase())) {
-                const password = prompt(`The username "${rawName}" is reserved. Please enter the password:`);
-                if (!password) return; 
-                if (password !== ADMIN_PASSWORD) { alert("Access Denied: Incorrect Password."); return; }
-            }
-
+            // Check if name is reserved in 'registered_users'
             const userKey = rawName.toLowerCase().replace(/[^a-z0-9]/g, '_'); 
-            const userRef = database.ref('active_users/' + userKey);
-            
-            userRef.once('value', (snapshot) => {
+            database.ref('registered_users/' + userKey).once('value', (snapshot) => {
                 if (snapshot.exists()) {
-                    alert(`The name "${rawName}" is currently online! Please choose another.`);
+                    const data = snapshot.val();
+                    const now = Date.now();
+                    if (data.reservedUntil && data.reservedUntil > now) {
+                        alert(`The name "${rawName}" is reserved by a member. Please choose another.`);
+                        return;
+                    }
+                }
+                // Also check restricted names for Admin
+                if (RESTRICTED_NAMES.includes(rawName.toLowerCase()) && rawName.toLowerCase() !== 'naimur rahman') {
+                     // Allow admin to bypass if they know the password (legacy check or manual override)
+                     // But strictly speaking, Admin should use Member Login now.
+                     // We'll keep the prompt for backward compatibility or direct admin access
+                     const password = prompt(`The username "${rawName}" is restricted. Enter Admin Password:`);
+                     if (password !== ADMIN_PASSWORD) { alert("Access Denied."); return; }
+                } else if (rawName.toLowerCase() === 'naimur rahman') {
+                     // Force admin to use member login ideally, but let's see.
+                     // Let's redirect them or just ask for password here too.
+                     const password = prompt("Admin Login: Enter Password");
+                     if (password !== ADMIN_PASSWORD) { alert("Access Denied."); return; }
+                }
+
+                completeLogin(rawName);
+            });
+        }
+
+        async function loginAsMember() {
+            if (!database) { alert("Connecting to server..."); return; }
+            const rawName = memberUsernameInput.value.trim();
+            const password = memberPasswordInput.value.trim();
+            
+            if (!rawName) { alert("Please enter username."); return; }
+            if (!password) { alert("Please enter password."); return; }
+            if (/[.#$\[\]]/.test(rawName)) { alert("Username cannot contain special characters."); return; }
+
+            const userKey = rawName.toLowerCase().replace(/[^a-z0-9]/g, '_');
+            const userRef = database.ref('registered_users/' + userKey);
+
+            userRef.once('value', async (snapshot) => {
+                if (snapshot.exists()) {
+                    // Login
+                    const data = snapshot.val();
+                    if (data.password === password) {
+                        // Success
+                        myAvatar = data.avatar || null;
+                        if(myAvatar) localStorage.setItem('myAvatar', myAvatar);
+
+                        // Update reservation
+                        userRef.update({
+                            reservedUntil: Date.now() + (7 * 24 * 60 * 60 * 1000), // 7 Days
+                            lastSeen: firebase.database.ServerValue.TIMESTAMP
+                        });
+
+                        completeLogin(rawName);
+                    } else {
+                        alert("Incorrect Password!");
+                    }
                 } else {
-                    username = rawName;
+                    // Register
+                    if(confirm(`Username "${rawName}" not found. Create new account with this password?`)) {
+                        let uploadedAvatarUrl = null;
+
+                        if (pendingMemberAvatarFile) {
+                             memberLoginBtn.innerText = "Uploading...";
+                             memberLoginBtn.disabled = true;
+                             try {
+                                 uploadedAvatarUrl = await uploadToCloudinary(pendingMemberAvatarFile);
+                             } catch(err) {
+                                 alert("Avatar upload failed, continuing without avatar.");
+                             }
+                             memberLoginBtn.innerText = "Login / Register";
+                             memberLoginBtn.disabled = false;
+                        }
+
+                        const newData = {
+                            originalName: rawName,
+                            password: password,
+                            avatar: uploadedAvatarUrl,
+                            createdAt: firebase.database.ServerValue.TIMESTAMP,
+                            reservedUntil: Date.now() + (7 * 24 * 60 * 60 * 1000)
+                        };
+
+                        userRef.set(newData).then(() => {
+                            if(uploadedAvatarUrl) {
+                                myAvatar = uploadedAvatarUrl;
+                                localStorage.setItem('myAvatar', myAvatar);
+                            }
+                            completeLogin(rawName);
+                        });
+                    }
+                }
+            });
+        }
+
+        function completeLogin(finalName) {
+            const userKey = finalName.toLowerCase().replace(/[^a-z0-9]/g, '_');
+            const activeRef = database.ref('active_users/' + userKey);
+
+            activeRef.once('value', (snapshot) => {
+                if (snapshot.exists()) {
+                    alert(`The user "${finalName}" is already online in another session.`);
+                } else {
+                    username = finalName;
                     myUUID = generateUUID(); 
                     
-                    userRef.set({
+                    activeRef.set({
                         originalName: username, status: "online", avatar: myAvatar,
                         timestamp: firebase.database.ServerValue.TIMESTAMP
                     });
                     
-                    userRef.onDisconnect().remove();
+                    activeRef.onDisconnect().remove();
+
+                    // UI Switch
                     loginScreen.classList.add('hidden');
                     chatScreen.classList.remove('hidden');
+
+                    updateHeaderAvatar();
                     if (typeof lucide !== 'undefined') lucide.createIcons();
                     
                     loadMessages();
@@ -1280,8 +1439,57 @@
                              displaySystemMessage(`${u.originalName} left`);
                         }
                     });
+
+                    // INJECT WELCOME MESSAGE (Local Only)
+                    setTimeout(() => {
+                        displayWelcomeMessage();
+                    }, 1000);
                 }
             });
+        }
+
+        function displayWelcomeMessage() {
+            // Fake local message from Admin
+            const welcomeId = 'welcome-' + Date.now();
+            const wrapper = document.createElement('div');
+            wrapper.classList.add('message-wrapper');
+            wrapper.id = `msg-${welcomeId}`;
+
+            // It acts like a received message
+            wrapper.style.alignItems = 'flex-start';
+            const row = document.createElement('div');
+            row.className = 'message-row';
+
+            const avatarDiv = document.createElement('div');
+            avatarDiv.className = 'msg-avatar';
+            avatarDiv.innerHTML = '<div style="background:#ffd700; width:100%; height:100%; display:flex; align-items:center; justify-content:center; color:white; font-weight:bold;">N</div>';
+
+            const messageBubble = document.createElement('div');
+            messageBubble.classList.add('message', 'other-message');
+            messageBubble.style.border = "1px solid #ffd700";
+            messageBubble.style.background = "linear-gradient(135deg, #fff5e6 0%, #fff 100%)";
+
+            const headerDiv = document.createElement('div');
+            headerDiv.className = 'msg-header-inside';
+            headerDiv.innerHTML = `Naimur Rahman <span style="color:#1da1f2">✔</span> &bull; Now`;
+
+            const textDiv = document.createElement('div');
+            textDiv.className = 'text';
+            textDiv.innerHTML = `Welcome back, <b>${username}</b>! <br>Hope you have a great time here. ❤️`;
+
+            messageBubble.appendChild(headerDiv);
+            messageBubble.appendChild(textDiv);
+
+            const contentCol = document.createElement('div');
+            contentCol.className = 'msg-content';
+            contentCol.appendChild(messageBubble);
+
+            row.appendChild(avatarDiv);
+            row.appendChild(contentCol);
+            wrapper.appendChild(row);
+
+            messagesContainer.appendChild(wrapper);
+            scrollToBottom();
         }
 
         function displaySystemMessage(text) {
@@ -1463,10 +1671,15 @@
         }
 
         function deleteMessage(msgId) {
+            if(username.toLowerCase() !== 'naimur rahman') {
+                alert("Only Admin Naimur Rahman can delete messages.");
+                return;
+            }
             if(confirm("Delete this message permanently?")) {
                 database.ref('messages/' + msgId).update({
                     text: "🚫 Admin deleted message", isDeleted: true,
-                    replyTo: null, username: "Unknown" 
+                    replyTo: null,
+                    // We keep username so the bubble stays on the correct side
                 }).catch(error => alert("Error: " + error.message));
             }
         }
@@ -1501,7 +1714,6 @@
 
         function displayMessage(msgId, user, text, timestamp, senderId, isDeleted, replyToData, imageURL, senderAvatar) {
             const existingMsg = document.getElementById(`msg-${msgId}`);
-            if (existingMsg) existingMsg.remove();
 
             if (isDeleted) {
                 text = "🚫 Admin deleted message";
@@ -1516,26 +1728,6 @@
             const isNaimur = lowerUser.includes('naimur rahman');
             const iAmAdmin = username.toLowerCase().includes('naimur rahman');
 
-            // 1. Handle DELETED MESSAGE FIRST (Single Line Centered Pill)
-            if (isDeleted) {
-                const row = document.createElement('div');
-                row.className = 'deleted-message-row';
-                row.id = `msg-${msgId}`;
-                
-                if (isMyMessage) row.classList.add('deleted-right');
-                else row.classList.add('deleted-left');
-
-                row.innerHTML = `
-                    <div class="deleted-message-pill">
-                        <i data-lucide="trash-2" style="width:12px;"></i> 
-                        <span>Message unsent</span>
-                    </div>`;
-                
-                messagesContainer.appendChild(row);
-                if (typeof lucide !== 'undefined') lucide.createIcons();
-                return; // Stop here, don't render standard bubble
-            }
-
             // 2. STANDARD MESSAGE LOGIC
             const wrapper = document.createElement('div');
             wrapper.classList.add('message-wrapper');
@@ -1545,11 +1737,17 @@
 
             const messageBubble = document.createElement('div');
             messageBubble.classList.add('message');
-            
-            if (isBot) messageBubble.classList.add('other-message', 'ai-message');
-            else messageBubble.classList.add(isMyMessage ? 'my-message' : 'other-message');
-            
-            if (isNaimur && !isBot) messageBubble.style.border = "1px solid #ffd700"; 
+
+            if (isDeleted) {
+                messageBubble.classList.add('deleted-state');
+                if (isMyMessage) messageBubble.style.alignSelf = 'flex-end';
+                else messageBubble.classList.add('other-message');
+            } else {
+                if (isBot) messageBubble.classList.add('other-message', 'ai-message');
+                else messageBubble.classList.add(isMyMessage ? 'my-message' : 'other-message');
+
+                if (isNaimur && !isBot) messageBubble.style.border = "1px solid #ffd700";
+            }
 
             const headerDiv = document.createElement('div');
             headerDiv.className = 'msg-header-inside';
@@ -1662,7 +1860,11 @@
                 touchStartX = 0; currentX = 0;
             });
 
-            messagesContainer.appendChild(wrapper);
+            if (existingMsg) {
+                existingMsg.replaceWith(wrapper);
+            } else {
+                messagesContainer.appendChild(wrapper);
+            }
             if (typeof lucide !== 'undefined') lucide.createIcons();
 
             database.ref(`messages/${msgId}/reactions`).once('value', (snap) => {
