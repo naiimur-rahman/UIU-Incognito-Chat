@@ -373,15 +373,15 @@
         /* --- DELETED MESSAGE (BUBBLE STYLE) --- */
         .message.deleted-state {
             font-style: italic;
-            background: rgba(0,0,0,0.05) !important;
-            color: var(--text-secondary) !important;
+            background: rgba(0,0,0,0.08) !important;
+            color: rgba(0,0,0,0.6) !important;
             border: 1px solid rgba(0,0,0,0.1);
             box-shadow: none;
             display: flex; align-items: center; gap: 6px;
         }
         
         body.dark-mode .message.deleted-state {
-            background: rgba(255,255,255,0.05) !important;
+            background: rgba(255,255,255,0.08) !important;
             border-color: rgba(255,255,255,0.1);
             color: #aaa !important;
         }
@@ -449,6 +449,10 @@
             background: rgba(0,0,0,0.05); border-left: 3px solid var(--primary);
             padding: 6px 10px; border-radius: 6px; margin-bottom: 6px; font-size: 0.8rem; cursor: pointer; opacity: 0.9;
             color: var(--text-color);
+            max-width: 100%;
+        }
+        .reply-quote-text {
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
         body.dark-mode .reply-quote-block { background: rgba(255,255,255,0.08); }
         .my-message .reply-quote-block { background: rgba(255,255,255,0.2); border-color: white; color: white; }
@@ -649,6 +653,10 @@
             .ai-trigger, .emoji-trigger { width: 38px; height: 38px; }
             .input-wrapper.typing .send-btn { width: 38px; height: 38px; }
             .input-area input { font-size: 16px; padding: 10px 12px; } 
+
+            /* Optimization for replies on mobile */
+            .reply-quote-block { font-size: 0.75rem; padding: 4px 8px; }
+            .reply-quote-text { font-size: 0.75rem; }
         }
 
         /* --- SAFARI / iOS SPECIFIC FIXES --- */
@@ -1836,6 +1844,10 @@
             const messageBubble = document.createElement('div');
             messageBubble.classList.add('message');
 
+            if (isDeleted) {
+                messageBubble.classList.add('deleted-state');
+            }
+
             // Apply standard classes even if deleted, so it keeps the bubble shape/color
             if (isBot) messageBubble.classList.add('other-message', 'ai-message');
             else messageBubble.classList.add(isMyMessage ? 'my-message' : 'other-message');
@@ -1860,7 +1872,7 @@
                 replyBlock.className = 'reply-quote-block';
                 replyBlock.innerHTML = `
                     <div class="reply-quote-name">${replyToData.username}</div>
-                    <div style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${replyToData.text}</div>
+                    <div class="reply-quote-text">${replyToData.text}</div>
                 `;
                 replyBlock.onclick = () => {
                      const originalMsg = document.getElementById(`msg-${replyToData.id}`);
