@@ -10,8 +10,6 @@
     
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/appwrite@14.0.1"></script>
-
     <style>
         /* --- CSS VARIABLES --- */
         :root {
@@ -30,7 +28,7 @@
             --status-green: #2ecc71;
             --verified-blue: #1da1f2;
             --admin-gold: #ffd700;
-            --ai-color: #6c5ce7;
+            --ai-color: #007bff; /* Vibrant Blue for Bot */
             --pin-bg: rgba(255, 245, 230, 0.95);
         }
 
@@ -46,7 +44,7 @@
             --msg-other-bg: rgba(45, 45, 55, 0.95);
             --msg-other-text: #e0e0e0;
             --input-bg: rgba(40, 40, 50, 0.6);
-            --ai-color: #a29bfe;
+            --ai-color: #3eadcf; 
             --shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
             --pin-bg: rgba(45, 45, 58, 0.95);
         }
@@ -201,7 +199,8 @@
 
         .glass-header {
             background: var(--glass-bg); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
-            padding: 12px 18px; display: flex; justify-content: space-between; align-items: center;
+            padding: 8px 18px; /* Reduced Top Padding */
+            display: flex; justify-content: space-between; align-items: center;
             box-shadow: 0 4px 20px rgba(0,0,0,0.03); z-index: 20; flex-shrink: 0;
             border-bottom: 1px solid var(--glass-border);
         }
@@ -219,7 +218,8 @@
 
         #pinned-banner {
             background: var(--pin-bg); backdrop-filter: blur(12px);
-            border-bottom: 1px solid var(--glass-border); padding: 10px 18px;
+            border-bottom: 1px solid var(--glass-border); 
+            padding: 6px 18px; /* Reduced Pinned Padding */
             display: flex; justify-content: space-between; align-items: center;
             box-shadow: 0 4px 15px rgba(0,0,0,0.03); z-index: 18; cursor: pointer;
             animation: floatUp 0.3s ease;
@@ -244,113 +244,203 @@
         .welcome-watermark p { color: var(--text-secondary); font-size: 1rem; font-weight: 500; opacity: 0.8; }
         .welcome-watermark .hint { font-size: 0.8rem; margin-top: 8px; opacity: 0.6; }
 
+        /* --- UPDATED: TIGHTER SPACING --- */
         #messages-container { 
-            flex: 1; overflow-y: auto; padding: 15px; background: transparent; 
-            display: flex; flex-direction: column; gap: 15px; z-index: 10; 
+            flex: 1; overflow-y: auto; 
+            padding: 8px 15px 0 15px; /* Minimized Padding */
+            background: transparent; 
+            display: flex; flex-direction: column; 
+            gap: 2px; /* Minimized Gap */
+            z-index: 10; 
             scroll-behavior: smooth; overscroll-behavior-y: contain; overflow-x: hidden;
         }
         #messages-container::-webkit-scrollbar { width: 4px; }
         #messages-container::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 10px; }
         body.dark-mode #messages-container::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); }
 
+        /* --- UPDATED MESSAGE BUBBLE STYLES --- */
         .message-wrapper {
             width: 100%; display: flex; flex-direction: column; position: relative;
-            transition: transform 0.2s; margin-bottom: 12px;
+            margin-bottom: 6px; /* Slightly more breathing room */
+            padding: 0 10px;
         }
 
         .message-row { display: flex; align-items: flex-end; gap: 8px; max-width: 100%; }
 
+        /* Avatar styling */
         .msg-avatar {
-            width: 32px; height: 32px; border-radius: 50%; background: rgba(0,0,0,0.1);
-            flex-shrink: 0; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            display: flex; align-items: center; justify-content: center;
-            font-size: 1.2rem;
+            width: 28px; height: 28px; border-radius: 50%; 
+            flex-shrink: 0; overflow: hidden; 
+            margin-bottom: 5px; /* Align with bottom of bubble */
         }
         .msg-avatar img { width: 100%; height: 100%; object-fit: cover; }
-        
-        .msg-content { display: flex; flex-direction: column; max-width: 80%; }
 
-        .msg-name {
-            font-size: 0.7rem; color: var(--text-secondary); margin-left: 4px;
-            margin-bottom: 2px; opacity: 0.8; font-weight: 600;
+        .msg-content { 
+            display: flex; flex-direction: column; max-width: 75%; position: relative; 
+            align-items: flex-start; 
         }
 
+        /* The actual bubble */
         .message { 
-            padding: 10px 14px; border-radius: 18px; font-size: 0.95rem; line-height: 1.4;
-            position: relative; z-index: 11; user-select: text !important; touch-action: pan-y;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid rgba(255,255,255,0.1);
-            word-wrap: break-word;
+            padding: 10px 14px; 
+            border-radius: 20px; 
+            font-size: 0.95rem; line-height: 1.4;
+            position: relative; z-index: 11; 
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            min-width: 80px; /* Ensure space for header */
+        }
+        
+        /* --- DELETED MESSAGE (BUBBLE STYLE) --- */
+        /* It looks like a normal bubble but greyed out */
+        .message.deleted-state {
+            font-style: italic;
+            background: rgba(0,0,0,0.05) !important; /* Force neutral grey */
+            color: var(--text-secondary) !important;
+            border: 1px solid rgba(0,0,0,0.1);
+            box-shadow: none;
+        }
+        
+        body.dark-mode .message.deleted-state {
+            background: rgba(255,255,255,0.05) !important;
+            border-color: rgba(255,255,255,0.1);
+            color: #aaa !important;
         }
 
+        /* --- DELETED MESSAGE PILL STYLE (FOR UN-BUBBLED) --- */
+        .deleted-message-row {
+            width: 100%;
+            display: flex;
+            margin: 5px 0;
+            padding: 0 15px; /* Align with other messages */
+        }
+        .deleted-right { justify-content: flex-end; }
+        .deleted-left { justify-content: flex-start; }
+
+        .deleted-message-pill {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            font-style: italic;
+            background: rgba(0,0,0,0.04);
+            border: 1px solid rgba(0,0,0,0.05);
+            padding: 4px 10px; /* REDUCED PADDING */
+            border-radius: 50px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            max-width: fit-content;
+        }
+        body.dark-mode .deleted-message-pill {
+            background: rgba(255,255,255,0.05);
+            border-color: rgba(255,255,255,0.1);
+        }
+
+        /* Header inside the bubble (Name • Time) */
+        .msg-header-inside {
+            font-size: 0.7rem;
+            font-weight: 600;
+            margin-bottom: 4px;
+            opacity: 0.7;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            white-space: nowrap;
+        }
+
+        /* Color Schemes */
         .my-message { 
             align-self: flex-end; 
             background: linear-gradient(135deg, var(--primary) 0%, #ff8c00 100%); 
-            color: white; border-bottom-right-radius: 4px; 
-            animation: slideInRight 0.3s ease-out;
-            max-width: 85%;
+            color: white; 
+            border-bottom-right-radius: 4px; 
         }
         
+        /* Dark Mode / Others Message Style */
         .other-message { 
-            background: var(--msg-other-bg); backdrop-filter: blur(5px);
-            color: var(--msg-other-text); 
+            background: #f0f2f5; 
+            color: #050505; 
             border-bottom-left-radius: 4px; 
-            animation: slideInLeft 0.3s ease-out;
         }
-        
-        .message.ai-message {
-            background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%);
-            color: white; border: 1px solid rgba(255, 255, 255, 0.2);
-            box-shadow: 0 8px 25px rgba(108, 92, 231, 0.3);
+        body.dark-mode .other-message {
+            background: #262626; 
+            color: #e4e6eb;
         }
-        
-        .message.admin-special { border: 2px solid var(--admin-gold); box-shadow: 0 0 12px rgba(255, 215, 0, 0.4); }
-        .verified-badge { display: inline-flex; vertical-align: middle; margin-left: 4px; color: var(--verified-blue); }
 
-        .message.deleted-message {
-            background-color: rgba(0,0,0,0.05); color: #888; font-style: italic;
-            border: 1px solid rgba(0,0,0,0.1); box-shadow: none; user-select: none !important;
+        /* --- BOT MESSAGE BLUE COLOR --- */
+        .message.ai-message {
+            background: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%) !important; /* Vibrant Blue */
+            color: white !important;
+            border: none !important;
         }
-        body.dark-mode .message.deleted-message { background-color: rgba(255,255,255,0.05); color: #aaa; border-color: rgba(255,255,255,0.1); }
+
+        /* --- REACTIONS (FIXED TO RIGHT SIDE) --- */
+        .reaction-display-bubble {
+            position: absolute; 
+            bottom: -12px; 
+            right: 0; /* Force Right Alignment ALWAYS */
+            left: auto !important; /* Override any previous left: 0 */
+            background: white; border-radius: 12px; padding: 2px 6px; 
+            font-size: 0.7rem; box-shadow: 0 2px 5px rgba(0,0,0,0.1); 
+            display: flex; gap: 2px; align-items: center; z-index: 12; 
+            border: 2px solid var(--chat-bg); 
+            min-width: 20px; justify-content: center;
+        }
+        body.dark-mode .reaction-display-bubble { background: #3a3a4a; border-color: #0f0c29; color: white; }
+        
+        /* Positioning based on parent container context */
+        /* UPDATED: BOTH align right now */
+        .message-wrapper > .reaction-display-bubble { right: 0; } 
+        .msg-content > .reaction-display-bubble { right: 0; left: auto; } 
+
+        .reply-quote-block {
+            background: rgba(0,0,0,0.05); border-left: 3px solid var(--primary);
+            padding: 6px 10px; border-radius: 6px; margin-bottom: 6px; font-size: 0.8rem; cursor: pointer; opacity: 0.9;
+            color: var(--text-color);
+        }
+        body.dark-mode .reply-quote-block { background: rgba(255,255,255,0.08); }
+        .my-message .reply-quote-block { background: rgba(255,255,255,0.2); border-color: white; color: white; }
+        .reply-quote-name { font-weight: 700; font-size: 0.75rem; margin-bottom: 2px; }
 
         .admin-delete-btn {
-            position: absolute; top: 50%; transform: translateY(-50%);
             background: #ff4757; color: white; border: none; border-radius: 50%;
-            width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;
-            cursor: pointer; z-index: 15; font-size: 14px; box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; z-index: 15; box-shadow: 0 4px 10px rgba(0,0,0,0.2);
             transition: transform 0.2s;
         }
-        .admin-delete-btn:hover { transform: translateY(-50%) scale(1.1); }
-        .delete-left { left: -36px; }
-        .delete-right { right: -36px; }
+        .admin-delete-btn:hover { transform: scale(1.1); }
 
-        .meta { font-size: 0.7rem; margin-bottom: 4px; opacity: 0.8; font-weight: 600; display: flex; align-items: center; user-select: none; padding-left: 2px; }
-
-        .reaction-menu {
-            position: absolute; top: -50px; background: var(--glass-bg); backdrop-filter: blur(15px);
-            padding: 6px 10px; border-radius: 50px;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.15); display: flex; gap: 8px; z-index: 100;
-            animation: floatUp 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
-            border: 1px solid var(--glass-border); align-items: center;
+        /* --- SYSTEM MESSAGE STYLES --- */
+        .system-message-container {
+            width: 100%; display: flex; justify-content: center; 
+            margin: 4px 0; 
+            animation: fadeIn 0.3s ease;
         }
-        
-        .reaction-option { font-size: 1.3rem; cursor: pointer; transition: transform 0.2s; user-select: none; }
-        .reaction-option:hover { transform: scale(1.3); }
-
-        .reaction-display-bubble {
-            position: absolute; bottom: -14px; background: white; border-radius: 12px; padding: 2px 8px; 
-            font-size: 0.75rem; box-shadow: 0 4px 10px rgba(0,0,0,0.1); display: flex; gap: 3px; align-items: center; z-index: 12; border: 2px solid var(--chat-bg); user-select: none;
+        .system-message {
+            font-size: 0.75rem; color: var(--text-secondary); background: rgba(0,0,0,0.05);
+            padding: 4px 12px; border-radius: 20px; font-weight: 500;
         }
-        body.dark-mode .reaction-display-bubble { background: #3a3a4a; color: white; border-color: #222; }
-        
-        .my-message + .reaction-display-bubble { right: 0; }
-        .other-message + .reaction-display-bubble { left: 0; }
+        body.dark-mode .system-message { background: rgba(255,255,255,0.1); color: #bbb; }
+
+        /* --- SCROLL DOWN BUTTON --- */
+        .scroll-bottom-btn {
+            position: absolute; bottom: 80px; right: 20px;
+            background: var(--glass-bg); backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border); color: var(--primary);
+            width: 40px; height: 40px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1); cursor: pointer;
+            z-index: 50; transition: all 0.3s ease;
+            animation: floatUp 0.3s ease;
+        }
+        .scroll-bottom-btn:hover { transform: translateY(-3px); background: white; }
+        body.dark-mode .scroll-bottom-btn { background: rgba(40,40,50,0.8); color: white; }
 
         /* --- MODERN INPUT AREA (FIXED FOR MOBILE) --- */
         .input-area {
-            padding: 15px; background: var(--glass-bg); display: flex; flex-direction: column; 
+            padding: 10px; 
+            background: var(--glass-bg); display: flex; flex-direction: column; 
             backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
             position: relative; z-index: 20;
-            padding-bottom: max(20px, env(safe-area-inset-bottom)); 
+            padding-bottom: max(5px, env(safe-area-inset-bottom)); 
             border-top: 1px solid var(--glass-border);
             box-shadow: 0 -10px 40px rgba(0,0,0,0.05);
         }
@@ -358,19 +448,19 @@
         .input-wrapper { 
             display: flex; 
             width: 100%; 
-            gap: 10px; 
+            gap: 5px; /* REDUCED GAP FROM 10px TO 5px */
             align-items: center; 
-            box-sizing: border-box; /* Ensures width includes padding */
+            box-sizing: border-box; 
         }
 
-        /* FIXED INPUT EXPANSION ON MOBILE */
         .input-area input { 
             background: var(--input-bg); box-shadow: inset 0 2px 5px rgba(0,0,0,0.02); 
-            flex: 1; /* Takes available space */
-            min-width: 0; /* CRITICAL: Prevents input from forcing parent wider */
-            width: 0; /* Double safety to force flex shrink */
+            flex: 1; 
+            min-width: 0; 
+            width: 0; 
             font-size: 1rem; padding-left: 18px; color: var(--text-color);
-            padding: 14px 18px; border: 1px solid rgba(255,255,255,0.1); border-radius: 24px; outline: none;
+            padding: 10px 18px; 
+            border: 1px solid rgba(255,255,255,0.1); border-radius: 24px; outline: none;
             transition: all 0.3s;
             -webkit-appearance: none; appearance: none;
             -webkit-text-fill-color: var(--text-color);
@@ -395,7 +485,8 @@
 
         .chat-footer {
             width: 100%; text-align: center; font-size: 0.7rem; color: var(--text-color); font-weight: 500; opacity: 0.5; 
-            margin-top: 10px; pointer-events: none;
+            margin-top: 4px; 
+            pointer-events: none;
         }
 
         .ai-trigger {
@@ -414,6 +505,21 @@
         }
         .emoji-trigger:hover { background: rgba(0,0,0,0.1); transform: translateY(-2px); }
         body.dark-mode .emoji-trigger { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2); }
+
+        /* --- INSTAGRAM STYLE ANIMATION LOGIC --- */
+        .input-wrapper .icon-btn, 
+        .input-wrapper .send-btn {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+            overflow: hidden; 
+        }
+        .input-wrapper:not(.typing) .send-btn {
+            width: 0; height: 0; margin: 0; opacity: 0; padding: 0;
+            transform: scale(0.5); pointer-events: none;
+        }
+        .input-wrapper.typing .emoji-trigger {
+            width: 0; height: 0; margin: 0; padding: 0; opacity: 0;
+            pointer-events: none; transform: scale(0.5); 
+        }
 
         .emoji-picker {
             position: absolute; bottom: 90px; left: 20px; width: 280px; height: 220px;
@@ -439,61 +545,53 @@
         .reply-to-name { font-size: 0.75rem; color: var(--primary); font-weight: 700; display: block; margin-bottom: 2px; }
         .reply-text { font-size: 0.85rem; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-        .reply-quote-block {
-            background: rgba(0,0,0,0.05); border-left: 3px solid var(--primary);
-            padding: 6px 10px; border-radius: 6px; margin-bottom: 6px; font-size: 0.8rem; cursor: pointer; opacity: 0.9;
-            color: var(--text-color);
-        }
-        body.dark-mode .reply-quote-block { background: rgba(255,255,255,0.08); }
-        .my-message .reply-quote-block { background: rgba(255,255,255,0.2); border-color: white; color: white; }
-        .reply-quote-name { font-weight: 700; font-size: 0.75rem; margin-bottom: 2px; }
-        
         .reply-option-btn, .pin-option-btn { font-size: 1.1rem; padding: 0 6px; cursor: pointer; display: flex; align-items: center; color: var(--text-color); }
         body.dark-mode .reply-option-btn, body.dark-mode .pin-option-btn { color: white; }
 
         .hidden { display: none !important; }
         .icon-btn { background: none; border: none; cursor: pointer; color: var(--text-color); padding: 8px; border-radius: 50%; transition: background 0.2s; display: flex; align-items: center; justify-content: center; }
         
+        .reaction-menu {
+            position: absolute; top: -50px; background: var(--glass-bg); backdrop-filter: blur(15px);
+            padding: 6px 10px; border-radius: 50px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15); display: flex; gap: 8px; z-index: 100;
+            animation: floatUp 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+            border: 1px solid var(--glass-border); align-items: center;
+        }
+        .reaction-option { font-size: 1.3rem; cursor: pointer; transition: transform 0.2s; user-select: none; }
+        .reaction-option:hover { transform: scale(1.3); }
+
         /* --- MOBILE TWEAKS --- */
         @media (max-width: 480px) {
             .login-card { 
                 padding: 2rem 1.5rem; width: 90%; 
-                /* Removed margins to allow flex centering */
             }
-            
             .message { font-size: 0.9rem; }
             .welcome-watermark { width: 90%; }
             .admin-delete-btn { opacity: 1 !important; } 
             .emoji-picker { width: 90%; left: 5%; bottom: 90px; }
             
-            /* FIXED MOBILE INPUT */
-            .input-area { padding: 10px 10px 25px 10px; }
+            .input-area { padding: 8px 10px 20px 10px; }
             .input-wrapper { gap: 6px; }
             .ai-trigger, .emoji-trigger { width: 38px; height: 38px; }
-            .send-btn { width: 38px; height: 38px; }
+            .input-wrapper.typing .send-btn { width: 38px; height: 38px; }
             .input-area input { font-size: 16px; padding: 10px 12px; } 
         }
 
         /* --- SAFARI / iOS SPECIFIC FIXES --- */
-        /* 1. Reset Default iOS Form Styles */
         input, button, .primary-btn, .secondary-btn, .ai-trigger, .emoji-trigger, .send-btn {
-            -webkit-appearance: none; /* Remove iOS default shadows/rounding */
-            appearance: none;
-            border-radius: 0; /* Reset radius before applying custom */
+            -webkit-appearance: none; appearance: none; border-radius: 0;
         }
-
-        /* 2. Re-apply Custom Border Radius because iOS removes it with appearance:none */
         .login-card input { border-radius: 12px; }
         .primary-btn { border-radius: 12px; }
         .secondary-btn { border-radius: 12px; }
         .input-area input { border-radius: 24px; }
         .ai-trigger, .emoji-trigger, .send-btn { border-radius: 50%; }
 
-        /* 3. Fix Input Text Color on Safari (Sometimes it becomes gray) */
         input {
             color: var(--text-color);
             -webkit-text-fill-color: var(--text-color);
-            opacity: 1; /* Fixes disabled-look transparency */
+            opacity: 1;
         }
 
         /* --- AVATAR MODAL --- */
@@ -645,6 +743,10 @@
         <div id="messages-container">
         </div>
 
+        <button id="scroll-bottom-btn" class="scroll-bottom-btn hidden" title="Scroll to bottom">
+            <i data-lucide="arrow-down"></i>
+        </button>
+
         <div class="input-area">
             <div id="reply-preview" class="reply-preview hidden">
                 <div class="reply-content">
@@ -665,7 +767,7 @@
                     <i data-lucide="smile"></i>
                 </button>
 
-                <button id="image-btn" class="icon-btn emoji-trigger" title="Send Image" style="margin-right:4px;">
+                <button id="image-btn" class="icon-btn emoji-trigger" title="Send Image">
                     <i data-lucide="image"></i>
                 </button>
                 <input type="file" id="image-input" accept="image/png, image/jpeg, image/jpg, image/heic" class="hidden">
@@ -720,14 +822,9 @@
         const ADMIN_PASSWORD = "0112420186"; 
         const RESTRICTED_NAMES = ['naimur rahman', 'naimur rahma', 'naimur', 'admin', 'uiu bot', 'ai'];
 
-        // --- APPWRITE CONFIGURATION ---
-        // Project ID এবং Bucket ID চেক করে বসান
-        const APPWRITE_PROJECT_ID = '6933ea3c000517e78055'; 
-        const APPWRITE_BUCKET_ID = '6933eb1500110e10bf69';   
-        const APPWRITE_ENDPOINT = 'https://cloud.appwrite.io/v1';
-
-        let appwriteStorage = null;
-        let appwriteAccount = null;
+        // --- CLOUDINARY CONFIGURATION ---
+        const CLOUDINARY_CLOUD_NAME = 'dxjtj6wan'; 
+        const CLOUDINARY_UPLOAD_PRESET = 'Naimur'; 
 
         // --- 2. INITIALIZATION ---
         const loginScreen = document.getElementById('login-screen');
@@ -741,6 +838,7 @@
         const sendBtn = document.getElementById('send-btn');
         const themeToggleLogin = document.getElementById('theme-toggle-login');
         const themeToggleChat = document.getElementById('theme-toggle-chat');
+        const inputWrapper = document.querySelector('.input-wrapper');
 
         const replyPreview = document.getElementById('reply-preview');
         const closeReplyBtn = document.getElementById('close-reply');
@@ -766,12 +864,17 @@
         const avatarUploadProgress = document.getElementById('avatar-upload-progress');
         const headerAvatar = document.querySelector('.header-info .avatar');
 
+        const scrollBottomBtn = document.getElementById('scroll-bottom-btn');
+
         let username = '';
         let myUUID = ''; 
         let database = null;
         let currentReply = null;
-        const MAX_MESSAGES = 500;
-        let myAvatar = null; // Default null
+        const MAX_MESSAGES = 50;
+        let myAvatar = null; 
+        
+        let isAtBottom = true; 
+        const SCROLL_THRESHOLD = 150; 
 
         const REACTION_OPTIONS = ['❤️', '😂', '😮', '😢', '😡', '👍'];
 
@@ -834,72 +937,41 @@
             }
         }
 
-        // --- APPWRITE INITIALIZATION (UPDATED) ---
-        async function initAppwrite() {
-            if(typeof Appwrite === 'undefined') {
-                console.error("Appwrite SDK not loaded");
-                return;
+        async function uploadToCloudinary(file, progressCallback) {
+            if (CLOUDINARY_CLOUD_NAME === 'YOUR_CLOUD_NAME' || CLOUDINARY_UPLOAD_PRESET === 'YOUR_UPLOAD_PRESET') {
+                throw new Error("Cloudinary configuration missing. Please check the code settings.");
             }
-            const { Client, Storage, Account } = Appwrite;
-            const client = new Client();
+
+            const url = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`;
             
-            client
-                .setEndpoint(APPWRITE_ENDPOINT)
-                .setProject(APPWRITE_PROJECT_ID);
-                
-            appwriteStorage = new Storage(client);
-            appwriteAccount = new Account(client);
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
 
-            // Create Anonymous Session to avoid "Failed to fetch" due to 401
-            try {
-                await appwriteAccount.createAnonymousSession();
-                console.log("Appwrite Session Created");
-            } catch (error) {
-                // If session already active, ignore error but log it
-                // 'user_already_session_active' is common
-                if (error.type !== 'user_already_session_active' && error.code !== 401) {
-                    console.log("Session info:", error.message);
-                }
-            }
-            
-            console.log("Appwrite initialized");
-        }
+            return new Promise((resolve, reject) => {
+                const xhr = new XMLHttpRequest();
+                xhr.open('POST', url, true);
 
-        // --- UPLOAD FUNCTION (FIXED) ---
-        async function uploadFileToAppwrite(file, progressCallback) {
-            if(!appwriteStorage) throw new Error("Storage not initialized");
+                xhr.upload.onprogress = (e) => {
+                    if (e.lengthComputable && progressCallback) {
+                        const percentComplete = (e.loaded / e.total) * 100;
+                        progressCallback(percentComplete);
+                    }
+                };
 
-            try {
-                // Ensure session exists (retry)
-                try { await appwriteAccount.getSession('current'); }
-                catch(e) { try { await appwriteAccount.createAnonymousSession(); } catch(e2) {} }
+                xhr.onload = () => {
+                    if (xhr.status === 200) {
+                        const response = JSON.parse(xhr.responseText);
+                        resolve(response.secure_url);
+                    } else {
+                        reject(new Error('Cloudinary Upload Failed'));
+                    }
+                };
 
-                // FIXED: Added permissions back to ensure file is readable by everyone
-                const promise = appwriteStorage.createFile(
-                    APPWRITE_BUCKET_ID,
-                    Appwrite.ID.unique(),
-                    file,
-                    [Appwrite.Permission.read(Appwrite.Role.any())]
-                );
+                xhr.onerror = () => reject(new Error('Network Error'));
 
-                if(progressCallback) progressCallback(10); 
-                const response = await promise;
-                if(progressCallback) progressCallback(100);
-
-                // Construct View URL
-                const url = `${APPWRITE_ENDPOINT}/storage/buckets/${APPWRITE_BUCKET_ID}/files/${response.$id}/view?project=${APPWRITE_PROJECT_ID}`;
-                
-                return url;
-
-            } catch (error) {
-                console.error("Appwrite Upload Error:", error);
-                if (error.message === 'Failed to fetch') {
-                    alert("Upload Failed: Network Error. Please check your internet connection.");
-                } else {
-                    alert("Upload Error: " + error.message);
-                }
-                throw error;
-            }
+                xhr.send(formData);
+            });
         }
 
         async function handleAvatarUpload(e) {
@@ -911,7 +983,6 @@
             let fileToUpload = file;
             let fileName = file.name;
 
-            // Simple HEIC check
             if(fileName.toLowerCase().endsWith('.heic') && typeof heic2any !== 'undefined') {
                 try {
                     const blob = await heic2any({ blob: file, toType: "image/jpeg", quality: 0.8 });
@@ -925,8 +996,7 @@
             chooseAvatarBtn.disabled = true;
 
             try {
-                // USE APPWRITE
-                const url = await uploadFileToAppwrite(fileToUpload, (progress) => {
+                const url = await uploadToCloudinary(fileToUpload, (progress) => {
                     avatarUploadProgress.innerText = `Uploading... ${Math.round(progress)}%`;
                 });
 
@@ -988,7 +1058,6 @@
 
         initTheme();
         initAvatar();
-        initAppwrite(); // Init Appwrite
         initFirebase();
         initEmojiPicker();
 
@@ -1015,6 +1084,16 @@
         
         if (sendBtn) sendBtn.addEventListener('click', () => sendMessage());
         if (messageInput) messageInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
+
+        if (messageInput) {
+            messageInput.addEventListener('input', () => {
+                if (messageInput.value.trim().length > 0) {
+                    inputWrapper.classList.add('typing');
+                } else {
+                    inputWrapper.classList.remove('typing');
+                }
+            });
+        }
 
         if(aiTriggerBtn) aiTriggerBtn.addEventListener('click', () => {
             const text = messageInput.value.trim();
@@ -1062,6 +1141,22 @@
             });
         }
 
+        messagesContainer.addEventListener('scroll', () => {
+            const position = messagesContainer.scrollTop + messagesContainer.clientHeight;
+            const height = messagesContainer.scrollHeight;
+            isAtBottom = (height - position) <= SCROLL_THRESHOLD;
+
+            if (isAtBottom) {
+                scrollBottomBtn.classList.add('hidden');
+            } else {
+                scrollBottomBtn.classList.remove('hidden');
+            }
+        });
+
+        scrollBottomBtn.addEventListener('click', () => {
+            scrollToBottom(true); 
+        });
+
         function generateUUID() { return Date.now().toString(36) + Math.random().toString(36).substr(2); }
 
         function initEmojiPicker() {
@@ -1074,12 +1169,13 @@
                     messageInput.value += emoji;
                     messageInput.focus();
                     emojiPicker.classList.add('hidden');
+                    const event = new Event('input', { bubbles: true });
+                    messageInput.dispatchEvent(event);
                 };
                 emojiPicker.appendChild(span);
             });
         }
 
-        // --- PIN LOGIC ---
         function initPinListener() {
             if(!database) return;
             database.ref('pinned_message').on('value', (snapshot) => {
@@ -1127,7 +1223,6 @@
             }
         }
 
-        // --- JOIN LOGIC ---
         function joinChat() {
             if (!database) { alert("Connecting to server... Please check your internet."); return; }
             
@@ -1160,14 +1255,47 @@
                     loginScreen.classList.add('hidden');
                     chatScreen.classList.remove('hidden');
                     if (typeof lucide !== 'undefined') lucide.createIcons();
+                    
                     loadMessages();
                     
+                    setTimeout(() => scrollToBottom(true), 100);
+                    setTimeout(() => scrollToBottom(true), 500);
+                    setTimeout(() => scrollToBottom(true), 2000); 
+                    
                     if(username.toLowerCase() === 'naimur rahman') unpinBtn.classList.remove('hidden');
+
+                    const loginTime = Date.now();
+                    const usersRef = database.ref('active_users');
+
+                    usersRef.on('child_added', (snap) => {
+                        const u = snap.val();
+                        if (u.timestamp > loginTime && u.originalName !== username) {
+                            displaySystemMessage(`${u.originalName} just joined`);
+                        }
+                    });
+
+                    usersRef.on('child_removed', (snap) => {
+                        const u = snap.val();
+                        if(u && u.originalName !== username) {
+                             displaySystemMessage(`${u.originalName} left`);
+                        }
+                    });
                 }
             });
         }
 
-        // --- AI LOGIC ---
+        function displaySystemMessage(text) {
+            const container = document.createElement('div');
+            container.className = 'system-message-container';
+            const msg = document.createElement('div');
+            msg.className = 'system-message';
+            msg.innerText = text;
+            container.appendChild(msg);
+            messagesContainer.appendChild(container);
+            
+            if(isAtBottom) scrollToBottom();
+        }
+
         async function askGemini(currentQuery) {
             let chatHistory = "Recent Chat Context:\n";
             const messages = document.querySelectorAll('.message-wrapper');
@@ -1263,13 +1391,11 @@
             const file = e.target.files[0];
             if(!file) return;
 
-            // 1MB Limit
             if(file.size > 1 * 1024 * 1024) { alert("File too large. Max 1MB."); fileInput.value = ''; return; }
 
             let fileToUpload = file;
             let fileName = file.name;
 
-            // HEIC Conversion
             if(file.name.toLowerCase().endsWith('.heic') && typeof heic2any !== 'undefined') {
                 try {
                     const blob = await heic2any({ blob: file, toType: "image/jpeg", quality: 0.8 });
@@ -1282,8 +1408,7 @@
             displayMessage(tempId, username, "📸 Uploading image... 0%", Date.now(), myUUID, false, null);
 
             try {
-                // USE APPWRITE
-                const url = await uploadFileToAppwrite(fileToUpload, (progress) => {
+                const url = await uploadToCloudinary(fileToUpload, (progress) => {
                       const tempMsg = document.getElementById(`msg-${tempId}`);
                       if(tempMsg) {
                           const textEl = tempMsg.querySelector('.text');
@@ -1325,7 +1450,10 @@
             database.ref('messages').push(msgData).then(() => { 
                 messageInput.value = ''; 
                 cancelReply();
+                scrollToBottom(true); 
                 
+                inputWrapper.classList.remove('typing');
+
                 if (isAiRequest) {
                     let query = text.replace(/^(@ai|\/ai)\s*/i, '');
                     if(query.trim() === '') query = text; 
@@ -1352,7 +1480,7 @@
                 const msgId = snapshot.key; 
                 if (data) { 
                     displayMessage(msgId, data.username, data.text, data.timestamp, data.senderId, data.isDeleted, data.replyTo, data.imageURL, data.avatar);
-                    scrollToBottom(); 
+                    if (isAtBottom) scrollToBottom(); 
                 }
             });
 
@@ -1365,207 +1493,181 @@
                 const msgEl = document.getElementById(`msg-${msgId}`);
                 if (msgEl) {
                     const bubble = msgEl.querySelector('.message');
-                    if (data.isDeleted) {
-                        msgEl.querySelector('.text').textContent = "🚫 Admin deleted message";
-                        bubble.classList.add('deleted-message');
-                        bubble.classList.remove('ai-message');
-                        if(msgEl.querySelector('.reply-quote-block')) msgEl.querySelector('.reply-quote-block').remove();
-                        if(msgEl.querySelector('.admin-delete-btn')) msgEl.querySelector('.admin-delete-btn').remove();
-                    }
+                    // We simply re-render to handle state changes cleanly
+                    displayMessage(msgId, data.username, data.text, data.timestamp, data.senderId, data.isDeleted, data.replyTo, data.imageURL, data.avatar);
                 }
             });
         }
 
         function displayMessage(msgId, user, text, timestamp, senderId, isDeleted, replyToData, imageURL, senderAvatar) {
+            const existingMsg = document.getElementById(`msg-${msgId}`);
+            if (existingMsg) existingMsg.remove();
+
+            if (isDeleted) {
+                text = "🚫 Admin deleted message";
+                imageURL = null;   
+                replyToData = null; 
+            }
+
+            const isMyMessage = senderId ? (senderId === myUUID) : (user === username);
+            const isBot = senderId === BOT_ID; 
+            const cleanUser = user || "Anonymous";
+            const lowerUser = cleanUser.toLowerCase();
+            const isNaimur = lowerUser.includes('naimur rahman');
+            const iAmAdmin = username.toLowerCase().includes('naimur rahman');
+
+            // 1. Handle DELETED MESSAGE FIRST (Single Line Centered Pill)
+            if (isDeleted) {
+                const row = document.createElement('div');
+                row.className = 'deleted-message-row';
+                row.id = `msg-${msgId}`;
+                
+                if (isMyMessage) row.classList.add('deleted-right');
+                else row.classList.add('deleted-left');
+
+                row.innerHTML = `
+                    <div class="deleted-message-pill">
+                        <i data-lucide="trash-2" style="width:12px;"></i> 
+                        <span>Message unsent</span>
+                    </div>`;
+                
+                messagesContainer.appendChild(row);
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+                return; // Stop here, don't render standard bubble
+            }
+
+            // 2. STANDARD MESSAGE LOGIC
             const wrapper = document.createElement('div');
             wrapper.classList.add('message-wrapper');
             wrapper.id = `msg-${msgId}`;
 
-            const isMyMessage = senderId ? (senderId === myUUID) : (user === username);
-            const isBot = senderId === BOT_ID; 
-            const lowerUser = user.toLowerCase().trim();
-            const cleanMyName = username.toLowerCase().trim();
-            const isNaimur = lowerUser === 'naimur rahman';
-            const iAmAdmin = cleanMyName === 'naimur rahman';
-
             let timeStr = timestamp ? new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "";
-            
-            // --- Message Bubble ---
+
             const messageBubble = document.createElement('div');
             messageBubble.classList.add('message');
-            if (isBot) { messageBubble.classList.add('other-message', 'ai-message'); }
-            else { messageBubble.classList.add(isMyMessage ? 'my-message' : 'other-message'); }
+            
+            if (isBot) messageBubble.classList.add('other-message', 'ai-message');
+            else messageBubble.classList.add(isMyMessage ? 'my-message' : 'other-message');
+            
+            if (isNaimur && !isBot) messageBubble.style.border = "1px solid #ffd700"; 
 
-            if (isNaimur && !isBot) messageBubble.classList.add('admin-special');
-            if (isDeleted) messageBubble.classList.add('deleted-message');
-
-            // --- Construct Content ---
-            if (isDeleted) {
-                messageBubble.innerText = "🚫 Admin deleted message";
+            const headerDiv = document.createElement('div');
+            headerDiv.className = 'msg-header-inside';
+            
+            if (isMyMessage) {
+                headerDiv.style.justifyContent = 'flex-end';
+                headerDiv.innerHTML = `${timeStr}`;
             } else {
-                // Reply Block
-                if (replyToData) {
-                    const replyBlock = document.createElement('div');
-                    replyBlock.className = 'reply-quote-block';
-                    replyBlock.innerHTML = `
-                        <div class="reply-quote-name">${replyToData.username}</div>
-                        <div style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${replyToData.text}</div>
-                    `;
-                    replyBlock.onclick = () => {
-                        const originalMsg = document.getElementById(`msg-${replyToData.id}`);
-                        if(originalMsg) originalMsg.scrollIntoView({behavior: 'smooth', block: 'center'});
-                    };
-                    messageBubble.appendChild(replyBlock);
-                }
+                let nameHtml = cleanUser;
+                if (isNaimur) nameHtml += ` <span style="color:#1da1f2">✔</span>`;
+                headerDiv.innerHTML = `${nameHtml} &bull; ${timeStr}`;
+            }
+            messageBubble.appendChild(headerDiv);
 
-                // Image Content
-                if (imageURL) {
-                    const imgContainer = document.createElement('div');
-                    imgContainer.style.marginBottom = text ? '8px' : '0';
-                    imgContainer.style.position = 'relative';
-
-                    const img = document.createElement('img');
-                    img.src = imageURL;
-                    img.style.maxWidth = '100%';
-                    img.style.borderRadius = '12px';
-                    img.style.display = 'block';
-                    img.style.cursor = 'pointer';
-                    img.alt = 'Shared Image';
-                    img.onclick = () => window.open(imageURL, '_blank');
-
-                    const downloadLink = document.createElement('a');
-                    downloadLink.href = imageURL;
-                    downloadLink.download = 'uiu-chat-image.jpg';
-                    downloadLink.target = '_blank';
-                    downloadLink.innerHTML = '<i data-lucide="download" style="width:16px;height:16px;"></i>';
-                    downloadLink.className = 'icon-btn';
-                    downloadLink.style.position = 'absolute';
-                    downloadLink.style.bottom = '10px';
-                    downloadLink.style.right = '10px';
-                    downloadLink.style.background = 'rgba(0,0,0,0.5)';
-                    downloadLink.style.color = 'white';
-                    downloadLink.style.backdropFilter = 'blur(5px)';
-                    downloadLink.style.padding = '8px';
-                    downloadLink.style.borderRadius = '50%';
-                    downloadLink.onclick = (e) => e.stopPropagation();
-
-                    imgContainer.appendChild(img);
-                    imgContainer.appendChild(downloadLink);
-                    messageBubble.appendChild(imgContainer);
-                }
-
-                // Text Content
-                if (text) {
-                    const textDiv = document.createElement('div');
-                    textDiv.classList.add('text');
-                    textDiv.innerText = text;
-                    messageBubble.appendChild(textDiv);
-                }
-
-                // Timestamp (inside bubble for my msg, or part of name for others?
-                // Classic messenger puts it invisible or on tap, but for now lets keep it inside or below.
-                // To keep it simple, small timestamp at bottom right of text)
-                const metaTime = document.createElement('div');
-                metaTime.style.fontSize = '0.65rem';
-                metaTime.style.opacity = '0.7';
-                metaTime.style.textAlign = 'right';
-                metaTime.style.marginTop = '4px';
-                metaTime.innerText = timeStr;
-                messageBubble.appendChild(metaTime);
-
-                // Admin Delete Button
-                if (iAmAdmin) {
-                    const delBtn = document.createElement('button');
-                    delBtn.innerText = '🗑️';
-                    delBtn.className = isMyMessage ? 'admin-delete-btn delete-left' : 'admin-delete-btn delete-right';
-                    delBtn.onclick = (e) => { e.stopPropagation(); deleteMessage(msgId); };
-                    messageBubble.appendChild(delBtn);
-                }
-
-                // Interactions
-                let touchStartX = 0;
-                messageBubble.addEventListener('touchstart', (e) => { touchStartX = e.touches[0].clientX; }, {passive: true});
-                messageBubble.addEventListener('touchend', (e) => {
-                    if (e.changedTouches[0].clientX - touchStartX > 50) {
-                        if(navigator.vibrate) navigator.vibrate(50);
-                        initiateReply(msgId, user, text);
-                    }
-                });
-                messageBubble.addEventListener('dblclick', (e) => showReactionMenu(e, msgId, wrapper));
-                let pressTimer;
-                messageBubble.addEventListener('touchstart', () => {
-                    pressTimer = setTimeout(() => showReactionMenu(null, msgId, wrapper), 600);
-                }, {passive: true});
-                messageBubble.addEventListener('touchend', () => clearTimeout(pressTimer));
+            if (replyToData) {
+                const replyBlock = document.createElement('div');
+                replyBlock.className = 'reply-quote-block';
+                replyBlock.innerHTML = `
+                    <div class="reply-quote-name">${replyToData.username}</div>
+                    <div style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${replyToData.text}</div>
+                `;
+                replyBlock.onclick = () => {
+                     const originalMsg = document.getElementById(`msg-${replyToData.id}`);
+                     if(originalMsg) originalMsg.scrollIntoView({behavior: 'smooth', block: 'center'});
+                };
+                messageBubble.appendChild(replyBlock);
             }
 
-            // --- Structure Assembly ---
+            if (imageURL) {
+                const imgContainer = document.createElement('div');
+                imgContainer.style.marginBottom = text ? '8px' : '0';
+                imgContainer.innerHTML = `<img src="${imageURL}" style="max-width:100%; border-radius:12px; display:block;" onclick="window.open('${imageURL}', '_blank')">`;
+                messageBubble.appendChild(imgContainer);
+            }
+
+            if (text) {
+                const textDiv = document.createElement('div');
+                textDiv.className = 'text';
+                textDiv.innerText = text;
+                messageBubble.appendChild(textDiv);
+            }
+
+            if (iAmAdmin) {
+                const delBtn = document.createElement('button');
+                delBtn.innerHTML = '×';
+                delBtn.className = 'admin-delete-btn';
+                delBtn.style.position = 'absolute';
+                delBtn.style.top = '-5px';
+                delBtn.style.right = isMyMessage ? '10px' : '-10px';
+                delBtn.style.width = '18px'; delBtn.style.height = '18px'; delBtn.style.fontSize = '12px';
+                delBtn.onclick = (e) => { e.stopPropagation(); deleteMessage(msgId); };
+                messageBubble.appendChild(delBtn);
+            }
+
+            const reactionDisplay = document.createElement('div');
+            reactionDisplay.id = `react-disp-${msgId}`;
+            reactionDisplay.className = 'reaction-display-bubble hidden';
+            
             if (isMyMessage) {
-                // My Message: Just the bubble aligned right
                 wrapper.style.alignItems = 'flex-end';
+                messageBubble.appendChild(reactionDisplay);
                 wrapper.appendChild(messageBubble);
             } else {
-                // Other Message: Row with Avatar + Column(Name, Bubble)
                 wrapper.style.alignItems = 'flex-start';
-
                 const row = document.createElement('div');
                 row.className = 'message-row';
 
-                // Avatar
                 const avatarDiv = document.createElement('div');
                 avatarDiv.className = 'msg-avatar';
+                
                 if (isBot) {
-                    avatarDiv.innerHTML = '🤖';
-                    avatarDiv.style.background = 'var(--ai-color)';
-                    avatarDiv.style.color = 'white';
+                    avatarDiv.innerHTML = '🤖'; avatarDiv.style.background = '#6c5ce7'; avatarDiv.style.display='flex'; avatarDiv.style.alignItems='center'; avatarDiv.style.justifyContent='center';
                 } else if (senderAvatar && senderAvatar.startsWith('http')) {
-                    avatarDiv.innerHTML = `<img src="${senderAvatar}" alt="Avatar">`;
+                    avatarDiv.innerHTML = `<img src="${senderAvatar}">`;
                 } else {
-                    avatarDiv.innerHTML = '<i data-lucide="user" style="width:16px;"></i>';
-                    // Re-run lucide later if needed, but innerHTML might not trigger it immediately if not called
+                    avatarDiv.innerHTML = '<div style="width:100%; height:100%; background:#ddd; display:flex; align-items:center; justify-content:center; color:#555;"><i data-lucide="user" style="width:16px;"></i></div>';
                 }
 
-                // Content Column
                 const contentCol = document.createElement('div');
                 contentCol.className = 'msg-content';
-
-                // Name
-                const nameDiv = document.createElement('div');
-                nameDiv.className = 'msg-name';
-                let nameHtml = user;
-                if (isNaimur && !isBot) {
-                    nameHtml += ` <span class="verified-badge" style="vertical-align: middle;">✔</span>`;
-                }
-                nameDiv.innerHTML = nameHtml;
-
-                contentCol.appendChild(nameDiv);
                 contentCol.appendChild(messageBubble);
+                contentCol.appendChild(reactionDisplay);
 
                 row.appendChild(avatarDiv);
                 row.appendChild(contentCol);
                 wrapper.appendChild(row);
             }
 
-            // Reactions
-            const reactionDisplay = document.createElement('div');
-            reactionDisplay.id = `react-disp-${msgId}`;
-            reactionDisplay.className = 'reaction-display-bubble hidden';
-
-            // Append reaction relative to wrapper (needs absolute positioning)
-            // Note: Reaction styling relies on sibling selector .my-message + .reaction...
-            // Since we changed structure for 'other', we need to adjust CSS or JS for reactions.
-            // For now, append to wrapper, but we might need to fix CSS for 'other' reactions position.
-            wrapper.appendChild(reactionDisplay);
+            messageBubble.addEventListener('dblclick', (e) => showReactionMenu(e, msgId, wrapper));
+            
+            let touchStartX = 0;
+            let currentX = 0;
+            messageBubble.addEventListener('touchstart', (e) => {
+                touchStartX = e.touches[0].clientX;
+                messageBubble.style.transition = 'none';
+            }, {passive: true});
+            messageBubble.addEventListener('touchmove', (e) => {
+                currentX = e.touches[0].clientX;
+                const diff = currentX - touchStartX;
+                if (diff > 0 && diff < 150) {
+                    messageBubble.style.transform = `translateX(${diff}px)`;
+                }
+            }, {passive: true});
+            messageBubble.addEventListener('touchend', (e) => {
+                messageBubble.style.transition = 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+                messageBubble.style.transform = 'translateX(0)';
+                if (currentX - touchStartX > 50) {
+                    initiateReply(msgId, user, text);
+                }
+                touchStartX = 0; currentX = 0;
+            });
 
             messagesContainer.appendChild(wrapper);
-
             if (typeof lucide !== 'undefined') lucide.createIcons();
 
-            if(!isDeleted) {
-                database.ref(`messages/${msgId}/reactions`).once('value', (snap) => {
-                    if(snap.exists()) updateReactions(msgId, snap.val());
-                });
-            }
+            database.ref(`messages/${msgId}/reactions`).once('value', (snap) => {
+                if(snap.exists()) updateReactions(msgId, snap.val());
+            });
         }
 
         function initiateReply(msgId, name, text) {
@@ -1600,7 +1702,7 @@
             replyBtn.onclick = () => {
                 const msgEl = document.getElementById(`msg-${msgId}`);
                 const textContent = msgEl.querySelector('.text').innerText;
-                const nameContent = msgEl.querySelector('.meta').innerText.split('•')[0].trim();
+                const nameContent = msgEl.querySelector('.msg-header-inside').innerText.split('•')[0].trim();
                 initiateReply(msgId, nameContent, textContent);
                 menu.remove();
                 currentOpenMenuId = null;
@@ -1615,7 +1717,7 @@
                 pinBtn.onclick = () => {
                     const msgEl = document.getElementById(`msg-${msgId}`);
                     const textContent = msgEl.querySelector('.text').innerText;
-                    const nameContent = msgEl.querySelector('.meta').innerText.split('•')[0].trim();
+                    const nameContent = msgEl.querySelector('.msg-header-inside').innerText.split('•')[0].trim();
                     pinMessage(msgId, textContent, nameContent);
                     menu.remove();
                     currentOpenMenuId = null;
@@ -1673,7 +1775,11 @@
             }
         });
 
-        function scrollToBottom() { messagesContainer.scrollTop = messagesContainer.scrollHeight; }
+        function scrollToBottom(force = false) { 
+            if(isAtBottom || force) {
+                messagesContainer.scrollTop = messagesContainer.scrollHeight; 
+            }
+        }
     </script>
 </body>
 </html>
