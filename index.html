@@ -878,8 +878,7 @@
                 const promise = appwriteStorage.createFile(
                     APPWRITE_BUCKET_ID,
                     Appwrite.ID.unique(),
-                    file,
-                    [Appwrite.Permission.read(Appwrite.Role.any())]
+                    file
                 );
 
                 if(progressCallback) progressCallback(10); 
