@@ -10,8 +10,6 @@
     
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/appwrite@14.0.1"></script>
-
     <style>
         /* --- CSS VARIABLES --- */
         :root {
@@ -720,14 +718,10 @@
         const ADMIN_PASSWORD = "0112420186"; 
         const RESTRICTED_NAMES = ['naimur rahman', 'naimur rahma', 'naimur', 'admin', 'uiu bot', 'ai'];
 
-        // --- APPWRITE CONFIGURATION ---
-        // Project ID এবং Bucket ID চেক করে বসান
-        const APPWRITE_PROJECT_ID = '6933ea3c000517e78055'; 
-        const APPWRITE_BUCKET_ID = '6933eb1500110e10bf69';   
-        const APPWRITE_ENDPOINT = 'https://cloud.appwrite.io/v1';
-
-        let appwriteStorage = null;
-        let appwriteAccount = null;
+        // --- CLOUDINARY CONFIGURATION (ADDED) ---
+        // IMPORTANT: Fill these with your details from Cloudinary Dashboard
+        const CLOUDINARY_CLOUD_NAME = 'YOUR_CLOUD_NAME'; // e.g. 'dxy....'
+        const CLOUDINARY_UPLOAD_PRESET = 'YOUR_UPLOAD_PRESET'; // Create an 'Unsigned' preset in Cloudinary Settings
 
         // --- 2. INITIALIZATION ---
         const loginScreen = document.getElementById('login-screen');
@@ -834,71 +828,45 @@
             }
         }
 
-        // --- APPWRITE INITIALIZATION (UPDATED) ---
-        async function initAppwrite() {
-            if(typeof Appwrite === 'undefined') {
-                console.error("Appwrite SDK not loaded");
-                return;
+        // --- CLOUDINARY UPLOAD FUNCTION (ADDED) ---
+        async function uploadToCloudinary(file, progressCallback) {
+            if (CLOUDINARY_CLOUD_NAME === 'YOUR_CLOUD_NAME' || CLOUDINARY_UPLOAD_PRESET === 'YOUR_UPLOAD_PRESET') {
+                throw new Error("Cloudinary configuration missing. Please check the code settings.");
             }
-            const { Client, Storage, Account } = Appwrite;
-            const client = new Client();
+
+            const url = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`;
             
-            client
-                .setEndpoint(APPWRITE_ENDPOINT)
-                .setProject(APPWRITE_PROJECT_ID);
-                
-            appwriteStorage = new Storage(client);
-            appwriteAccount = new Account(client);
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
 
-            // Create Anonymous Session to avoid "Failed to fetch" due to 401
-            try {
-                await appwriteAccount.createAnonymousSession();
-                console.log("Appwrite Session Created");
-            } catch (error) {
-                // If session already active, ignore error but log it
-                // 'user_already_session_active' is common
-                if (error.type !== 'user_already_session_active' && error.code !== 401) {
-                    console.log("Session info:", error.message);
-                }
-            }
-            
-            console.log("Appwrite initialized");
-        }
+            return new Promise((resolve, reject) => {
+                const xhr = new XMLHttpRequest();
+                xhr.open('POST', url, true);
 
-        // --- UPLOAD FUNCTION (FIXED) ---
-        async function uploadFileToAppwrite(file, progressCallback) {
-            if(!appwriteStorage) throw new Error("Storage not initialized");
+                // Progress event
+                xhr.upload.onprogress = (e) => {
+                    if (e.lengthComputable && progressCallback) {
+                        const percentComplete = (e.loaded / e.total) * 100;
+                        progressCallback(percentComplete);
+                    }
+                };
 
-            try {
-                // Ensure session exists (retry)
-                try { await appwriteAccount.getSession('current'); }
-                catch(e) { try { await appwriteAccount.createAnonymousSession(); } catch(e2) {} }
+                // Load event
+                xhr.onload = () => {
+                    if (xhr.status === 200) {
+                        const response = JSON.parse(xhr.responseText);
+                        resolve(response.secure_url);
+                    } else {
+                        reject(new Error('Cloudinary Upload Failed'));
+                    }
+                };
 
-                // FIXED: Added permissions back to ensure file is readable by everyone
-                const promise = appwriteStorage.createFile(
-                    APPWRITE_BUCKET_ID,
-                    Appwrite.ID.unique(),
-                    file
-                );
+                // Error event
+                xhr.onerror = () => reject(new Error('Network Error'));
 
-                if(progressCallback) progressCallback(10); 
-                const response = await promise;
-                if(progressCallback) progressCallback(100);
-
-                // Construct View URL
-                const url = `${APPWRITE_ENDPOINT}/storage/buckets/${APPWRITE_BUCKET_ID}/files/${response.$id}/view?project=${APPWRITE_PROJECT_ID}`;
-                
-                return url;
-
-            } catch (error) {
-                console.error("Appwrite Upload Error:", error);
-                if (error.message === 'Failed to fetch') {
-                    alert("Upload Failed: Network Error. Please check your internet connection.");
-                } else {
-                    alert("Upload Error: " + error.message);
-                }
-                throw error;
-            }
+                xhr.send(formData);
+            });
         }
 
         async function handleAvatarUpload(e) {
@@ -924,8 +892,8 @@
             chooseAvatarBtn.disabled = true;
 
             try {
-                // USE APPWRITE
-                const url = await uploadFileToAppwrite(fileToUpload, (progress) => {
+                // CHANGED: Using Cloudinary
+                const url = await uploadToCloudinary(fileToUpload, (progress) => {
                     avatarUploadProgress.innerText = `Uploading... ${Math.round(progress)}%`;
                 });
 
@@ -987,7 +955,7 @@
 
         initTheme();
         initAvatar();
-        initAppwrite(); // Init Appwrite
+        // Removed initAppwrite();
         initFirebase();
         initEmojiPicker();
 
@@ -1281,8 +1249,8 @@
             displayMessage(tempId, username, "📸 Uploading image... 0%", Date.now(), myUUID, false, null);
 
             try {
-                // USE APPWRITE
-                const url = await uploadFileToAppwrite(fileToUpload, (progress) => {
+                // CHANGED: Using Cloudinary
+                const url = await uploadToCloudinary(fileToUpload, (progress) => {
                       const tempMsg = document.getElementById(`msg-${tempId}`);
                       if(tempMsg) {
                           const textEl = tempMsg.querySelector('.text');
@@ -1461,9 +1429,6 @@
                     messageBubble.appendChild(textDiv);
                 }
 
-                // Timestamp (inside bubble for my msg, or part of name for others?
-                // Classic messenger puts it invisible or on tap, but for now lets keep it inside or below.
-                // To keep it simple, small timestamp at bottom right of text)
                 const metaTime = document.createElement('div');
                 metaTime.style.fontSize = '0.65rem';
                 metaTime.style.opacity = '0.7';
@@ -1521,7 +1486,6 @@
                     avatarDiv.innerHTML = `<img src="${senderAvatar}" alt="Avatar">`;
                 } else {
                     avatarDiv.innerHTML = '<i data-lucide="user" style="width:16px;"></i>';
-                    // Re-run lucide later if needed, but innerHTML might not trigger it immediately if not called
                 }
 
                 // Content Column
@@ -1550,10 +1514,6 @@
             reactionDisplay.id = `react-disp-${msgId}`;
             reactionDisplay.className = 'reaction-display-bubble hidden';
 
-            // Append reaction relative to wrapper (needs absolute positioning)
-            // Note: Reaction styling relies on sibling selector .my-message + .reaction...
-            // Since we changed structure for 'other', we need to adjust CSS or JS for reactions.
-            // For now, append to wrapper, but we might need to fix CSS for 'other' reactions position.
             wrapper.appendChild(reactionDisplay);
 
             messagesContainer.appendChild(wrapper);
