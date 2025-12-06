@@ -281,7 +281,9 @@
             word-wrap: break-word;
             /* For smooth swipe snap-back */
             transform: translateX(0);
+            cursor: grab; /* Added for PC */
         }
+        .message:active { cursor: grabbing; }
 
         .my-message { 
             align-self: flex-end; 
@@ -1455,11 +1457,12 @@
                     messageBubble.appendChild(delBtn);
                 }
 
-                // Interactions (Swipe & Double Tap)
+                // Interactions (Swipe & Double Tap & Mouse Drag)
                 let touchStartX = 0;
                 let currentX = 0;
+                let isMouseDown = false; // Flag for mouse drag
 
-                // VISUAL SWIPE ANIMATION
+                // --- TOUCH EVENTS (Mobile) ---
                 messageBubble.addEventListener('touchstart', (e) => {
                     touchStartX = e.touches[0].clientX;
                     messageBubble.style.transition = 'none'; // Remove transition for direct movement
@@ -1468,7 +1471,7 @@
                 messageBubble.addEventListener('touchmove', (e) => {
                     currentX = e.touches[0].clientX;
                     const diff = currentX - touchStartX;
-                    // Only allow swipe right, capped at 100px visual shift
+                    // Only allow swipe right, capped at 150px visual shift
                     if (diff > 0 && diff < 150) {
                         messageBubble.style.transform = `translateX(${diff}px)`;
                     }
@@ -1486,7 +1489,48 @@
                     currentX = 0;
                 });
 
+                // --- MOUSE EVENTS (PC) ---
+                messageBubble.addEventListener('mousedown', (e) => {
+                    isMouseDown = true;
+                    touchStartX = e.clientX;
+                    messageBubble.style.transition = 'none'; 
+                });
+
+                messageBubble.addEventListener('mousemove', (e) => {
+                    if(!isMouseDown) return;
+                    currentX = e.clientX;
+                    const diff = currentX - touchStartX;
+                    if (diff > 0 && diff < 150) {
+                        messageBubble.style.transform = `translateX(${diff}px)`;
+                    }
+                });
+
+                const endDrag = () => {
+                    if(!isMouseDown) return;
+                    isMouseDown = false;
+                    messageBubble.style.transition = 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+                    messageBubble.style.transform = 'translateX(0)';
+                    
+                    if (currentX - touchStartX > 50) {
+                        initiateReply(msgId, user, text);
+                    }
+                    touchStartX = 0; 
+                    currentX = 0;
+                };
+
+                messageBubble.addEventListener('mouseup', endDrag);
+                messageBubble.addEventListener('mouseleave', () => {
+                    if(isMouseDown) {
+                        isMouseDown = false;
+                        messageBubble.style.transition = 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+                        messageBubble.style.transform = 'translateX(0)';
+                    }
+                });
+
+                // Double Tap (Both)
                 messageBubble.addEventListener('dblclick', (e) => showReactionMenu(e, msgId, wrapper));
+                
+                // Long Press (Mobile)
                 let pressTimer;
                 messageBubble.addEventListener('touchstart', () => {
                     pressTimer = setTimeout(() => showReactionMenu(null, msgId, wrapper), 600);
