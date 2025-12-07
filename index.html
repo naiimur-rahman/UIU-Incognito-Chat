@@ -823,7 +823,7 @@
             </div>
 
             <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 15px;">
-                Upload a photo to be recognized.<br>Max 1MB (JPG, PNG)
+                Upload a photo to be recognized.<br>Max 5MB (JPG, PNG)
             </p>
 
             <button id="choose-avatar-btn" class="primary-btn" style="margin-bottom: 10px;">
@@ -1230,7 +1230,7 @@
             const file = e.target.files[0];
             if(!file) return;
 
-            if(file.size > 1 * 1024 * 1024) { alert("File too large. Max 1MB."); return; }
+            if(file.size > 5 * 1024 * 1024) { alert("File too large. Max 5MB."); return; }
 
             let fileToUpload = file;
             let fileName = file.name;
@@ -1838,7 +1838,7 @@
             const file = e.target.files[0];
             if(!file) return;
 
-            if(file.size > 1 * 1024 * 1024) { alert("File too large. Max 1MB."); fileInput.value = ''; return; }
+            if(file.size > 5 * 1024 * 1024) { alert("File too large. Max 1MB."); fileInput.value = ''; return; }
 
             let fileToUpload = file;
             let fileName = file.name;
