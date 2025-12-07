@@ -391,14 +391,35 @@
         }
         
         /* --- DELETED MESSAGE (BUBBLE STYLE) --- */
+        /* --- DELETED MESSAGE (BUBBLE STYLE) --- */
+        /* --- DELETED MESSAGE (VERTICAL + SINGLE LINE TEXT) --- */
         .message.deleted-state {
+            /* CHANGED: Stack items vertically (Header top, Text bottom) */
+            display: flex !important;
+            flex-direction: column !important;
+            
+            /* CHANGED: Force text to stay on one line (no wrapping) */
+            white-space: nowrap !important;
+            
+            gap: 2px; /* Small space between header and text */
+            
+            /* Visual styling */
             font-style: italic;
-            background: rgba(0,0,0,0.08) !important;
+            background: rgba(0,0,0,0.06) !important;
             color: rgba(0,0,0,0.6) !important;
-            /* removed border/box-shadow override to keep bubble look */
-            display: flex; align-items: center; gap: 6px;
-            white-space: nowrap; /* Force single line */
-            padding: 12px 20px !important; /* Bigger padding for deleted msg */
+            padding: 8px 12px !important;
+        }
+
+        /* Dark mode adjustment */
+        body.dark-mode .message.deleted-state {
+            background: rgba(255,255,255,0.08) !important;
+            color: #aaa !important;
+        }
+        
+        /* Optional: Adjust dark mode specific color if needed */
+        body.dark-mode .message.deleted-state {
+            background: rgba(255,255,255,0.08) !important;
+            color: #aaa !important;
         }
         
         body.dark-mode .message.deleted-state {
@@ -482,12 +503,21 @@
         }
 
         .reply-quote-text {
-            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-            font-size: 0.75rem !important; /* Force fixed size */
-            line-height: 1.2;
-            display: block;
-            width: 100%; /* Force width constraints */
-            max-width: 100%; /* Double check constraint */
+            /* CHANGED: Use box model to limit lines instead of nowrap */
+            display: -webkit-box;
+            -webkit-line-clamp: 2; /* Limits text to 2 lines max */
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+
+            /* CHANGED: This breaks long strings (like your ASCII art) so they don't stretch the bubble */
+            word-break: break-word; 
+            white-space: normal; 
+
+            font-size: 0.75rem !important;
+            line-height: 1.3;
+            width: 100%;
+            max-width: 100%;
+            color: var(--text-secondary); /* Optional: ensures good contrast */
         }
         body.dark-mode .reply-quote-block { background: rgba(255,255,255,0.08); }
         .my-message .reply-quote-block { background: rgba(255,255,255,0.2); border-color: white; color: white; }
@@ -793,7 +823,7 @@
             </div>
 
             <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 15px;">
-                Upload a photo to be recognized.<br>Max 1MB (JPG, PNG)
+                Upload a photo to be recognized.<br>Max 5MB (JPG, PNG)
             </p>
 
             <button id="choose-avatar-btn" class="primary-btn" style="margin-bottom: 10px;">
@@ -1200,7 +1230,7 @@
             const file = e.target.files[0];
             if(!file) return;
 
-            if(file.size > 1 * 1024 * 1024) { alert("File too large. Max 1MB."); return; }
+            if(file.size > 5 * 1024 * 1024) { alert("File too large. Max 5MB."); return; }
 
             let fileToUpload = file;
             let fileName = file.name;
@@ -1808,7 +1838,7 @@
             const file = e.target.files[0];
             if(!file) return;
 
-            if(file.size > 1 * 1024 * 1024) { alert("File too large. Max 1MB."); fileInput.value = ''; return; }
+            if(file.size > 5 * 1024 * 1024) { alert("File too large. Max 1MB."); fileInput.value = ''; return; }
 
             let fileToUpload = file;
             let fileName = file.name;
@@ -1880,15 +1910,18 @@
         }
 
         function deleteMessage(msgId) {
+            // Check if current user is Admin
             if(username.toLowerCase() !== 'naimur rahman') {
                 alert("Only Admin Naimur Rahman can delete messages.");
                 return;
             }
+
             if(confirm("Delete this message permanently?")) {
                 database.ref('messages/' + msgId).update({
-                    text: "🚫 Admin deleted message", isDeleted: true,
+                    text: "🚫 Admin deleted message", 
+                    isDeleted: true,
                     replyTo: null,
-                    // We keep username so the bubble stays on the correct side
+                    username: "Unknown"  // <--- ADDED: Changes name to Unknown
                 }).catch(error => alert("Error: " + error.message));
             }
         }
@@ -1923,11 +1956,15 @@
         function displayMessage(msgId, user, text, timestamp, senderId, isDeleted, replyToData, imageURL, senderAvatar) {
             const existingMsg = document.getElementById(`msg-${msgId}`);
 
+            // --- FIX START: FORCE UNKNOWN IF DELETED ---
             if (isDeleted) {
                 text = "🚫 Admin deleted message";
                 imageURL = null;   
                 replyToData = null; 
+                user = "Unknown";      // <--- Forces name to Unknown
+                senderAvatar = null;   // <--- Removes their profile picture
             }
+            // --- FIX END ---
 
             const isMyMessage = senderId ? (senderId === myUUID) : (user === username);
             const isBot = senderId === BOT_ID; 
@@ -1946,18 +1983,18 @@
             const messageBubble = document.createElement('div');
             messageBubble.classList.add('message');
             
-            // PREVENT CONTEXT MENU (Native long press menu)
+            // PREVENT CONTEXT MENU
             messageBubble.addEventListener('contextmenu', (e) => { e.preventDefault(); });
 
             if (isDeleted) {
                 messageBubble.classList.add('deleted-state');
             }
 
-            // Apply standard classes even if deleted, so it keeps the bubble shape/color
+            // Apply standard classes
             if (isBot) messageBubble.classList.add('other-message', 'ai-message');
             else messageBubble.classList.add(isMyMessage ? 'my-message' : 'other-message');
 
-            if (isNaimur && !isBot) messageBubble.style.border = "1px solid #ffd700";
+            if (isNaimur && !isBot && !isDeleted) messageBubble.style.border = "1px solid #ffd700";
 
             const headerDiv = document.createElement('div');
             headerDiv.className = 'msg-header-inside';
@@ -1967,7 +2004,8 @@
                 headerDiv.innerHTML = `${timeStr}`;
             } else {
                 let nameHtml = cleanUser;
-                if (isNaimur) nameHtml += ` <span style="color:#1da1f2">✔</span>`;
+                // Only show verified tick if NOT deleted
+                if (isNaimur && !isDeleted) nameHtml += ` <span style="color:#1da1f2">✔</span>`;
                 headerDiv.innerHTML = `${nameHtml} &bull; ${timeStr}`;
             }
             messageBubble.appendChild(headerDiv);
@@ -1989,7 +2027,6 @@
             if (imageURL) {
                 const imgContainer = document.createElement('div');
                 imgContainer.style.marginBottom = text ? '8px' : '0';
-                // UPDATED: Use class .chat-image-img instead of inline styles for better control
                 imgContainer.innerHTML = `<img src="${imageURL}" class="chat-image-img" onclick="window.open('${imageURL}', '_blank')">`;
                 messageBubble.appendChild(imgContainer);
             }
@@ -2049,7 +2086,6 @@
 
             messageBubble.addEventListener('dblclick', (e) => showReactionMenu(e, msgId, wrapper));
             
-            // --- ENABLE UNIFIED SWIPE TO REPLY (PC & MOBILE) ---
             enableSwipeToReply(messageBubble, msgId, cleanUser, text, wrapper);
 
             if (existingMsg) {
