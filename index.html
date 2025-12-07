@@ -1199,6 +1199,7 @@
             const formData = new FormData();
             formData.append('file', file);
             formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+            formData.append('moderation', 'cloudinary_ai');
 
             return new Promise((resolve, reject) => {
                 const xhr = new XMLHttpRequest();
@@ -1214,6 +1215,10 @@
                 xhr.onload = () => {
                     if (xhr.status === 200) {
                         const response = JSON.parse(xhr.responseText);
+                        if (response.moderation && response.moderation.length > 0 && response.moderation[0].status === 'rejected') {
+                            reject(new Error('Inappropriate content detected'));
+                            return;
+                        }
                         resolve(response.secure_url);
                     } else {
                         reject(new Error('Cloudinary Upload Failed'));
