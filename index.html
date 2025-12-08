@@ -2173,12 +2173,35 @@ messageInput.addEventListener('input', (e) => {
                         }
                     });
 
+                    // --- INBOX NOTIFICATION LISTENER ---
+                    const chatsRef = database.ref('user_chats/' + myUUID);
+                    chatsRef.on('child_changed', handleInboxUpdate);
+                    chatsRef.on('child_added', handleInboxUpdate);
+
                     // INJECT WELCOME MESSAGE (Local Only)
                     setTimeout(() => {
                         displayWelcomeMessage();
                     }, 1000);
                 }
             });
+        }
+
+        function handleInboxUpdate(snapshot) {
+            const partnerId = snapshot.key;
+            const data = snapshot.val();
+
+            // If I am in the private chat with them, no notification.
+            if (currentChatMode === 'private' && privateChatUser && privateChatUser.uuid === partnerId) {
+                return;
+            }
+
+            // Only trigger notifications for recent messages (< 10 seconds ago)
+            // This prevents sound spam and red dots for old chat history on login
+            if (data.timestamp && (Date.now() - data.timestamp) < 10000) {
+                const badge = document.getElementById('inbox-badge');
+                if(badge) badge.style.display = 'block';
+                playSound('received');
+            }
         }
 
         function displayWelcomeMessage() {
@@ -2334,8 +2357,12 @@ messageInput.addEventListener('input', (e) => {
         async function handleFileUpload(e) {
             const file = e.target.files[0];
             if(!file) return;
+            await processFile(file);
+            fileInput.value = '';
+        }
 
-            if(file.size > 5 * 1024 * 1024) { alert("File too large. Max 5MB."); fileInput.value = ''; return; }
+        async function processFile(file) {
+            if(file.size > 5 * 1024 * 1024) { alert("File too large. Max 5MB."); return; }
 
             let fileToUpload = file;
             let fileName = file.name;
@@ -2368,10 +2395,20 @@ messageInput.addEventListener('input', (e) => {
                 alert("Upload failed: " + error.message);
                 const tempEl = document.getElementById(`msg-${tempId}`);
                 if(tempEl) tempEl.remove();
-            } finally {
-                fileInput.value = '';
             }
         }
+
+        // PASTE LISTENER
+        document.addEventListener('paste', (e) => {
+            const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+            for (let index in items) {
+                const item = items[index];
+                if (item.kind === 'file' && item.type.indexOf('image/') !== -1) {
+                    const blob = item.getAsFile();
+                    processFile(blob);
+                }
+            }
+        });
 
         function sendMessage(isDirectAI = false, imageURL = null) {
     const text = messageInput.value.trim();
@@ -2546,8 +2583,6 @@ messageInput.addEventListener('input', (e) => {
     const messageBubble = document.createElement('div');
     messageBubble.classList.add('message');
     
-    messageBubble.addEventListener('contextmenu', (e) => { e.preventDefault(); });
-
     if (isDeleted) messageBubble.classList.add('deleted-state');
 
     // --- 3. APPLY CLASSES (Including Mention) ---
@@ -2583,7 +2618,22 @@ messageInput.addEventListener('input', (e) => {
         `;
         replyBlock.onclick = () => {
               const originalMsg = document.getElementById(`msg-${replyToData.id}`);
-              if(originalMsg) originalMsg.scrollIntoView({behavior: 'smooth', block: 'center'});
+              if(originalMsg) {
+                   const container = document.getElementById('messages-container');
+                   const targetScroll = originalMsg.offsetTop - (container.clientHeight / 2) + (originalMsg.clientHeight / 2);
+                   container.scrollTo({ top: targetScroll, behavior: 'smooth' });
+
+                   const bubble = originalMsg.querySelector('.message');
+                   if(bubble) {
+                        bubble.style.transition = "box-shadow 0.3s, transform 0.3s";
+                        bubble.style.boxShadow = "0 0 20px var(--primary)";
+                        bubble.style.transform = "scale(1.02)";
+                        setTimeout(() => {
+                             bubble.style.boxShadow = "0 1px 2px rgba(0,0,0,0.05)";
+                             bubble.style.transform = "scale(1)";
+                        }, 1000);
+                   }
+              }
         };
         messageBubble.appendChild(replyBlock);
     }
@@ -2891,6 +2941,25 @@ messageInput.addEventListener('input', (e) => {
                 menu.appendChild(pinBtn);
             }
 
+            const copyBtn = document.createElement('div');
+            copyBtn.innerHTML = '<i data-lucide="copy" style="width:16px;"></i>';
+            copyBtn.className = 'reply-option-btn';
+            copyBtn.onclick = () => {
+                const msgEl = document.getElementById(`msg-${msgId}`);
+                if(msgEl) {
+                    const textEl = msgEl.querySelector('.text');
+                    const textContent = textEl ? textEl.innerText : "";
+                    if(textContent) {
+                        navigator.clipboard.writeText(textContent).then(() => {
+                            // Optional: Toast?
+                        });
+                    }
+                }
+                menu.remove();
+                currentOpenMenuId = null;
+            };
+            menu.appendChild(copyBtn);
+
             const sep = document.createElement('span');
             sep.style.borderLeft = '1px solid #ccc'; sep.style.margin = '0 5px';
             menu.appendChild(sep);
@@ -3149,12 +3218,20 @@ messageInput.addEventListener('input', (e) => {
 
         function closeInbox() {
             inboxScreen.classList.add('hidden');
+            if(inboxListener) {
+                 database.ref(`user_chats/${myUUID}`).off('value', inboxListener);
+                 inboxListener = null;
+            }
         }
 
+        let inboxListener = null;
         function loadInboxList() {
             inboxList.innerHTML = '<div style="text-align:center; padding:20px;">Loading...</div>';
 
-            database.ref(`user_chats/${myUUID}`).once('value', (snapshot) => {
+            const ref = database.ref(`user_chats/${myUUID}`);
+            if(inboxListener) ref.off('value', inboxListener);
+
+            inboxListener = ref.on('value', (snapshot) => {
                 inboxList.innerHTML = '';
                 if(!snapshot.exists()) {
                     inboxList.innerHTML = '<div style="text-align:center; padding:20px; color:var(--text-secondary); opacity:0.6;">No recent chats</div>';
