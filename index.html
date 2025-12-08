@@ -3297,12 +3297,6 @@ function clearNotificationForUser(partnerId) {
     const showNotification = () => {
         console.log("New message detected, showing badge");
         
-        // Only show badge if we're not currently viewing the inbox
-        if (!inboxScreen.classList.contains('hidden')) {
-            console.log("Inbox is open, not showing badge");
-            return;
-        }
-        
         // Show badge
         const badge = document.getElementById('inbox-badge');
         if (badge) {
@@ -3337,8 +3331,10 @@ function clearNotificationForUser(partnerId) {
         const chatData = snapshot.val();
         if (!chatData || !chatData.timestamp) return;
         
+        const isLookingAtChat = currentChatMode === 'private' && privateChatUser && privateChatUser.uuid === chatData.partnerId && inboxScreen.classList.contains('hidden');
+
         // Check if this is a new message (not sent by me AND newer than when we started listening)
-        if (chatData.lastSender !== myUUID && chatData.timestamp > lastCheckTime) {
+        if (!isLookingAtChat && chatData.lastSender !== myUUID && chatData.timestamp > lastCheckTime) {
             showNotification();
         }
     });
@@ -3348,8 +3344,10 @@ function clearNotificationForUser(partnerId) {
         const chatData = snapshot.val();
         if (!chatData || !chatData.timestamp) return;
         
+        const isLookingAtChat = currentChatMode === 'private' && privateChatUser && privateChatUser.uuid === chatData.partnerId && inboxScreen.classList.contains('hidden');
+
         // Check if this is a new message (not sent by me AND newer than when we started listening)
-        if (chatData.lastSender !== myUUID && chatData.timestamp > lastCheckTime) {
+        if (!isLookingAtChat && chatData.lastSender !== myUUID && chatData.timestamp > lastCheckTime) {
             showNotification();
         }
     });
