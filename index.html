@@ -1320,7 +1320,7 @@ body.dark-mode .message.mentioned {
 
         // --- CLOUDINARY CONFIGURATION ---
         const CLOUDINARY_CLOUD_NAME = 'dxjtj6wan'; 
-        const CLOUDINARY_UPLOAD_PRESET = 'Naimur'; 
+        const CLOUDINARY_UPLOAD_PRESET = 'standard_upload';
 
         // --- 2. INITIALIZATION ---
         const loginScreen = document.getElementById('login-screen');
@@ -1471,6 +1471,7 @@ body.dark-mode .message.mentioned {
         }
 
         async function uploadToCloudinary(file, progressCallback) {
+            // Check for missing config (keeping this safety check)
             if (CLOUDINARY_CLOUD_NAME === 'YOUR_CLOUD_NAME' || CLOUDINARY_UPLOAD_PRESET === 'YOUR_UPLOAD_PRESET') {
                 throw new Error("Cloudinary configuration missing. Please check the code settings.");
             }
@@ -1501,13 +1502,9 @@ body.dark-mode .message.mentioned {
                     }
 
                     if (xhr.status === 200) {
-                        console.log("Cloudinary Response:", response); // Debugging for moderation verification
-
-                        if (response.moderation && response.moderation.length > 0 && response.moderation[0].status === 'rejected') {
-                            console.warn("Moderation Rejection:", response.moderation);
-                            reject(new Error('Inappropriate content detected'));
-                            return;
-                        }
+                        // REMOVED: The AI Moderation check block is gone.
+                        // Now it just accepts the URL directly.
+                        console.log("Upload successful:", response);
                         resolve(response.secure_url);
                     } else {
                         const errorMsg = response.error ? response.error.message : 'Cloudinary Upload Failed';
@@ -1808,13 +1805,14 @@ messageInput.addEventListener('input', (e) => {
     // 1. Build Suggestion List
     const suggestions = [{name: 'ai', display: 'BhodAi (AI Bot)'}];
 
-    // Add active users (excluding self)
-    activeUsersList.forEach(name => {
-        if(name !== username) suggestions.push({name: name, display: name});
-    });
+    // FIX: Only add real users if we are in GLOBAL mode
+    if (currentChatMode === 'global') {
+        activeUsersList.forEach(name => {
+            if(name !== username) suggestions.push({name: name, display: name});
+        });
+    }
 
     // 2. Filter List
-    // If query is empty (just typed @), show everyone. Otherwise filter.
     const filtered = query === '' 
         ? suggestions 
         : suggestions.filter(s => s.name.toLowerCase().startsWith(lowerQuery));
@@ -1835,7 +1833,6 @@ messageInput.addEventListener('input', (e) => {
             const text = messageInput.value;
             const before = text.substring(0, atIndex);
             const after = text.substring(messageInput.selectionStart);
-            // Insert name with a space after
             const insert = `@${item.name} `;
 
             messageInput.value = before + insert + after;
@@ -2238,22 +2235,26 @@ messageInput.addEventListener('input', (e) => {
             if(isAtBottom) scrollToBottom();
         }
 
-        async function askGemini(currentQuery) {
-            let chatHistory = "Recent Chat Context:\n";
-            const messages = document.querySelectorAll('.message-wrapper');
-            const lastMessages = Array.from(messages).slice(-10); 
+        async function askGemini(currentQuery, targetPath) { // Added targetPath parameter
+    let chatHistory = "Recent Chat Context:\n";
+    const messages = document.querySelectorAll('.message-wrapper');
+    const lastMessages = Array.from(messages).slice(-10); 
 
-            lastMessages.forEach(msgWrapper => {
-                const nameEl = msgWrapper.querySelector('.meta');
-                const textEl = msgWrapper.querySelector('.text');
-                if (nameEl && textEl) {
-                    let name = nameEl.innerText.split('•')[0].trim();
-                    let text = textEl.innerText;
-                    chatHistory += `${name}: ${text}\n`;
-                }
-            });
+    lastMessages.forEach(msgWrapper => {
+        const nameEl = msgWrapper.querySelector('.msg-header-inside'); // Fixed selector based on your HTML structure
+        const textEl = msgWrapper.querySelector('.text');
+        
+        if (nameEl && textEl) {
+            let name = nameEl.innerText.split('•')[0].trim();
+            let text = textEl.innerText;
+            chatHistory += `${name}: ${text}\n`;
+        }
+    });
 
-            const systemInstruction = `
+    // ... (Keep your existing systemInstruction and API_KEY logic exactly the same) ...
+    // Copy the systemInstruction variable and the while loop for fetching from your previous code
+    
+    const systemInstruction = `
             Identity: You are 'BhodAi', a witty, a Sarcastic Bangladeshi student. You are a Muslim.
             
             Current Task: Reply to the "Current User Query" based on the "Recent Chat Context".
@@ -2274,60 +2275,61 @@ messageInput.addEventListener('input', (e) => {
             - Creator -> Naimur Rahman (CSE 242, UIU).
             - If topic is about cgpa/gpa down -> Tell about Naimur Rahman's CGPA Calculator.
                 Features-> Calculate trimester GPA and updated CGPA using your course list and grades.
-                           Recalculate results for retaken courses by entering old and new grades.
-                           Use a Target CGPA Planner to see what GPA you need next trimester to reach a goal CGPA.
-                           Track course marks through a Course Grade Calculator.
-                           Monitor your completed and remaining credits with a built-in Credit Tracker.
+                            Recalculate results for retaken courses by entering old and new grades.
+                            Use a Target CGPA Planner to see what GPA you need next trimester to reach a goal CGPA.
+                            Track course marks through a Course Grade Calculator.
+                            Monitor your completed and remaining credits with a built-in Credit Tracker.
             
             ${chatHistory}
             
             Current User Query: ${currentQuery}
             Your Reply (Be unique, savage, Islamic witty):`;
 
-            let aiResponse = "Matha hang korse mama... Server limit sesh! 😵‍💫 Naimur vai ke janan.";
-            let success = false;
-            let attempts = 0;
-            const MAX_ATTEMPTS = API_KEY_PARTS.length; 
+    let aiResponse = "Matha hang korse mama... Server limit sesh! 😵‍💫 Naimur vai ke janan.";
+    let success = false;
+    let attempts = 0;
+    const MAX_ATTEMPTS = API_KEY_PARTS.length; 
 
-            while (attempts < MAX_ATTEMPTS && !success) {
-                try {
-                    const currentKey = API_KEY_PARTS[currentKeyIndex].join("");
-                    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${currentKey}`;
+    while (attempts < MAX_ATTEMPTS && !success) {
+        try {
+            const currentKey = API_KEY_PARTS[currentKeyIndex].join("");
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${currentKey}`;
 
-                    const response = await fetch(url, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ contents: [{ parts: [{ text: systemInstruction }] }] })
-                    });
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ contents: [{ parts: [{ text: systemInstruction }] }] })
+            });
 
-                    if (!response.ok) {
-                        if (response.status === 429) {
-                            console.warn(`Key #${currentKeyIndex} limit over. Switching...`);
-                            currentKeyIndex = (currentKeyIndex + 1) % MAX_ATTEMPTS; 
-                            attempts++; continue; 
-                        } else { break; }
-                    }
-
-                    const data = await response.json();
-                    if (data.candidates && data.candidates[0].content) {
-                        aiResponse = data.candidates[0].content.parts[0].text;
-                        success = true; 
-                    } else {
-                        attempts++;
-                        currentKeyIndex = (currentKeyIndex + 1) % MAX_ATTEMPTS;
-                    }
-                } catch (error) {
-                    console.error("Network Error, trying next key:", error);
-                    currentKeyIndex = (currentKeyIndex + 1) % MAX_ATTEMPTS;
-                    attempts++;
-                }
+            if (!response.ok) {
+                if (response.status === 429) {
+                    console.warn(`Key #${currentKeyIndex} limit over. Switching...`);
+                    currentKeyIndex = (currentKeyIndex + 1) % MAX_ATTEMPTS; 
+                    attempts++; continue; 
+                } else { break; }
             }
 
-            database.ref('messages').push({
-                username: "BhodAi 🤖", text: aiResponse, senderId: BOT_ID, 
-                timestamp: firebase.database.ServerValue.TIMESTAMP, isDeleted: false
-            });
+            const data = await response.json();
+            if (data.candidates && data.candidates[0].content) {
+                aiResponse = data.candidates[0].content.parts[0].text;
+                success = true; 
+            } else {
+                attempts++;
+                currentKeyIndex = (currentKeyIndex + 1) % MAX_ATTEMPTS;
+            }
+        } catch (error) {
+            console.error("Network Error, trying next key:", error);
+            currentKeyIndex = (currentKeyIndex + 1) % MAX_ATTEMPTS;
+            attempts++;
         }
+    }
+
+    // FIX: Push to the correct targetPath (Global or Private)
+    database.ref(targetPath).push({
+        username: "BhodAi 🤖", text: aiResponse, senderId: BOT_ID, 
+        timestamp: firebase.database.ServerValue.TIMESTAMP, isDeleted: false
+    });
+}
 
         async function handleFileUpload(e) {
             const file = e.target.files[0];
@@ -2372,81 +2374,78 @@ messageInput.addEventListener('input', (e) => {
         }
 
         function sendMessage(isDirectAI = false, imageURL = null) {
-            const text = messageInput.value.trim();
-            if (!database || (!text && !imageURL)) return;
+    const text = messageInput.value.trim();
+    if (!database || (!text && !imageURL)) return;
 
-            // Prepare Message Data
-            const msgData = {
-                username: username, text: text, senderId: myUUID, avatar: myAvatar,
-                timestamp: firebase.database.ServerValue.TIMESTAMP, isDeleted: false
+    // Prepare Message Data
+    const msgData = {
+        username: username, text: text, senderId: myUUID, avatar: myAvatar,
+        timestamp: firebase.database.ServerValue.TIMESTAMP, isDeleted: false
+    };
+
+    if(imageURL) msgData.imageURL = imageURL;
+    if (currentReply) {
+        msgData.replyTo = { id: currentReply.id, username: currentReply.username, text: currentReply.text };
+    }
+
+    // Determine Path based on Mode
+    let targetPath = 'messages'; // Default global
+    if (currentChatMode === 'private' && privateRoomId) {
+        targetPath = `private_messages/${privateRoomId}`;
+    }
+
+    const targetRef = database.ref(targetPath);
+
+    targetRef.push(msgData).then(() => {
+        messageInput.value = ''; 
+        cancelReply();
+        scrollToBottom(true); 
+        
+        inputWrapper.classList.remove('typing');
+
+        // Typing Status Logic (Global Only)
+        if (currentUserKey && database && currentChatMode === 'global') {
+            database.ref('active_users/' + currentUserKey).update({ isTyping: false });
+            if (typingTimeout) clearTimeout(typingTimeout);
+            isTypingStatusSent = false;
+        }
+
+        // Update Inbox metadata if Private
+        if (currentChatMode === 'private' && privateChatUser) {
+            const updatePayload = {
+                lastMsg: text || 'Sent an image',
+                timestamp: firebase.database.ServerValue.TIMESTAMP,
+                partnerName: privateChatUser.name,
+                partnerAvatar: privateChatUser.avatar,
+                partnerId: privateChatUser.uuid
             };
 
-            if(imageURL) msgData.imageURL = imageURL;
-            if (currentReply) {
-                msgData.replyTo = { id: currentReply.id, username: currentReply.username, text: currentReply.text };
-            }
-
-            // Determine Path based on Mode
-            let targetRef;
-            if (currentChatMode === 'private' && privateRoomId) {
-                targetRef = database.ref(`private_messages/${privateRoomId}`);
-            } else {
-                targetRef = database.ref('messages');
-            }
-
-            targetRef.push(msgData).then(() => {
-                messageInput.value = ''; 
-                cancelReply();
-                scrollToBottom(true); 
-                
-                inputWrapper.classList.remove('typing');
-
-                // Typing Status Logic (Global Only or Private Specific?)
-                // Currently keeping global typing status for simplicity, or we can update a private path
-                if (currentUserKey && database && currentChatMode === 'global') {
-                    database.ref('active_users/' + currentUserKey).update({ isTyping: false });
-                    if (typingTimeout) clearTimeout(typingTimeout);
-                    isTypingStatusSent = false;
-                }
-
-                // Update Inbox metadata if Private
-                if (currentChatMode === 'private' && privateChatUser) {
-                    const updatePayload = {
-                        lastMsg: text || 'Sent an image',
-                        timestamp: firebase.database.ServerValue.TIMESTAMP,
-                        partnerName: privateChatUser.name,
-                        partnerAvatar: privateChatUser.avatar,
-                        partnerId: privateChatUser.uuid
-                    };
-
-                    // Update for Me
-                    database.ref(`user_chats/${myUUID}/${privateChatUser.uuid}`).update(updatePayload);
-
-                    // Update for Them
-                    database.ref(`user_chats/${privateChatUser.uuid}/${myUUID}`).update({
-                        lastMsg: text || 'Sent an image',
-                        timestamp: firebase.database.ServerValue.TIMESTAMP,
-                        partnerName: username,
-                        partnerAvatar: myAvatar,
-                        partnerId: myUUID
-                    });
-                }
-
-                // AI Logic (Only Global)
-                const isReplyingToBot = currentReply && currentReply.username === "BhodAi 🤖";
-                const isAiRequest = isDirectAI || text.toLowerCase().startsWith('@ai') || text.toLowerCase().startsWith('/ai') || isReplyingToBot;
-
-                if (currentChatMode === 'global' && isAiRequest) {
-                    let query = text.replace(/^(@ai|\/ai)\s*/i, '');
-                    if(query.trim() === '') query = text; 
-                    setTimeout(() => askGemini(query), 500);
-                }
-
-                // Play Sent Sound
-                playSound('sent');
-
-            }).catch(error => console.error(error));
+            // Update for Me and Them
+            database.ref(`user_chats/${myUUID}/${privateChatUser.uuid}`).update(updatePayload);
+            database.ref(`user_chats/${privateChatUser.uuid}/${myUUID}`).update({
+                lastMsg: text || 'Sent an image',
+                timestamp: firebase.database.ServerValue.TIMESTAMP,
+                partnerName: username,
+                partnerAvatar: myAvatar,
+                partnerId: myUUID
+            });
         }
+
+        // AI Logic (Enabled for BOTH Global and Private)
+        const isReplyingToBot = currentReply && currentReply.username === "BhodAi 🤖";
+        const isAiRequest = isDirectAI || text.toLowerCase().startsWith('@ai') || text.toLowerCase().startsWith('/ai') || isReplyingToBot;
+
+        if (isAiRequest) {
+            let query = text.replace(/^(@ai|\/ai)\s*/i, '');
+            if(query.trim() === '') query = text; 
+            // FIX: Pass the targetPath so AI replies in the correct room
+            setTimeout(() => askGemini(query, targetPath), 500);
+        }
+
+        playSound('sent');
+
+    }).catch(error => console.error(error));
+}
 
         function deleteMessage(msgId) {
             // Check if current user is Admin
@@ -2912,11 +2911,18 @@ messageInput.addEventListener('input', (e) => {
         }
 
         function submitReaction(msgId, emoji) {
-            const existingMenu = document.getElementById('active-reaction-menu');
-            if(existingMenu) existingMenu.remove();
-            currentOpenMenuId = null;
-            database.ref(`messages/${msgId}/reactions/${myUUID}`).set(emoji);
-        }
+    const existingMenu = document.getElementById('active-reaction-menu');
+    if(existingMenu) existingMenu.remove();
+    currentOpenMenuId = null;
+
+    // FIX: Determine correct path based on mode
+    let path = 'messages';
+    if (currentChatMode === 'private' && privateRoomId) {
+        path = `private_messages/${privateRoomId}`;
+    }
+
+    database.ref(`${path}/${msgId}/reactions/${myUUID}`).set(emoji);
+}
 
         function updateReactions(msgId, reactionsData) {
             const display = document.getElementById(`react-disp-${msgId}`);
