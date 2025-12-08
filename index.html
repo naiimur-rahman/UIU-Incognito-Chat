@@ -1,5065 +1,2533 @@
 <!DOCTYPE html>
-
 <html lang="en">
-
 <head>
-
     <meta charset="UTF-8">
-
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, interactive-widget=resizes-content">
-
     <title>Incognito Chat</title>
-
     
-
     <meta name="theme-color" content="#ff9966">
-
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-
     
-
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
-
     <style>
-
         /* --- CSS VARIABLES --- */
-
         :root {
-
             --primary: #ff6600;
-
             --primary-dark: #e65c00;
-
             --bg-gradient: linear-gradient(135deg, #ff9966 0%, #ff5e62 100%);
-
             --glass-bg: rgba(255, 255, 255, 0.85);
-
             --glass-border: rgba(255, 255, 255, 0.6);
-
             --text-color: #333;
-
             --text-secondary: #666;
-
             --shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
-
             --chat-bg: rgba(255, 255, 255, 0.5);
-
             --msg-other-bg: rgba(255, 255, 255, 0.95);
-
             --msg-other-text: #333;
-
             --input-bg: rgba(255, 255, 255, 0.6);
-
             --status-green: #2ecc71;
-
             --verified-blue: #1da1f2;
-
             --admin-gold: #ffd700;
-
             --ai-color: #007bff; /* Vibrant Blue for Bot */
-
             --pin-bg: rgba(255, 245, 230, 0.95);
-
         }
-
-
 
         /* --- DARK MODE --- */
-
         body.dark-mode {
-
             --bg-gradient: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
-
             --glass-bg: rgba(22, 22, 27, 0.85);
-
             --glass-border: rgba(255, 255, 255, 0.1);
-
             --text-color: #e0e0e0;
-
             --text-secondary: #a0a0a0;
-
             --primary: #ff8c00;
-
             --chat-bg: rgba(0, 0, 0, 0.3);
-
             --msg-other-bg: rgba(45, 45, 55, 0.95);
-
             --msg-other-text: #e0e0e0;
-
             --input-bg: rgba(40, 40, 50, 0.6);
-
             --ai-color: #3eadcf; 
-
             --shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
-
             --pin-bg: rgba(45, 45, 58, 0.95);
-
         }
-
-
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
 
-
-
         html, body {
-
             height: 100%; width: 100%; overflow: hidden; position: fixed; inset: 0; overscroll-behavior: none;
-
         }
-
-
 
         body {
-
             background: var(--bg-gradient);
-
             display: flex; flex-direction: column; color: var(--text-color); transition: background 0.5s ease;
-
             -webkit-font-smoothing: antialiased;
-
             -moz-osx-font-smoothing: grayscale;
-
         }
-
-
 
         /* --- ANIMATIONS --- */
-
         @keyframes popUp { 0% { transform: scale(0.9); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
-
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
         @keyframes floatUp { 0% { transform: translateY(10px); opacity: 0; } 100% { transform: translateY(0); opacity: 1; } }
-
         @keyframes slideInRight { 0% { transform: translateX(20px); opacity: 0; } 100% { transform: translateX(0); opacity: 1; } }
-
         @keyframes slideInLeft { 0% { transform: translateX(-20px); opacity: 0; } 100% { transform: translateX(0); opacity: 1; } }
 
-
-
         .background-shape { position: absolute; border-radius: 50%; filter: blur(80px); z-index: -1; opacity: 0.6; pointer-events: none; }
-
         .shape-1 { width: 300px; height: 300px; background: #ffe259; top: -50px; left: -50px; }
-
         .shape-2 { width: 400px; height: 400px; background: #ffa751; bottom: -100px; right: -100px; }
-
         
-
         body.dark-mode .shape-1 { background: #4e54c8; opacity: 0.2; }
-
         body.dark-mode .shape-2 { background: #8f94fb; opacity: 0.2; }
 
-
-
         /* --- LOGIN SCREEN FIXED (NO SCROLL) --- */
-
         #login-screen {
-
             height: 100dvh; 
-
             width: 100%; 
-
             display: flex; 
-
             flex-direction: column; 
-
             justify-content: center;
-
             align-items: center; 
-
             position: relative; 
-
             overflow: hidden;
-
             padding: 20px;
-
         }
-
-
 
         .theme-toggle-container { position: absolute; top: 20px; right: 20px; z-index: 50; }
 
-
-
         /* --- SPLIT LOGIN CONTAINER --- */
-
         .login-container {
-
             width: 100%;
-
             max-width: 900px; /* Wider for split view */
-
             animation: popUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
-
             z-index: 10;
-
         }
-
-
 
         .login-card-split {
-
             background: rgba(255, 255, 255, 0.65);
-
             backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-
             border: 1px solid rgba(255, 255, 255, 0.6);
-
             border-radius: 24px;
-
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
-
             display: flex;
-
             overflow: hidden;
-
             position: relative;
-
             transition: all 0.3s ease;
-
         }
-
-
 
         /* Mobile Selection Screen */
-
         #mobile-login-selection {
-
             display: none; /* Hidden on Desktop */
-
             flex-direction: column;
-
             gap: 15px;
-
             width: 100%;
-
             max-width: 400px;
-
             margin: 0 auto;
-
             z-index: 20;
-
         }
-
         .mobile-select-btn {
-
             background: rgba(255, 255, 255, 0.8);
-
             backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
-
             border: 1px solid rgba(255, 255, 255, 0.5);
-
             padding: 20px;
-
             border-radius: 20px;
-
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-
             text-align: center; gap: 10px;
-
             cursor: pointer;
-
             box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-
             transition: transform 0.2s, box-shadow 0.2s;
-
         }
-
         .mobile-select-btn h3 { font-size: 1.2rem; color: var(--primary); margin: 0; }
-
         .mobile-select-btn p { font-size: 0.85rem; color: var(--text-secondary); margin: 0; }
-
         .mobile-select-btn:active { transform: scale(0.98); }
 
-
-
         body.dark-mode .mobile-select-btn {
-
             background: rgba(30, 30, 40, 0.8);
-
             border-color: rgba(255, 255, 255, 0.1);
-
         }
-
         body.dark-mode .mobile-select-btn h3 { color: #fff; }
 
-
-
         .back-to-select-btn {
-
             display: none; /* Hidden on Desktop */
-
             align-items: center; gap: 6px;
-
             margin-bottom: 15px;
-
             align-self: flex-start;
-
             font-size: 0.85rem; color: var(--text-secondary);
-
             background: none; border: none; cursor: pointer;
-
         }
-
         .back-to-select-btn:hover { color: var(--primary); }
 
-
-
         /* Shine Effect for Split Card */
-
         .login-card-split::before {
-
             content: ''; position: absolute; top: 0; left: -50%; width: 100%; height: 100%;
-
             background: linear-gradient(to right, transparent, rgba(255,255,255,0.3), transparent);
-
             transform: skewX(-25deg); animation: shine 6s infinite; pointer-events: none;
-
         }
-
         @keyframes shine { 0% { left: -100%; } 20% { left: 200%; } 100% { left: 200%; } }
 
-
-
         .login-panel {
-
             flex: 1;
-
             padding: 2.5rem 2rem;
-
             display: flex;
-
             flex-direction: column;
-
             align-items: center;
-
             justify-content: center;
-
             text-align: center;
-
             position: relative; z-index: 2;
-
         }
-
-
 
         .vertical-divider {
-
             width: 1px;
-
             background: rgba(0,0,0,0.1);
-
             margin: 20px 0;
-
         }
-
-
 
         .login-panel h2 { font-size: 1.5rem; font-weight: 700; color: var(--text-color); margin-bottom: 5px; }
-
         .login-panel p { font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 1.5rem; }
 
-
-
         .logo-area { margin-bottom: 1.2rem; position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; }
-
         .logo-icon { 
-
             width: 48px; height: 48px; 
-
             color: white; background: var(--primary);
-
             display: flex; align-items: center; justify-content: center;
-
             border-radius: 14px; box-shadow: 0 8px 20px rgba(255, 102, 0, 0.4);
-
             margin-bottom: 10px; animation: floatLogo 3s ease-in-out infinite;
-
         }
-
         @keyframes floatLogo { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
 
-
-
         .input-group { position: relative; margin-bottom: 1.2rem; width: 100%; z-index: 2; }
-
         .input-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--primary); width: 18px; transition: 0.3s; }
-
         
-
         .login-panel input {
-
             width: 100%; 
-
             padding: 12px 12px 12px 40px; 
-
             border: 2px solid transparent; border-radius: 12px;
-
             background: rgba(255, 255, 255, 0.8); font-size: 0.95rem; font-weight: 500;
-
             transition: all 0.3s ease; color: var(--text-color); outline: none;
-
             -webkit-appearance: none; appearance: none;
-
             margin-bottom: 10px;
-
         }
-
         .login-panel input:focus {
-
             background: #fff; border-color: var(--primary); box-shadow: 0 8px 25px rgba(255, 102, 0, 0.15); transform: translateY(-2px);
-
         }
-
-
 
         .primary-btn {
-
             width: 100%; 
-
             padding: 12px; 
-
             border-radius: 12px; border: none; cursor: pointer;
-
             background: linear-gradient(90deg, var(--primary) 0%, #ff8c00 100%); color: white;
-
             font-size: 1rem; font-weight: 600; display: flex; justify-content: center; align-items: center; gap: 8px;
-
             box-shadow: 0 10px 30px rgba(255, 102, 0, 0.4); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-
             position: relative; z-index: 2;
-
             -webkit-appearance: none; appearance: none;
-
         }
-
         .primary-btn:hover { transform: translateY(-3px); box-shadow: 0 15px 35px rgba(255, 102, 0, 0.5); }
-
         .primary-btn:active { transform: scale(0.98); }
 
-
-
         .secondary-btn {
-
             width: 100%; 
-
             padding: 10px; 
-
             border-radius: 12px; 
-
             border: 2px solid rgba(0,0,0,0.08); background: rgba(255, 255, 255, 0.6);
-
             color: var(--text-color); font-size: 0.9rem;
-
             font-weight: 600; display: flex; justify-content: center; align-items: center; gap: 8px; 
-
             text-decoration: none; transition: 0.3s; position: relative; z-index: 10; margin-top: 0.8rem;
-
             -webkit-appearance: none; appearance: none;
-
         }
-
         .secondary-btn:hover { border-color: var(--primary); color: var(--primary); background: #fff; transform: translateY(-2px); }
 
-
-
         .divider {
-
             margin: 1.2rem 0; display: flex; align-items: center; gap: 10px;
-
             color: var(--text-secondary); font-size: 0.75rem; font-weight: 500; opacity: 0.6;
-
         }
-
         .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: currentColor; opacity: 0.3; }
 
-
-
         /* FOOTER FIXED TO BOTTOM */
-
         .login-footer {
-
             position: absolute;
-
             bottom: 20px;
-
             width: 100%; 
-
             text-align: center;
-
             font-size: 0.75rem; color: var(--text-color); font-weight: 500; opacity: 0.8;
-
             pointer-events: none;
-
         }
-
         .login-footer a { color: var(--text-color); font-weight: 700; text-decoration: none; pointer-events: auto; }
 
-
-
         /* Dark Mode Adjustments */
-
         body.dark-mode .login-card-split { background: rgba(30, 30, 40, 0.65); border-color: rgba(255, 255, 255, 0.1); }
-
         body.dark-mode .login-panel input { background: rgba(0, 0, 0, 0.3); color: white; }
-
         body.dark-mode .login-panel input:focus { background: rgba(0, 0, 0, 0.5); }
-
         body.dark-mode .vertical-divider { background: rgba(255,255,255,0.1); }
-
         body.dark-mode .secondary-btn { background: rgba(0,0,0,0.2); border-color: rgba(255,255,255,0.1); color: #ccc; }
-
         body.dark-mode .secondary-btn:hover { background: rgba(255,255,255,0.05); color: white; border-color: var(--primary); }
 
-
-
         @media (max-width: 768px) {
-
             /* On mobile, we handle visibility via JS */
-
             .login-card-split {
-
                 flex-direction: column;
-
                 display: none; /* Hidden initially, controlled by JS */
-
             }
-
             .vertical-divider { display: none; } /* No divider needed when showing one panel */
-
             .login-panel { padding: 1.5rem; display: none; /* Hidden initially */ }
-
-
 
             #mobile-login-selection { display: flex; }
 
-
-
             .back-to-select-btn { display: flex; }
-
         }
-
-
 
         /* --- CHAT SCREEN --- */
-
         #chat-screen { 
-
             height: 100%; width: 100%; display: flex; flex-direction: column; 
-
             animation: fadeIn 0.5s ease-out; position: relative; 
-
         }
-
-
 
         .glass-header {
-
             background: var(--glass-bg); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
-
             padding: 8px 18px; /* Reduced Top Padding */
-
             display: flex; justify-content: space-between; align-items: center;
-
             box-shadow: 0 4px 20px rgba(0,0,0,0.03); z-index: 20; flex-shrink: 0;
-
             border-bottom: 1px solid var(--glass-border);
-
         }
-
         .header-info { display: flex; align-items: center; gap: 12px; }
-
         .avatar { 
-
             width: 40px; height: 40px; background: linear-gradient(135deg, rgba(255, 102, 0, 0.2), rgba(255, 94, 98, 0.2)); 
-
             color: var(--primary); border-radius: 12px; display: flex; align-items: center; justify-content: center;
-
             box-shadow: 0 4px 10px rgba(0,0,0,0.05); border: 1px solid rgba(255,255,255,0.2);
-
         }
-
         
-
         .header-text h2 { font-size: 1rem; margin-bottom: 2px; font-weight: 600; }
-
         .active-count { font-size: 0.75rem; color: var(--text-secondary); font-weight: 500; display: flex; align-items: center; gap: 6px; }
-
         .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; background-color: var(--status-green); box-shadow: 0 0 8px var(--status-green); }
-
         .header-controls { display: flex; gap: 8px; }
 
-
-
         #pinned-banner {
-
             background: var(--pin-bg); backdrop-filter: blur(12px);
-
             border-bottom: 1px solid var(--glass-border); 
-
             padding: 6px 18px; /* Reduced Pinned Padding */
-
             display: flex; justify-content: space-between; align-items: center;
-
             box-shadow: 0 4px 15px rgba(0,0,0,0.03); z-index: 18; cursor: pointer;
-
             animation: floatUp 0.3s ease;
-
         }
-
         .pinned-content { display: flex; align-items: center; gap: 12px; flex: 1; overflow: hidden; }
-
         .pin-icon { 
-
             color: var(--primary); transform: rotate(45deg); flex-shrink: 0; 
-
             background: rgba(255, 102, 0, 0.1); padding: 6px; border-radius: 50%;
-
         }
-
         .pinned-text-area { display: flex; flex-direction: column; overflow: hidden; }
-
         .pinned-label { font-size: 0.65rem; color: var(--primary); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
-
         .pinned-text { font-size: 0.85rem; color: var(--text-color); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-
         .unpin-btn { background: none; border: none; cursor: pointer; color: var(--text-secondary); padding: 5px; transition: 0.2s; }
-
         .unpin-btn:hover { color: #ff4757; }
 
-
-
         .welcome-watermark {
-
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-
             text-align: center; width: 85%; pointer-events: none; z-index: 0; opacity: 0.7;
-
         }
-
         .welcome-icon-wrapper svg { width: 50px; height: 50px; stroke-width: 1.5px; opacity: 0.6; margin-bottom: 12px; color: var(--text-secondary);}
-
         .welcome-watermark p { color: var(--text-secondary); font-size: 1rem; font-weight: 500; opacity: 0.8; }
-
         .welcome-watermark .hint { font-size: 0.8rem; margin-top: 8px; opacity: 0.6; }
 
-
-
         /* --- UPDATED: TIGHTER SPACING --- */
-
         #messages-container { 
-
             flex: 1; overflow-y: auto; 
-
             padding: 8px 10px 0 10px; /* Balanced Padding */
-
             background: transparent; 
-
             display: flex; flex-direction: column; 
-
             gap: 2px; /* Minimized Gap */
-
             z-index: 10; 
-
             scroll-behavior: smooth; overscroll-behavior-y: contain; overflow-x: hidden;
-
         }
-
         #messages-container::-webkit-scrollbar { width: 4px; }
-
         #messages-container::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 10px; }
-
         body.dark-mode #messages-container::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); }
 
-
-
         /* --- UPDATED MESSAGE BUBBLE STYLES --- */
-
         .message-wrapper {
-
             width: 100%; display: flex; flex-direction: column; position: relative;
-
             margin-bottom: 6px; /* Slightly more breathing room */
-
             padding: 0 5px; /* Reduced wrapper padding to allow wider bubbles */
-
         }
-
-
 
         .message-row { display: flex; align-items: flex-end; gap: 8px; max-width: 100%; }
 
-
-
         /* Avatar styling */
-
         .msg-avatar {
-
             width: 28px; height: 28px; border-radius: 50%; 
-
             flex-shrink: 0; overflow: hidden; 
-
             margin-bottom: 5px; /* Align with bottom of bubble */
-
         }
-
         .msg-avatar img { width: 100%; height: 100%; object-fit: cover; }
 
-
-
         /* --- FIX 1: CAP WIDTH FOR RECEIVER (GREY) --- */
-
         .msg-content { 
-
             display: flex; 
-
             flex-direction: column; 
-
             max-width: 70%; /* STRICTLY 70% */
-
             position: relative;
-
             align-items: flex-start; 
-
             min-width: 0; 
-
         }
-
-
 
         /* --- FIX 2: CAP WIDTH FOR SENDER (ORANGE) --- */
-
         /* Since sender bubble is direct child of wrapper in JS logic */
-
         .message-wrapper > .message {
-
             max-width: 70%; /* STRICTLY 70% */
-
         }
-
-
 
         /* The actual bubble */
-
         .message { 
-
             padding: 8px 12px;
-
             border-radius: 20px; 
-
             font-size: 0.95rem; line-height: 1.4;
-
             position: relative; z-index: 11; 
-
             box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-
             min-width: 80px; /* Ensure space for header */
-
             word-wrap: break-word; word-break: break-word; /* Prevent text overflow */
-
             user-select: text; 
-
             -webkit-user-select: text;
-
             cursor: auto;
-
             transition: transform 0.1s linear; /* Smooth drag */
-
             touch-action: pan-y; /* Allow vertical scroll, handle horizontal in JS */
-
             
-
             /* UPDATED FOR LONG PRESS TO REACT */
-
             -webkit-touch-callout: none; /* Disable native callout menu on iOS */
-
         }
-
         
-
         /* --- DELETED MESSAGE (BUBBLE STYLE) --- */
-
         /* --- DELETED MESSAGE (BUBBLE STYLE) --- */
-
         /* --- DELETED MESSAGE (VERTICAL + SINGLE LINE TEXT) --- */
-
         .message.deleted-state {
-
             /* CHANGED: Stack items vertically (Header top, Text bottom) */
-
             display: flex !important;
-
             flex-direction: column !important;
-
             
-
             /* CHANGED: Force text to stay on one line (no wrapping) */
-
             white-space: nowrap !important;
-
             
-
             gap: 2px; /* Small space between header and text */
-
             
-
             /* Visual styling */
-
             font-style: italic;
-
             background: rgba(0,0,0,0.06) !important;
-
             color: rgba(0,0,0,0.6) !important;
-
             padding: 8px 12px !important;
-
         }
-
-
 
         /* Dark mode adjustment */
-
         body.dark-mode .message.deleted-state {
-
             background: rgba(255,255,255,0.08) !important;
-
             color: #aaa !important;
-
         }
-
         
-
         /* Optional: Adjust dark mode specific color if needed */
-
         body.dark-mode .message.deleted-state {
-
             background: rgba(255,255,255,0.08) !important;
-
             color: #aaa !important;
-
         }
-
         
-
         body.dark-mode .message.deleted-state {
-
             background: rgba(255,255,255,0.08) !important;
-
             color: #aaa !important;
-
         }
-
-
 
         /* Header inside the bubble (Name • Time) */
-
         .msg-header-inside {
-
             font-size: 0.7rem;
-
             font-weight: 600;
-
             margin-bottom: 4px;
-
             opacity: 0.7;
-
             display: flex;
-
             align-items: center;
-
             gap: 5px;
-
             white-space: nowrap;
-
         }
-
-
 
         /* Color Schemes */
-
         .my-message { 
-
             align-self: flex-end; 
-
             background: linear-gradient(135deg, var(--primary) 0%, #ff8c00 100%); 
-
             color: white; 
-
             border-bottom-right-radius: 4px; 
-
         }
-
         
-
         /* Dark Mode / Others Message Style */
-
         .other-message { 
-
             background: #f0f2f5; 
-
             color: #050505; 
-
             border-bottom-left-radius: 4px; 
-
         }
-
         body.dark-mode .other-message {
-
             background: #262626; 
-
             color: #e4e6eb;
-
         }
-
-
 
         /* --- BOT MESSAGE PURPLE/LAVENDER COLOR --- */
-
         .message.ai-message {
-
             background: linear-gradient(135deg, #8a7bff 0%, #ada2ff 100%) !important;
-
             color: white !important;
-
             border: none !important;
-
         }
-
-
 
         /* --- REACTIONS (FIXED TO RIGHT SIDE) --- */
-
         .reaction-display-bubble {
-
             position: absolute; 
-
             bottom: -12px; 
-
             right: 0; /* Force Right Alignment ALWAYS */
-
             left: auto !important; /* Override any previous left: 0 */
-
             background: white; border-radius: 12px; padding: 2px 6px; 
-
             font-size: 0.7rem; box-shadow: 0 2px 5px rgba(0,0,0,0.1); 
-
             display: flex; gap: 2px; align-items: center; z-index: 12; 
-
             border: 2px solid var(--chat-bg); 
-
             min-width: 20px; justify-content: center;
-
         }
-
         body.dark-mode .reaction-display-bubble { background: #3a3a4a; border-color: #0f0c29; color: white; }
-
         
-
         /* Positioning based on parent container context */
-
         /* UPDATED: BOTH align right now */
-
         .message-wrapper > .reaction-display-bubble { right: 0; } 
-
         .msg-content > .reaction-display-bubble { right: 0; left: auto; } 
 
-
-
         /* --- FIX 2: REPLY BLOCK STYLING & TEXT SIZE --- */
-
         .reply-quote-block {
-
             background: rgba(0,0,0,0.05); 
-
             border-left: 3px solid var(--primary);
-
             padding: 6px 10px; 
-
             border-radius: 6px; 
-
             margin-bottom: 6px; 
-
             cursor: pointer; 
-
             opacity: 0.9;
-
             color: var(--text-color);
-
             width: 100%; /* Ensure it fills the available bubble space */
-
             max-width: 100%; /* FORCE MAX WIDTH */
-
             box-sizing: border-box;
-
             display: flex;
-
             flex-direction: column;
-
             font-size: 0.8rem;
-
         }
-
-
 
         .reply-quote-text {
-
             /* CHANGED: Use box model to limit lines instead of nowrap */
-
             display: -webkit-box;
-
             -webkit-line-clamp: 2; /* Limits text to 2 lines max */
-
             -webkit-box-orient: vertical;
-
             overflow: hidden;
 
-
-
             /* CHANGED: This breaks long strings (like your ASCII art) so they don't stretch the bubble */
-
             word-break: break-word; 
-
             white-space: normal; 
 
-
-
             font-size: 0.75rem !important;
-
             line-height: 1.3;
-
             width: 100%;
-
             max-width: 100%;
-
             color: var(--text-secondary); /* Optional: ensures good contrast */
-
         }
-
         body.dark-mode .reply-quote-block { background: rgba(255,255,255,0.08); }
-
         .my-message .reply-quote-block { background: rgba(255,255,255,0.2); border-color: white; color: white; }
-
         .reply-quote-name { 
-
             font-weight: 700; 
-
             font-size: 0.75rem; 
-
             margin-bottom: 2px; 
-
         }
-
-
 
         /* Visual cue icon behind the message when swiping */
-
         .swipe-reply-icon {
-
             position: absolute;
-
             left: -30px;
-
             top: 50%;
-
             transform: translateY(-50%) scale(0);
-
             color: var(--text-secondary);
-
             transition: transform 0.2s;
-
             z-index: 0;
-
         }
-
         .my-message ~ .swipe-reply-icon { display: none; } /* Don't show on own messages usually */
 
 
-
-
-
         .admin-delete-btn {
-
             background: #ff4757; color: white; border: none; border-radius: 50%;
-
             display: flex; align-items: center; justify-content: center;
-
             cursor: pointer; z-index: 15; box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-
             transition: transform 0.2s;
-
         }
-
         .admin-delete-btn:hover { transform: scale(1.1); }
 
-
-
         /* --- SYSTEM MESSAGE STYLES --- */
-
         .system-message-container {
-
             width: 100%; display: flex; justify-content: center; 
-
             margin: 4px 0; 
-
             animation: fadeIn 0.3s ease;
-
         }
-
         .system-message {
-
             font-size: 0.75rem; color: var(--text-secondary);
-
             background: rgba(255, 255, 255, 0.25);
-
             backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-
             padding: 4px 12px; border-radius: 20px; font-weight: 500;
-
             border: 1px solid rgba(255,255,255,0.2);
-
         }
-
         body.dark-mode .system-message {
-
             background: rgba(0,0,0,0.3);
-
             color: #bbb;
-
             border-color: rgba(255,255,255,0.05);
-
         }
-
-
 
         /* --- WELCOME MESSAGE --- */
-
         .welcome-message {
-
             border: 1px solid #ffd700 !important;
-
             background: linear-gradient(135deg, #fff5e6 0%, #fff 100%) !important;
-
             color: #333 !important;
-
         }
-
         body.dark-mode .welcome-message {
-
             background: linear-gradient(135deg, #4b3d20 0%, #1a1a1a 100%) !important;
-
             color: #ffd700 !important;
-
             border-color: #bfa100 !important;
-
         }
-
-
 
         /* --- SCROLL DOWN BUTTON --- */
-
         .scroll-bottom-btn {
-
             position: absolute; bottom: 80px; right: 20px;
-
             background: var(--glass-bg); backdrop-filter: blur(10px);
-
             border: 1px solid var(--glass-border); color: var(--primary);
-
             width: 40px; height: 40px; border-radius: 50%;
-
             display: flex; align-items: center; justify-content: center;
-
             box-shadow: 0 4px 15px rgba(0,0,0,0.1); cursor: pointer;
-
             z-index: 50; transition: all 0.3s ease;
-
             animation: floatUp 0.3s ease;
-
         }
-
         .scroll-bottom-btn:hover { transform: translateY(-3px); background: white; }
-
         body.dark-mode .scroll-bottom-btn { background: rgba(40,40,50,0.8); color: white; }
 
-
-
         /* --- MODERN INPUT AREA (FIXED FOR MOBILE) --- */
-
         .input-area {
-
             padding: 10px; 
-
             background: var(--glass-bg); display: flex; flex-direction: column; 
-
             backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-
             position: relative; z-index: 20;
-
             padding-bottom: max(5px, env(safe-area-inset-bottom)); 
-
             border-top: 1px solid var(--glass-border);
-
             box-shadow: 0 -10px 40px rgba(0,0,0,0.05);
-
         }
-
-
 
         .input-wrapper { 
-
             display: flex; 
-
             width: 100%; 
-
             gap: 5px; /* REDUCED GAP FROM 10px TO 5px */
-
             align-items: center; 
-
             box-sizing: border-box; 
-
         }
-
-
 
         .input-area input { 
-
             background: var(--input-bg); box-shadow: inset 0 2px 5px rgba(0,0,0,0.02); 
-
             flex: 1; 
-
             min-width: 0; 
-
             width: 0; 
-
             font-size: 1rem; padding-left: 18px; color: var(--text-color);
-
             padding: 10px 18px; 
-
             border: 1px solid rgba(255,255,255,0.1); border-radius: 24px; outline: none;
-
             transition: all 0.3s;
-
             -webkit-appearance: none; appearance: none;
-
             -webkit-text-fill-color: var(--text-color);
-
             opacity: 1;
-
         }
-
         .input-area input::placeholder { color: var(--text-secondary); opacity: 0.7; }
-
         .input-area input:focus { 
-
             border-color: var(--primary); background: rgba(255,255,255,0.9); 
-
             box-shadow: 0 4px 15px rgba(255, 102, 0, 0.15);
-
         }
-
         body.dark-mode .input-area input:focus { background: rgba(255,255,255,0.15); }
-
         
-
         .send-btn {
-
             background: linear-gradient(135deg, var(--primary) 0%, #ff8c00 100%); 
-
             color: white; border: none; width: 48px; height: 48px;
-
             border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center;
-
             transition: 0.3s; box-shadow: 0 4px 15px rgba(255, 102, 0, 0.3); flex-shrink: 0;
-
             -webkit-appearance: none; appearance: none;
-
         }
-
         .send-btn:hover { transform: scale(1.05); box-shadow: 0 6px 20px rgba(255, 102, 0, 0.4); }
-
         .send-btn:active { transform: scale(0.95); }
 
-
-
         .chat-footer {
-
             width: 100%; text-align: center; font-size: 0.7rem; color: var(--text-color); font-weight: 500; opacity: 0.5; 
-
             margin-top: 4px; 
-
             pointer-events: none;
-
         }
-
-
 
         .ai-trigger {
-
             background: rgba(108, 92, 231, 0.1); color: var(--ai-color); border-radius: 50%;
-
             width: 44px; height: 44px; flex-shrink: 0; border: 1px solid rgba(108, 92, 231, 0.2);
-
             cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.3s;
-
             -webkit-appearance: none; appearance: none;
-
         }
-
         .ai-trigger:hover { background: rgba(108, 92, 231, 0.2); transform: translateY(-2px); }
 
-
-
         .emoji-trigger {
-
             background: rgba(0,0,0,0.05); color: #f39c12; border-radius: 50%;
-
             width: 44px; height: 44px; flex-shrink: 0; border: 1px solid rgba(0,0,0,0.1);
-
             cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.3s;
-
             -webkit-appearance: none; appearance: none;
-
         }
-
         .emoji-trigger:hover { background: rgba(0,0,0,0.1); transform: translateY(-2px); }
-
         body.dark-mode .emoji-trigger { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2); }
 
-
-
         /* --- INSTAGRAM STYLE ANIMATION LOGIC --- */
-
         .input-wrapper .icon-btn, 
-
         .input-wrapper .send-btn {
-
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
-
             overflow: hidden; 
-
         }
-
         .input-wrapper:not(.typing) .send-btn {
-
             width: 0; height: 0; margin: 0; opacity: 0; padding: 0;
-
             transform: scale(0.5); pointer-events: none;
-
         }
-
         .input-wrapper.typing #image-btn {
-
             width: 0; height: 0; margin: 0; padding: 0; opacity: 0;
-
             pointer-events: none; transform: scale(0.5); 
-
         }
-
-
 
         .emoji-picker {
-
             position: absolute; bottom: 90px; left: 20px; width: 280px; height: 220px;
-
             background: var(--glass-bg); backdrop-filter: blur(25px);
-
             border-radius: 20px; border: 1px solid var(--glass-border);
-
             box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-
             display: grid; grid-template-columns: repeat(6, 1fr);
-
             padding: 12px; gap: 6px; overflow-y: auto; z-index: 100;
-
             animation: floatUp 0.2s ease;
-
         }
-
         .emoji-item { font-size: 1.5rem; cursor: pointer; text-align: center; padding: 6px; border-radius: 10px; transition: background 0.2s; user-select: none; }
-
         .emoji-item:hover { background: rgba(0,0,0,0.1); transform: scale(1.1); }
-
         body.dark-mode .emoji-item:hover { background: rgba(255,255,255,0.1); }
 
-
-
         .reply-preview {
-
             position: absolute; bottom: 100%; left: 0; width: 100%;
-
             background: var(--glass-bg); backdrop-filter: blur(15px);
-
             border-top: 1px solid var(--glass-border); padding: 12px 18px;
-
             display: flex; justify-content: space-between; align-items: center; z-index: 15;
-
             animation: floatUp 0.2s ease;
-
         }
-
         .reply-content { border-left: 3px solid var(--primary); padding-left: 12px; flex: 1; overflow: hidden; }
-
         .reply-to-name { font-size: 0.75rem; color: var(--primary); font-weight: 700; display: block; margin-bottom: 2px; }
-
         .reply-text { font-size: 0.85rem; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-
-
         .reply-option-btn, .pin-option-btn { font-size: 1.1rem; padding: 0 6px; cursor: pointer; display: flex; align-items: center; color: var(--text-color); }
-
         body.dark-mode .reply-option-btn, body.dark-mode .pin-option-btn { color: white; }
 
-
-
         .hidden { display: none !important; }
-
         .icon-btn { background: none; border: none; cursor: pointer; color: var(--text-color); padding: 8px; border-radius: 50%; transition: background 0.2s; display: flex; align-items: center; justify-content: center; }
-
         
-
         .reaction-menu {
-
             position: absolute; top: -50px; background: var(--glass-bg); backdrop-filter: blur(15px);
-
             padding: 6px 10px; border-radius: 50px;
-
             box-shadow: 0 8px 25px rgba(0,0,0,0.15); display: flex; gap: 8px; z-index: 100;
-
             animation: floatUp 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
-
             border: 1px solid var(--glass-border); align-items: center;
-
         }
-
         .reaction-option { font-size: 1.3rem; cursor: pointer; transition: transform 0.2s; user-select: none; }
-
         .reaction-option:hover { transform: scale(1.3); }
 
-
-
         /* --- IMAGE STYLES (NEW) --- */
-
         .chat-image-img {
-
             max-width: 100%;
-
             border-radius: 12px;
-
             display: block;
-
             cursor: pointer;
-
             object-fit: cover;
-
             /* Default for Mobile: Width 100%, Height Auto (based on aspect ratio) */
-
             width: 100%;
-
             height: auto;
-
         }
-
-
 
         /* PC / Tablet: Restrict Height */
-
         @media (min-width: 769px) {
-
             .chat-image-img {
-
                 max-height: 350px; /* Limit vertical height */
-
                 width: auto;       /* Allow width to shrink to maintain ratio */
-
                 max-width: 100%;   /* But never exceed container */
-
             }
-
         }
-
-
 
         /* --- MOBILE TWEAKS --- */
-
         @media (max-width: 480px) {
-
             .login-card { 
-
                 padding: 2rem 1.5rem; width: 90%; 
-
             }
-
             .message { font-size: 0.9rem; }
-
             .welcome-watermark { width: 90%; }
-
             .admin-delete-btn { opacity: 1 !important; } 
-
             .emoji-picker { width: 90%; left: 5%; bottom: 90px; }
-
             
-
             .input-area { padding: 8px 10px 20px 10px; }
-
             .input-wrapper { gap: 6px; }
-
             .ai-trigger, .emoji-trigger { width: 38px; height: 38px; }
-
             .input-wrapper.typing .send-btn { width: 38px; height: 38px; }
-
             .input-area input { font-size: 16px; padding: 10px 12px; } 
 
-
-
             /* Optimization for replies on mobile */
-
             .reply-quote-block { font-size: 0.75rem; padding: 4px 8px; }
-
             .reply-quote-text { font-size: 0.75rem; }
-
         }
-
-
 
         /* --- SAFARI / iOS SPECIFIC FIXES --- */
-
         input, button, .primary-btn, .secondary-btn, .ai-trigger, .emoji-trigger, .send-btn {
-
             -webkit-appearance: none; appearance: none; border-radius: 0;
-
         }
-
         .login-card input { border-radius: 12px; }
-
         .primary-btn { border-radius: 12px; }
-
         .secondary-btn { border-radius: 12px; }
-
         .input-area input { border-radius: 24px; }
-
         .ai-trigger, .emoji-trigger, .send-btn { border-radius: 50%; }
 
-
-
         input {
-
             color: var(--text-color);
-
             -webkit-text-fill-color: var(--text-color);
-
             opacity: 1;
-
         }
-
-
 
         /* --- AVATAR MODAL --- */
-
         #avatar-modal {
-
             position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(5px);
-
             z-index: 200; display: flex; align-items: center; justify-content: center;
-
             animation: fadeIn 0.3s;
-
         }
-
         .modal-content {
-
             background: var(--glass-bg); padding: 20px; border-radius: 20px;
-
             width: 90%; max-width: 400px; text-align: center;
-
             box-shadow: 0 10px 40px rgba(0,0,0,0.3); border: 1px solid var(--glass-border);
-
             animation: popUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-
         }
-
         .modal-content h3 { color: var(--text-color); margin-bottom: 15px; }
 
-
-
         .avatar-preview-container {
-
             width: 100px; height: 100px; margin: 0 auto 20px auto;
-
             border-radius: 50%; overflow: hidden; position: relative;
-
             background: rgba(0,0,0,0.05); border: 2px solid var(--primary);
-
             display: flex; align-items: center; justify-content: center;
-
             box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-
         }
-
         .avatar-preview-container img { width: 100%; height: 100%; object-fit: cover; }
-
         #avatar-placeholder { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; }
-
-
 
         body.dark-mode .avatar-preview-container { background: rgba(255,255,255,0.1); border-color: var(--primary); }
 
-
-
         /* --- TYPING INDICATOR --- */
-
         .typing-indicator {
-
             display: flex;
-
             align-items: center;
-
             gap: 4px;
-
             padding: 10px 14px;
-
             background: #f0f2f5;
-
             border-radius: 20px;
-
             border-bottom-left-radius: 4px;
-
             width: fit-content;
-
             margin-bottom: 6px;
-
             margin-left: 0;
-
             box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-
             animation: fadeIn 0.3s ease;
-
         }
-
         body.dark-mode .typing-indicator {
-
             background: #262626;
-
         }
-
-
 
         .typing-dot {
-
             width: 6px; height: 6px;
-
             background: #90949c;
-
             border-radius: 50%;
-
             animation: typingBounce 1.4s infinite ease-in-out both;
-
         }
-
         body.dark-mode .typing-dot { background: #b0b3b8; }
 
-
-
         .typing-dot:nth-child(1) { animation-delay: -0.32s; }
-
         .typing-dot:nth-child(2) { animation-delay: -0.16s; }
 
-
-
         @keyframes typingBounce {
-
             0%, 80%, 100% { transform: scale(0); }
-
             40% { transform: scale(1); }
-
         }
 
-
-
     </style>
-
 </head>
-
 <body>
 
-
-
     <div class="background-shape shape-1"></div>
-
     <div class="background-shape shape-2"></div>
 
-
-
     <div id="avatar-modal" class="hidden">
-
         <div class="modal-content">
-
             <h3>Update Profile Picture</h3>
 
-
-
             <div class="avatar-preview-container">
-
                 <img id="avatar-preview" src="" alt="Avatar Preview" class="hidden">
-
                 <div id="avatar-placeholder">
-
                     <i data-lucide="user" style="width: 40px; height: 40px; opacity: 0.5;"></i>
-
                 </div>
-
             </div>
-
-
 
             <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 15px;">
-
                 Upload a photo to be recognized.<br>Max 5MB (JPG, PNG)
-
             </p>
 
-
-
             <button id="choose-avatar-btn" class="primary-btn" style="margin-bottom: 10px;">
-
                 <i data-lucide="camera"></i> Choose Photo
-
             </button>
-
             <input type="file" id="avatar-upload-input" accept="image/png, image/jpeg, image/jpg, image/heic" class="hidden">
 
-
-
             <div id="avatar-upload-progress" class="hidden" style="margin: 10px 0; font-size: 0.8rem; font-weight: 600; color: var(--primary);">
-
                 Uploading... 0%
-
             </div>
-
-
 
             <button id="remove-avatar-btn" class="secondary-btn" style="margin-bottom: 10px; color: #ff4757; border-color: rgba(255, 71, 87, 0.3);">
-
                 <i data-lucide="trash-2"></i> Remove Photo
-
             </button>
-
-
 
             <button id="close-avatar-modal" class="secondary-btn">Close</button>
-
         </div>
-
     </div>
 
-
-
     <div id="login-screen">
-
         <div class="theme-toggle-container">
-
             <button id="theme-toggle-login" class="icon-btn" aria-label="Toggle Theme">
-
                 <i data-lucide="moon"></i>
-
             </button>
-
         </div>
-
         
-
         <div class="login-container">
-
             <div class="logo-area">
-
                 <div class="logo-icon">
-
                     <i data-lucide="message-circle" style="width: 32px; height: 32px;"></i>
-
                 </div>
-
                 <h1 style="font-size: 1.8rem; font-weight: 700; color: white; margin-bottom: 5px; text-shadow: 0 2px 10px rgba(0,0,0,0.2);">Incognito Chat</h1>
-
             </div>
-
-
 
             <div id="mobile-login-selection">
-
                 <div class="mobile-select-btn" onclick="showMobilePanel('guest')">
-
                     <i data-lucide="user" style="width: 32px; height: 32px; color: var(--primary);"></i>
-
                     <h3>Guest Login</h3>
-
                     <p>Anonymous • Quick Access</p>
-
                 </div>
-
                 <div class="mobile-select-btn" onclick="showMobilePanel('member')">
-
                     <i data-lucide="shield-check" style="width: 32px; height: 32px; color: #2ecc71;"></i>
-
                     <h3>Member Login</h3>
-
                     <p>Secure • Save History</p>
-
                 </div>
-
             </div>
 
-
-
             <div class="login-card-split" id="login-card-split-container">
-
                 <div class="login-panel left-panel" id="panel-guest">
-
                     <button class="back-to-select-btn" onclick="showMobileSelection()">
-
                         <i data-lucide="arrow-left" style="width:16px;"></i> Back
-
                     </button>
-
                     <h2>Quick Join</h2>
-
                     <p>Enter a secret name to join anonymously</p>
 
-
-
                     <div class="input-group">
-
                         <input type="text" id="guest-username-input" placeholder="Secret Name..." maxlength="15" autocomplete="off">
-
                         <i data-lucide="user" class="input-icon"></i>
-
                     </div>
 
-
-
                     <button id="guest-join-btn" class="primary-btn">
-
                         <span>Join as Guest</span>
-
                         <i data-lucide="arrow-right"></i>
-
                     </button>
 
-
-
                     <div class="divider" style="width: 100%; margin-top: 1.5rem;">USEFUL LINKS</div>
-
                     <a href="https://naiimur-rahman.github.io/UIU-CGPA-Calculator/" target="_blank" class="secondary-btn" style="margin-top: 0;">
-
                         <i data-lucide="calculator" style="width: 18px;"></i>
-
                         CGPA Calculator
-
                     </a>
-
                 </div>
-
-
 
                 <div class="vertical-divider"></div>
 
-
-
                 <div class="login-panel right-panel" id="panel-member">
-
                     <button class="back-to-select-btn" onclick="showMobileSelection()">
-
                         <i data-lucide="arrow-left" style="width:16px;"></i> Back
-
                     </button>
-
                     <h2>Member Login</h2>
-
                     <p>Secure your identity & save history</p>
 
-
-
                     <div class="input-group">
-
                         <input type="text" id="member-username-input" placeholder="Username" maxlength="15" autocomplete="off">
-
                         <i data-lucide="user-check" class="input-icon"></i>
-
                     </div>
-
-
 
                     <div class="input-group">
-
                         <input type="password" id="member-password-input" placeholder="Password" autocomplete="off">
-
                         <i data-lucide="lock" class="input-icon"></i>
-
                     </div>
-
-
 
                     <button id="member-avatar-btn" class="secondary-btn" style="margin-bottom: 15px; margin-top: 0;">
-
                         <i data-lucide="camera"></i> Upload Avatar
-
                     </button>
-
                     <input type="file" id="member-avatar-input" accept="image/*" class="hidden">
-
                     <p id="member-avatar-status" style="font-size: 0.75rem; color: var(--primary); display: none;">Avatar Selected!</p>
 
-
-
                     <button id="member-login-btn" class="primary-btn">
-
                         <span>Login / Register</span>
-
                         <i data-lucide="log-in"></i>
-
                     </button>
-
                 </div>
-
             </div>
-
         </div>
-
-
 
         <div class="login-footer">
-
             Developed by <a href="https://www.facebook.com/naiimurr/" target="_blank">Naimur Rahman</a> (CSE 242) ❤️️
-
         </div>
-
     </div>
-
-
 
     <div id="chat-screen" class="hidden">
-
         <header class="glass-header">
-
             <div class="header-info">
-
                 <div class="avatar">
-
                     <i data-lucide="graduation-cap"></i>
-
                 </div>
-
                 <div class="header-text">
-
                     <h2>UIU Community</h2>
-
                     <span class="active-count">
-
                         <span class="status-dot"></span> 
-
                         <span id="active-users-text">Connecting...</span>
-
                     </span>
-
                 </div>
-
             </div>
-
             <div class="header-controls">
-
                 <button id="theme-toggle-chat" class="icon-btn">
-
                     <i data-lucide="moon"></i>
-
                 </button>
-
                 <button id="logout-btn" class="icon-btn danger" title="Logout">
-
                     <i data-lucide="log-out"></i>
-
                 </button>
-
             </div>
-
         </header>
 
-
-
         <div id="pinned-banner" class="hidden">
-
             <div class="pinned-content">
-
                 <div class="pin-icon"><i data-lucide="pin" style="width: 16px;"></i></div>
-
                 <div class="pinned-text-area">
-
                     <span class="pinned-label">Pinned Message</span>
-
                     <span id="pinned-msg-text" class="pinned-text">Loading...</span>
-
                 </div>
-
             </div>
-
             <button id="unpin-btn" class="unpin-btn hidden"><i data-lucide="x" style="width: 16px;"></i></button>
-
         </div>
-
-
 
         <div class="welcome-watermark">
-
             <div class="welcome-icon-wrapper">
-
                 <i data-lucide="sparkles"></i>
-
             </div>
-
             <p>Be kind, stay curious.</p>
-
             <p class="hint">
-
                 Click <b>🤖 Bot Icon</b> for AI Help.<br>
-
                 Swipe Right ➡️ to Reply.
-
             </p>
-
         </div>
-
-
 
         <div id="messages-container">
-
         </div>
-
-
 
         <button id="scroll-bottom-btn" class="scroll-bottom-btn hidden" title="Scroll to bottom">
-
             <i data-lucide="arrow-down"></i>
-
         </button>
 
-
-
         <div class="input-area">
-
             <div id="reply-preview" class="reply-preview hidden">
-
                 <div class="reply-content">
-
                     <span class="reply-to-name">Replying to...</span>
-
                     <p class="reply-text">Message text...</p>
-
                 </div>
-
                 <button id="close-reply" class="icon-btn"><i data-lucide="x"></i></button>
-
             </div>
-
             
-
             <div id="emoji-picker" class="emoji-picker hidden"></div>
 
-
-
             <div class="input-wrapper">
-
                 <button id="ai-trigger-btn" class="icon-btn ai-trigger" title="Ask AI">
-
                     <i data-lucide="bot"></i>
-
                 </button>
-
-
 
                 <button id="emoji-btn" class="icon-btn emoji-trigger" title="Emojis">
-
                     <i data-lucide="smile"></i>
-
                 </button>
-
-
 
                 <button id="image-btn" class="icon-btn emoji-trigger" title="Send Image">
-
                     <i data-lucide="image"></i>
-
                 </button>
-
                 <input type="file" id="image-input" accept="image/png, image/jpeg, image/jpg, image/heic" class="hidden">
 
-
-
                 <input type="text" id="message-input" placeholder="@ai or (Click 🤖 to ask BhodAi)" autocomplete="off">
-
                 
-
                 <button id="send-btn" class="send-btn">
-
                     <i data-lucide="send" style="width: 20px;"></i>
-
                 </button>
-
             </div>
-
             <div class="chat-footer">
-
                 Developed by Naimur Rahman (CSE 242) ❤️
-
             </div>
-
         </div>
-
     </div>
 
-
-
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
-
     <script src="https://unpkg.com/heic2any"></script>
 
-
-
     <script>
-
         // --- 1. CONFIGURATION ---
-
         const firebaseConfig = {
-
             apiKey: "AIzaSyBx260kRaZe010DhaTxD7vPHER1ZIcQuxI",
-
             authDomain: "uiu-incognito-chat.firebaseapp.com",
-
             databaseURL: "https://uiu-incognito-chat-default-rtdb.firebaseio.com",
-
             projectId: "uiu-incognito-chat",
-
             storageBucket: "uiu-incognito-chat.firebasestorage.app",
-
             messagingSenderId: "579619680960",
-
             appId: "1:579619680960:web:11c11c4813eba3422cb325",
-
             measurementId: "G-B2RGV7N5JX"
-
         };
 
-
-
         // GEMINI API KEYS (ROTATION)
-
         const API_KEY_PARTS = [
-
             ["AIzaSyC_WOMJ9J_", "mRxWFmGGHyVbR8D8fh72r7d8"],
-
             ["AIzaSyDSStQu9xs-", "kHkEK1QeT96ONTq4d9kdDp0"],
-
             ["AIzaSyA__0c2WDC7_", "xeSDWrF5VFLxZCJeiMv4sE"],
-
             ["AIzaSyAPmYu6PCEy", "pKBI3QGClVH4EQM_XqZAK7c"],
-
             ["AIzaSyDoVxvtxCGPA", "kr_rTJbLmrmGL3J6u3R9F0"],
-
             ["AIzaSyCIj8vAM_u7", "UlmV0DkkhOqdDJ1td7sHT5o"],
-
             ["AIzaSyCgRFOmpCSw", "Jut8YUL-MSqQkN5x39BzegA"],
-
             ["AIzaSyDdw4sgr9An", "PF1q44FA6qtxUDqcpuMRaNI"],
-
             ["AIzaSyCOzbUrQFNh", "mbWyCgnMl6RXEjuPyoD7qCI"],
-
             ["AIzaSyBrlbSS-txX", "lTbzaM0Gde_lIriNpQdThms"]
-
         ];
 
-
-
         let currentKeyIndex = 0; 
-
         
-
         const BOT_ID = "ai-system-bot-v1";
-
         const ADMIN_PASSWORD = "0112420186"; 
-
         const RESTRICTED_NAMES = ['naimur rahman', 'naimur rahma', 'naimur', 'admin', 'uiu bot', 'ai'];
 
-
-
         // --- CLOUDINARY CONFIGURATION ---
-
         const CLOUDINARY_CLOUD_NAME = 'dxjtj6wan'; 
-
         const CLOUDINARY_UPLOAD_PRESET = 'Naimur'; 
 
-
-
         // --- 2. INITIALIZATION ---
-
         const loginScreen = document.getElementById('login-screen');
-
         const chatScreen = document.getElementById('chat-screen');
 
-
-
         // --- NEW LOGIN ELEMENTS ---
-
         const guestUsernameInput = document.getElementById('guest-username-input');
-
         const guestJoinBtn = document.getElementById('guest-join-btn');
 
-
-
         const memberUsernameInput = document.getElementById('member-username-input');
-
         const memberPasswordInput = document.getElementById('member-password-input');
-
         const memberLoginBtn = document.getElementById('member-login-btn');
-
         const memberAvatarBtn = document.getElementById('member-avatar-btn');
-
         const memberAvatarInput = document.getElementById('member-avatar-input');
-
         const memberAvatarStatus = document.getElementById('member-avatar-status');
 
-
-
         const activeUsersText = document.getElementById('active-users-text');
-
         const logoutBtn = document.getElementById('logout-btn');
-
         const messagesContainer = document.getElementById('messages-container');
-
         const messageInput = document.getElementById('message-input');
-
         const sendBtn = document.getElementById('send-btn');
-
         const themeToggleLogin = document.getElementById('theme-toggle-login');
-
         const themeToggleChat = document.getElementById('theme-toggle-chat');
-
         const inputWrapper = document.querySelector('.input-wrapper');
 
-
-
         const replyPreview = document.getElementById('reply-preview');
-
         const closeReplyBtn = document.getElementById('close-reply');
-
         const aiTriggerBtn = document.getElementById('ai-trigger-btn');
-
         const replyToName = document.querySelector('.reply-to-name');
-
         const replyTextDisplay = document.querySelector('.reply-text');
-
         
-
         const pinnedBanner = document.getElementById('pinned-banner');
-
         const pinnedMsgText = document.getElementById('pinned-msg-text');
-
         const unpinBtn = document.getElementById('unpin-btn');
-
         const emojiBtn = document.getElementById('emoji-btn');
-
         const emojiPicker = document.getElementById('emoji-picker');
 
-
-
         const imageBtn = document.getElementById('image-btn');
-
         const fileInput = document.getElementById('image-input');
 
-
-
         const avatarModal = document.getElementById('avatar-modal');
-
         const closeAvatarModalBtn = document.getElementById('close-avatar-modal');
-
         const chooseAvatarBtn = document.getElementById('choose-avatar-btn');
-
         const removeAvatarBtn = document.getElementById('remove-avatar-btn');
-
         const avatarUploadInput = document.getElementById('avatar-upload-input');
-
         const avatarPreview = document.getElementById('avatar-preview');
-
         const avatarPlaceholder = document.getElementById('avatar-placeholder');
-
         const avatarUploadProgress = document.getElementById('avatar-upload-progress');
-
         const headerAvatar = document.querySelector('.header-info .avatar');
-
-
 
         const scrollBottomBtn = document.getElementById('scroll-bottom-btn');
 
-
-
         let username = '';
-
         let myUUID = ''; 
-
         let database = null;
-
         let currentReply = null;
-
         const MAX_MESSAGES = 60;
-
         let myAvatar = null; 
-
         let pendingMemberAvatarFile = null;
-
         
-
         let typingTimeout = null;
-
         let currentUserKey = null;
-
         let isTypingStatusSent = false;
 
-
-
         let isAtBottom = true; 
-
         const SCROLL_THRESHOLD = 150; 
-
-
 
         const REACTION_OPTIONS = ['❤️', '😂', '😮', '😢', '😡', '👍'];
 
-
-
         const EMOJI_LIST = [
-
             '😀','😃','😄','😁','😆','😅','🤣','😂','🙂','🙃','😉','😊','😇',
-
             '🥰','😍','🤩','😘','😗','😚','😙','😋','😛','😜','🤪','😝','🤑',
-
             '🤗','🤭','🤫','🤔','🤐','🤨','😐','😑','😶','😏','😒','🙄','😬',
-
             '🤥','😌','😔','😪','🤤','😴','😷','🤒','🤕','🤢','🤮','🤧','🥵',
-
             '🥶','🥴','😵','🤯','🤠','🥳','😎','🤓','🧐','😕','😟','🙁','☹️',
-
             '😮','😯','😲','😳','🥺','😦','😧','😨','😰','😥','😢','😭','😱',
-
             '😖','😣','😞','😓','😩','😫','🥱','😤','😡','😠','🤬','😈','👿',
-
             '💀','☠️','💩','🤡','👹','👺','👻','👽','👾','🤖','👋','🤚','🖐',
-
             '✋','🖖','👌','🤏','✌️','🤞','🤟','🤘','🤙','👈','👉','👆','🖕',
-
             '👇','☝️','👍','👎','✊','👊','🤛','🤜','👏','🙌','👐','🤲','🤝',
-
             '🙏','✍️','💅','🤳','💪','🦾','🦿','🦵','🦶','👂','🦻','👃','🧠',
-
             '🦷','🦴','👀','👁','👅','👄','💋','🩸'
-
         ];
-
-
 
         if (typeof lucide !== 'undefined') lucide.createIcons();
 
-
-
         function initTheme() {
-
             const savedTheme = localStorage.getItem('theme');
-
             if (savedTheme === 'dark') {
-
                 document.body.classList.add('dark-mode');
-
                 updateThemeIcon(true);
-
             } else {
-
                 updateThemeIcon(false);
-
             }
-
         }
-
-
 
         function initAvatar() {
-
             const savedAvatar = localStorage.getItem('myAvatar');
-
             if(savedAvatar) myAvatar = savedAvatar;
-
             updateHeaderAvatar();
-
             updateAvatarPreview();
-
         }
-
-
 
         function updateHeaderAvatar() {
-
             if(!headerAvatar) return;
-
             headerAvatar.style.cursor = 'pointer';
-
             headerAvatar.style.overflow = 'hidden';
 
-
-
             if(myAvatar && myAvatar.startsWith('http')) {
-
                 headerAvatar.innerHTML = `<img src="${myAvatar}" style="width:100%; height:100%; object-fit:cover;">`;
-
             } else {
-
                 headerAvatar.innerHTML = '<i data-lucide="graduation-cap"></i>';
-
                 if(typeof lucide !== 'undefined') lucide.createIcons();
-
             }
-
         }
-
-
 
         function updateAvatarPreview() {
-
             if(!avatarPreview || !avatarPlaceholder) return;
-
             if(myAvatar && myAvatar.startsWith('http')) {
-
                 avatarPreview.src = myAvatar;
-
                 avatarPreview.classList.remove('hidden');
-
                 avatarPlaceholder.classList.add('hidden');
-
             } else {
-
                 avatarPreview.classList.add('hidden');
-
                 avatarPlaceholder.classList.remove('hidden');
-
             }
-
         }
 
-
-
         async function uploadToCloudinary(file, progressCallback) {
-
             if (CLOUDINARY_CLOUD_NAME === 'YOUR_CLOUD_NAME' || CLOUDINARY_UPLOAD_PRESET === 'YOUR_UPLOAD_PRESET') {
-
                 throw new Error("Cloudinary configuration missing. Please check the code settings.");
-
             }
 
-
-
             const url = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`;
-
             
-
             const formData = new FormData();
-
             formData.append('file', file);
-
             formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
 
-
-
             return new Promise((resolve, reject) => {
-
                 const xhr = new XMLHttpRequest();
-
                 xhr.open('POST', url, true);
 
-
-
                 xhr.upload.onprogress = (e) => {
-
                     if (e.lengthComputable && progressCallback) {
-
                         const percentComplete = (e.loaded / e.total) * 100;
-
                         progressCallback(percentComplete);
-
                     }
-
                 };
-
-
 
                 xhr.onload = () => {
-
                     let response;
-
                     try {
-
                         response = JSON.parse(xhr.responseText);
-
                     } catch (e) {
-
                         response = {};
-
                     }
-
-
 
                     if (xhr.status === 200) {
-
                         console.log("Cloudinary Response:", response); // Debugging for moderation verification
 
-
-
                         if (response.moderation && response.moderation.length > 0 && response.moderation[0].status === 'rejected') {
-
                             console.warn("Moderation Rejection:", response.moderation);
-
                             reject(new Error('Inappropriate content detected'));
-
                             return;
-
                         }
-
                         resolve(response.secure_url);
-
                     } else {
-
                         const errorMsg = response.error ? response.error.message : 'Cloudinary Upload Failed';
-
                         console.error("Cloudinary Error:", errorMsg, response);
-
                         reject(new Error(errorMsg));
-
                     }
-
                 };
-
-
 
                 xhr.onerror = () => reject(new Error('Network Error'));
 
-
-
                 xhr.send(formData);
-
             });
-
         }
 
-
-
         async function handleAvatarUpload(e) {
-
             const file = e.target.files[0];
-
             if(!file) return;
-
-
 
             if(file.size > 5 * 1024 * 1024) { alert("File too large. Max 5MB."); return; }
 
-
-
             let fileToUpload = file;
-
             let fileName = file.name;
 
-
-
             if(fileName.toLowerCase().endsWith('.heic') && typeof heic2any !== 'undefined') {
-
                 try {
-
                     const blob = await heic2any({ blob: file, toType: "image/jpeg", quality: 0.8 });
-
                     fileToUpload = new File([blob], fileName.replace(/\.heic$/i, ".jpg"), { type: "image/jpeg" });
-
                     fileName = fileToUpload.name;
-
                 } catch(err) { console.warn("HEIC conversion failed", err); }
-
             }
-
-
 
             avatarUploadProgress.innerText = "Uploading... 0%";
-
             avatarUploadProgress.classList.remove('hidden');
-
             chooseAvatarBtn.disabled = true;
 
-
-
             try {
-
                 const url = await uploadToCloudinary(fileToUpload, (progress) => {
-
                     avatarUploadProgress.innerText = `Uploading... ${Math.round(progress)}%`;
-
                 });
-
-
 
                 myAvatar = url;
-
                 localStorage.setItem('myAvatar', url);
-
                 updateHeaderAvatar();
-
                 updateAvatarPreview();
-
-
 
                 if(database && username) {
-
                      const userKey = username.toLowerCase().replace(/[^a-z0-9]/g, '_');
-
                      database.ref('active_users/' + userKey).update({ avatar: myAvatar });
-
                 }
-
-
 
                 avatarUploadProgress.innerText = "Upload Complete!";
-
                 setTimeout(() => {
-
                     avatarUploadProgress.classList.add('hidden');
-
                     avatarModal.classList.add('hidden');
-
                 }, 1500);
 
-
-
             } catch (error) {
-
                 alert("Avatar upload failed: " + error.message);
-
                 avatarUploadProgress.innerText = "Error!";
-
             } finally {
-
                 chooseAvatarBtn.disabled = false;
-
                 avatarUploadInput.value = '';
-
             }
-
         }
-
-
 
         function toggleTheme() {
-
             document.body.classList.toggle('dark-mode');
-
             const isDark = document.body.classList.contains('dark-mode');
-
             localStorage.setItem('theme', isDark ? 'dark' : 'light');
-
             updateThemeIcon(isDark);
-
             updateMetaThemeColor(isDark);
-
         }
-
-
 
         function updateMetaThemeColor(isDark) {
-
             const metaThemeColor = document.querySelector('meta[name="theme-color"]');
-
             // #0f0c29 is the start of the dark gradient, #ff9966 is light
-
             if(metaThemeColor) {
-
                 metaThemeColor.setAttribute('content', isDark ? '#0f0c29' : '#ff9966');
-
             }
-
         }
-
-
 
         function updateThemeIcon(isDark) {
-
             const iconName = isDark ? 'sun' : 'moon';
-
             if (themeToggleLogin) themeToggleLogin.innerHTML = `<i data-lucide="${iconName}"></i>`;
-
             if (themeToggleChat) themeToggleChat.innerHTML = `<i data-lucide="${iconName}"></i>`;
-
             if (typeof lucide !== 'undefined') lucide.createIcons();
-
         }
-
-
 
         function initFirebase() {
-
             if (typeof firebase === 'undefined') { console.error("Firebase SDK not loaded."); return; }
-
             try {
-
                 firebase.initializeApp(firebaseConfig);
-
                 database = firebase.database();
-
                 
-
                 const activeUsersRef = database.ref('active_users');
-
                 activeUsersRef.on('value', (snapshot) => {
-
                     const count = snapshot.exists() ? snapshot.numChildren() : 0;
-
                     if (activeUsersText) activeUsersText.innerText = `${count} Online`;
 
-
-
                     if (snapshot.exists()) {
-
                         updateTypingIndicator(snapshot.val());
-
                     } else {
-
                         updateTypingIndicator(null);
-
                     }
-
                 });
-
                 
-
                 initPinListener();
-
                 
-
             } catch (error) { console.error("Firebase Init Error:", error); }
-
         }
-
-
 
         initTheme();
-
         updateMetaThemeColor(document.body.classList.contains('dark-mode'));
-
         initAvatar();
-
         initFirebase();
-
         initEmojiPicker();
 
-
-
         // --- 3. EVENT LISTENERS ---
-
         if (themeToggleLogin) themeToggleLogin.addEventListener('click', toggleTheme);
-
         if (themeToggleChat) themeToggleChat.addEventListener('click', toggleTheme);
 
-
-
         if(headerAvatar) {
-
             headerAvatar.addEventListener('click', () => {
-
                 avatarModal.classList.remove('hidden');
-
             });
-
         }
-
         if(closeAvatarModalBtn) {
-
             closeAvatarModalBtn.addEventListener('click', () => {
-
                 avatarModal.classList.add('hidden');
-
             });
-
         }
-
         if(chooseAvatarBtn && avatarUploadInput) {
-
             chooseAvatarBtn.addEventListener('click', () => avatarUploadInput.click());
-
             avatarUploadInput.addEventListener('change', handleAvatarUpload);
-
         }
-
-
 
         if(removeAvatarBtn) {
-
             removeAvatarBtn.addEventListener('click', () => {
-
                 if(!confirm("Remove your profile photo?")) return;
 
-
-
                 myAvatar = null;
-
                 localStorage.removeItem('myAvatar');
 
-
-
                 updateHeaderAvatar();
-
                 updateAvatarPreview();
 
-
-
                 if (database && username) {
-
                     const userKey = username.toLowerCase().replace(/[^a-z0-9]/g, '_');
-
                     // Update active session
-
                     database.ref('active_users/' + userKey + '/avatar').remove();
 
-
-
                     // Update registered user data if applicable
-
                     database.ref('registered_users/' + userKey).once('value', snap => {
-
                         if(snap.exists()) {
-
                             database.ref('registered_users/' + userKey + '/avatar').remove();
-
                         }
-
                     });
-
                 }
-
-
 
                 alert("Profile photo removed.");
-
                 avatarModal.classList.add('hidden');
-
             });
-
         }
-
-
 
         // --- NEW LOGIN LISTENERS ---
-
         if (guestJoinBtn) guestJoinBtn.addEventListener('click', joinAsGuest);
-
         if (guestUsernameInput) guestUsernameInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') joinAsGuest(); });
 
-
-
         if (memberLoginBtn) memberLoginBtn.addEventListener('click', loginAsMember);
-
         if (memberUsernameInput) memberUsernameInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') memberPasswordInput.focus(); });
-
         if (memberPasswordInput) memberPasswordInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') loginAsMember(); });
 
-
-
         if (memberAvatarBtn) memberAvatarBtn.addEventListener('click', () => memberAvatarInput.click());
-
         if (memberAvatarInput) memberAvatarInput.addEventListener('change', (e) => {
-
             if (e.target.files && e.target.files[0]) {
-
                 pendingMemberAvatarFile = e.target.files[0];
-
                 memberAvatarStatus.style.display = 'block';
-
                 memberAvatarStatus.innerText = "Selected: " + pendingMemberAvatarFile.name;
-
             }
-
         });
-
         
-
         if (sendBtn) sendBtn.addEventListener('click', () => sendMessage());
-
         if (messageInput) messageInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
 
-
-
         if (messageInput) {
-
             messageInput.addEventListener('input', () => {
-
                 const hasText = messageInput.value.trim().length > 0;
 
-
-
                 if (hasText) {
-
                     inputWrapper.classList.add('typing');
-
                 } else {
-
                     inputWrapper.classList.remove('typing');
-
                 }
-
-
 
                 if (currentUserKey && database) {
-
                     if (!isTypingStatusSent) {
-
                         database.ref('active_users/' + currentUserKey).update({ isTyping: true });
-
                         isTypingStatusSent = true;
-
                     }
 
-
-
                     if (typingTimeout) clearTimeout(typingTimeout);
-
                     typingTimeout = setTimeout(() => {
-
                         database.ref('active_users/' + currentUserKey).update({ isTyping: false });
-
                         isTypingStatusSent = false;
-
                     }, 3000);
-
                 }
-
             });
-
         }
-
-
 
         if(aiTriggerBtn) aiTriggerBtn.addEventListener('click', () => {
-
             const text = messageInput.value.trim();
-
             if(!text) { alert("Type something to ask AI!"); return; }
-
             sendMessage(true);
-
         });
-
-
 
         if(closeReplyBtn) closeReplyBtn.addEventListener('click', cancelReply);
-
         
-
         if(emojiBtn) {
-
             emojiBtn.addEventListener('click', (e) => {
-
                 e.stopPropagation();
-
                 emojiPicker.classList.toggle('hidden');
-
             });
-
         }
-
-
 
         if(imageBtn && fileInput) {
-
             imageBtn.addEventListener('click', () => fileInput.click());
-
             fileInput.addEventListener('change', handleFileUpload);
-
         }
-
         
-
         document.addEventListener('click', (e) => {
-
             if(emojiPicker && !emojiPicker.contains(e.target) && !emojiBtn.contains(e.target)) {
-
                 emojiPicker.classList.add('hidden');
-
             }
-
         });
-
         
-
         if(unpinBtn) {
-
             unpinBtn.addEventListener('click', (e) => {
-
                 e.stopPropagation();
-
                 if(confirm("Unpin this message?")) {
-
                     database.ref('pinned_message').remove();
-
                 }
-
             });
-
         }
-
-
 
         if (logoutBtn) {
-
             logoutBtn.addEventListener('click', () => {
-
                 if(username && database) {
-
                     const userKey = username.toLowerCase().replace(/[^a-z0-9]/g, '_');
-
                     database.ref('active_users/' + userKey).remove()
-
                     .then(() => { location.reload(); })
-
                     .catch(() => { location.reload(); });
-
                 } else { location.reload(); }
-
             });
-
         }
 
-
-
         messagesContainer.addEventListener('scroll', () => {
-
             const position = messagesContainer.scrollTop + messagesContainer.clientHeight;
-
             const height = messagesContainer.scrollHeight;
-
             isAtBottom = (height - position) <= SCROLL_THRESHOLD;
 
-
-
             if (isAtBottom) {
-
                 scrollBottomBtn.classList.add('hidden');
-
             } else {
-
                 scrollBottomBtn.classList.remove('hidden');
-
             }
-
         });
-
-
 
         scrollBottomBtn.addEventListener('click', () => {
-
             scrollToBottom(true); 
-
         });
-
-
 
         function generateUUID() { return Date.now().toString(36) + Math.random().toString(36).substr(2); }
 
-
-
         function initEmojiPicker() {
-
             if(!emojiPicker) return;
-
             EMOJI_LIST.forEach(emoji => {
-
                 const span = document.createElement('div');
-
                 span.className = 'emoji-item';
-
                 span.innerText = emoji;
-
                 span.onclick = () => {
-
                     messageInput.value += emoji;
-
                     messageInput.focus();
-
                     emojiPicker.classList.add('hidden');
-
                     const event = new Event('input', { bubbles: true });
-
                     messageInput.dispatchEvent(event);
-
                 };
-
                 emojiPicker.appendChild(span);
-
             });
-
         }
-
-
 
         function initPinListener() {
-
             if(!database) return;
-
             database.ref('pinned_message').on('value', (snapshot) => {
-
                 const data = snapshot.val();
-
                 if(data) {
-
                     pinnedBanner.classList.remove('hidden');
-
                     pinnedMsgText.innerText = `${data.author}: ${data.text}`;
-
                     
-
                     pinnedBanner.onclick = (e) => {
-
                           if(e.target !== unpinBtn && !unpinBtn.contains(e.target)) {
-
                              const original = document.getElementById(`msg-${data.id}`);
-
                              if(original) {
-
                                  const container = document.getElementById('messages-container');
-
                                  const targetPosition = original.offsetTop - container.offsetTop - (container.clientHeight / 2) + (original.clientHeight / 2);
-
                                  container.scrollTo({ top: targetPosition, behavior: 'smooth' });
 
-
-
                                  const bubble = original.querySelector('.message');
-
                                  bubble.style.transition = "box-shadow 0.3s, transform 0.3s";
-
                                  bubble.style.boxShadow = "0 0 20px var(--primary)";
-
                                  bubble.style.transform = "scale(1.02)";
-
                                  
-
                                  setTimeout(() => {
-
                                      bubble.style.boxShadow = "0 4px 15px rgba(0,0,0,0.05)";
-
                                      bubble.style.transform = "scale(1)";
-
                                  }, 1000);
-
                              } else { alert("Message is too old or not currently loaded."); }
-
                           }
-
                     };
 
-
-
                     if(username.toLowerCase() === 'naimur rahman') unpinBtn.classList.remove('hidden');
-
                     else unpinBtn.classList.add('hidden');
-
                 } else {
-
                     pinnedBanner.classList.add('hidden');
-
                 }
-
             });
-
         }
-
-
 
         function pinMessage(msgId, text, author) {
-
             if(!database) return;
-
             if(confirm("Pin this message to the top?")) {
-
                 database.ref('pinned_message').set({
-
                     id: msgId, text: text, author: author,
-
                     timestamp: firebase.database.ServerValue.TIMESTAMP
-
                 });
-
             }
-
         }
-
-
 
         function joinAsGuest() {
-
             if (!database) { alert("Connecting to server..."); return; }
-
             const rawName = guestUsernameInput.value.trim();
-
             if (!rawName) { alert("Please enter a name."); return; }
-
             if (/[.#$\[\]]/.test(rawName)) { alert("Name cannot contain special characters."); return; }
 
-
-
             // Check if name is reserved in 'registered_users'
-
             const userKey = rawName.toLowerCase().replace(/[^a-z0-9]/g, '_'); 
-
             database.ref('registered_users/' + userKey).once('value', (snapshot) => {
-
                 if (snapshot.exists()) {
-
                     const data = snapshot.val();
-
                     const now = Date.now();
-
                     if (data.reservedUntil && data.reservedUntil > now) {
-
                         alert(`The name "${rawName}" is reserved for 7 days. Please choose another.`);
-
                         return;
-
                     }
-
                 }
-
                 // Also check restricted names for Admin
-
                 if (RESTRICTED_NAMES.includes(rawName.toLowerCase()) && rawName.toLowerCase() !== 'naimur rahman') {
-
                       // Allow admin to bypass if they know the password (legacy check or manual override)
-
                       // But strictly speaking, Admin should use Member Login now.
-
                       // We'll keep the prompt for backward compatibility or direct admin access
-
                       const password = prompt(`The username "${rawName}" is restricted. Enter Admin Password:`);
-
                       if (password !== ADMIN_PASSWORD) { alert("Access Denied."); return; }
-
                 } else if (rawName.toLowerCase() === 'naimur rahman') {
-
                       // Force admin to use member login ideally, but let's see.
-
                       // Let's redirect them or just ask for password here too.
-
                       const password = prompt("Admin Login: Enter Password");
-
                       if (password !== ADMIN_PASSWORD) { alert("Access Denied."); return; }
-
                 }
-
-
 
                 completeLogin(rawName);
-
             });
-
         }
-
-
 
         async function loginAsMember() {
-
             if (!database) { alert("Connecting to server..."); return; }
-
             const rawName = memberUsernameInput.value.trim();
-
             const password = memberPasswordInput.value.trim();
-
             
-
             if (!rawName) { alert("Please enter username."); return; }
-
             if (!password) { alert("Please enter password."); return; }
-
             if (/[.#$\[\]]/.test(rawName)) { alert("Username cannot contain special characters."); return; }
 
-
-
             const userKey = rawName.toLowerCase().replace(/[^a-z0-9]/g, '_');
-
             const userRef = database.ref('registered_users/' + userKey);
 
-
-
             userRef.once('value', async (snapshot) => {
-
                 if (snapshot.exists()) {
-
                     // Login
-
                     const data = snapshot.val();
-
                     if (data.password === password) {
-
                         // Success
-
                         myAvatar = data.avatar || null;
-
                         if(myAvatar) localStorage.setItem('myAvatar', myAvatar);
 
-
-
                         // Update reservation
-
                         userRef.update({
-
                             reservedUntil: Date.now() + (7 * 24 * 60 * 60 * 1000), // 7 Days
-
                             lastSeen: firebase.database.ServerValue.TIMESTAMP
-
                         });
-
-
 
                         completeLogin(rawName);
-
                     } else {
-
                         alert("Incorrect Password!");
-
                     }
-
                 } else {
-
                     // Register
-
                     if(confirm(`Username "${rawName}" not found. Create new account with this password?`)) {
-
                         let uploadedAvatarUrl = null;
 
-
-
                         if (pendingMemberAvatarFile) {
-
                              memberLoginBtn.innerText = "Uploading...";
-
                              memberLoginBtn.disabled = true;
-
                              try {
-
                                  uploadedAvatarUrl = await uploadToCloudinary(pendingMemberAvatarFile);
-
                              } catch(err) {
-
                                  alert("Avatar upload failed, continuing without avatar.");
-
                              }
-
                              memberLoginBtn.innerText = "Login / Register";
-
                              memberLoginBtn.disabled = false;
-
                         }
-
-
 
                         const newData = {
-
                             originalName: rawName,
-
                             password: password,
-
                             avatar: uploadedAvatarUrl,
-
                             createdAt: firebase.database.ServerValue.TIMESTAMP,
-
                             reservedUntil: Date.now() + (7 * 24 * 60 * 60 * 1000)
-
                         };
 
-
-
                         userRef.set(newData).then(() => {
-
                             if(uploadedAvatarUrl) {
-
                                 myAvatar = uploadedAvatarUrl;
-
                                 localStorage.setItem('myAvatar', myAvatar);
-
                             }
-
                             completeLogin(rawName);
-
                         });
-
                     }
-
                 }
-
             });
-
         }
-
-
 
         function completeLogin(finalName) {
-
             const userKey = finalName.toLowerCase().replace(/[^a-z0-9]/g, '_');
-
             const activeRef = database.ref('active_users/' + userKey);
 
-
-
             activeRef.once('value', (snapshot) => {
-
                 if (snapshot.exists()) {
-
                     alert(`The user "${finalName}" is already online in another session.`);
-
                 } else {
-
                     username = finalName;
-
                     myUUID = generateUUID(); 
-
                     currentUserKey = userKey;
-
                     
-
                     activeRef.set({
-
                         originalName: username, status: "online", avatar: myAvatar,
-
                         timestamp: firebase.database.ServerValue.TIMESTAMP,
-
                         isTyping: false
-
                     });
-
                     
-
                     activeRef.onDisconnect().remove();
 
-
-
                     // UI Switch
-
                     loginScreen.classList.add('hidden');
-
                     chatScreen.classList.remove('hidden');
 
-
-
                     updateHeaderAvatar();
-
                     if (typeof lucide !== 'undefined') lucide.createIcons();
-
                     
-
                     loadMessages();
-
                     
-
                     setTimeout(() => scrollToBottom(true), 100);
-
                     setTimeout(() => scrollToBottom(true), 500);
-
                     setTimeout(() => scrollToBottom(true), 2000); 
-
                     
-
                     if(username.toLowerCase() === 'naimur rahman') unpinBtn.classList.remove('hidden');
 
-
-
                     const loginTime = Date.now();
-
                     const usersRef = database.ref('active_users');
 
-
-
                     usersRef.on('child_added', (snap) => {
-
                         const u = snap.val();
-
                         if (u.timestamp > loginTime && u.originalName !== username) {
-
                             displaySystemMessage(`${u.originalName} just joined`);
-
                         }
-
                     });
-
-
 
                     usersRef.on('child_removed', (snap) => {
-
                         const u = snap.val();
-
                         if(u && u.originalName !== username) {
-
                              displaySystemMessage(`${u.originalName} left`);
-
                         }
-
                     });
-
-
 
                     // INJECT WELCOME MESSAGE (Local Only)
-
                     setTimeout(() => {
-
                         displayWelcomeMessage();
-
                     }, 1000);
-
                 }
-
             });
-
         }
-
-
 
         function displayWelcomeMessage() {
-
             // Fake local message from Admin
-
             const welcomeId = 'welcome-' + Date.now();
-
             const wrapper = document.createElement('div');
-
             wrapper.classList.add('message-wrapper');
-
             wrapper.id = `msg-${welcomeId}`;
 
-
-
             // It acts like a received message
-
             wrapper.style.alignItems = 'flex-start';
-
             const row = document.createElement('div');
-
             row.className = 'message-row';
 
-
-
             const avatarDiv = document.createElement('div');
-
             avatarDiv.className = 'msg-avatar';
-
             avatarDiv.innerHTML = '<div style="background:#ffd700; width:100%; height:100%; display:flex; align-items:center; justify-content:center; color:white; font-weight:bold;">N</div>';
 
-
-
             const messageBubble = document.createElement('div');
-
             messageBubble.classList.add('message', 'other-message', 'welcome-message');
 
-
-
             const headerDiv = document.createElement('div');
-
             headerDiv.className = 'msg-header-inside';
-
             headerDiv.innerHTML = `Naimur Rahman <span style="color:#1da1f2">✔</span> &bull; Now`;
 
-
-
             const textDiv = document.createElement('div');
-
             textDiv.className = 'text';
-
             textDiv.innerHTML = `Welcome back, <b>${username}</b>! <br>Hope you have a great time here. ❤️`;
 
-
-
             messageBubble.appendChild(headerDiv);
-
             messageBubble.appendChild(textDiv);
 
-
-
             const contentCol = document.createElement('div');
-
             contentCol.className = 'msg-content';
-
             contentCol.appendChild(messageBubble);
 
-
-
             row.appendChild(avatarDiv);
-
             row.appendChild(contentCol);
-
             wrapper.appendChild(row);
 
-
-
             messagesContainer.appendChild(wrapper);
-
             scrollToBottom();
-
         }
-
-
 
         function displaySystemMessage(text) {
-
             const container = document.createElement('div');
-
             container.className = 'system-message-container';
-
             const msg = document.createElement('div');
-
             msg.className = 'system-message';
-
             msg.innerText = text;
-
             container.appendChild(msg);
-
             messagesContainer.appendChild(container);
-
             
-
             if(isAtBottom) scrollToBottom();
-
         }
-
-
 
         async function askGemini(currentQuery) {
-
             let chatHistory = "Recent Chat Context:\n";
-
             const messages = document.querySelectorAll('.message-wrapper');
-
             const lastMessages = Array.from(messages).slice(-10); 
 
-
-
             lastMessages.forEach(msgWrapper => {
-
                 const nameEl = msgWrapper.querySelector('.meta');
-
                 const textEl = msgWrapper.querySelector('.text');
-
                 if (nameEl && textEl) {
-
                     let name = nameEl.innerText.split('•')[0].trim();
-
                     let text = textEl.innerText;
-
                     chatHistory += `${name}: ${text}\n`;
-
                 }
-
             });
-
-
 
             const systemInstruction = `
-
             Identity: You are 'BhodAi', a witty, a Sarcastic Bangladeshi student. You are a Muslim.
-
             
-
             Current Task: Reply to the "Current User Query" based on the "Recent Chat Context".
-
             
-
             CRITICAL RULES (Strictness Level: MAX):
-
             1. NEVER repeat the same phrase or roast twice.
-
             2. Keep replies SHORT (Max 30 words).
-
             3. Language: Mix of Bangla (English script) and English. Use emojis.
-
             4. Don't repeat "UIU" again and again. 
-
             5. Use InshaAllah, Alhamdulillah very rarely (only if context strictly requires it).
-
             6. Specific Triggers:
-
                 - University -> tell about UIU struggle.
-
                 - Love/Relationship -> Roast about being single/engineering student fate.
-
                 - Money/Treat -> When topic about money/friends treat only then, act like have no money.
-
             
-
             EXCEPTIONS:
-
             - Serious/Sad -> Don't bully, be supportive.
-
             - Creator -> Naimur Rahman (CSE 242, UIU).
-
             - If topic is about cgpa/gpa down -> Tell about Naimur Rahman's CGPA Calculator.
-
                 Features-> Calculate trimester GPA and updated CGPA using your course list and grades.
-
                            Recalculate results for retaken courses by entering old and new grades.
-
                            Use a Target CGPA Planner to see what GPA you need next trimester to reach a goal CGPA.
-
                            Track course marks through a Course Grade Calculator.
-
                            Monitor your completed and remaining credits with a built-in Credit Tracker.
-
             
-
             ${chatHistory}
-
             
-
             Current User Query: ${currentQuery}
-
             Your Reply (Be unique, savage, Islamic witty):`;
 
-
-
             let aiResponse = "Matha hang korse mama... Server limit sesh! 😵‍💫 Naimur vai ke janan.";
-
             let success = false;
-
             let attempts = 0;
-
             const MAX_ATTEMPTS = API_KEY_PARTS.length; 
 
-
-
             while (attempts < MAX_ATTEMPTS && !success) {
-
                 try {
-
                     const currentKey = API_KEY_PARTS[currentKeyIndex].join("");
-
                     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${currentKey}`;
 
-
-
                     const response = await fetch(url, {
-
                         method: 'POST',
-
                         headers: { 'Content-Type': 'application/json' },
-
                         body: JSON.stringify({ contents: [{ parts: [{ text: systemInstruction }] }] })
-
                     });
 
-
-
                     if (!response.ok) {
-
                         if (response.status === 429) {
-
                             console.warn(`Key #${currentKeyIndex} limit over. Switching...`);
-
                             currentKeyIndex = (currentKeyIndex + 1) % MAX_ATTEMPTS; 
-
                             attempts++; continue; 
-
                         } else { break; }
-
                     }
-
-
 
                     const data = await response.json();
-
                     if (data.candidates && data.candidates[0].content) {
-
                         aiResponse = data.candidates[0].content.parts[0].text;
-
                         success = true; 
-
                     } else {
-
                         attempts++;
-
                         currentKeyIndex = (currentKeyIndex + 1) % MAX_ATTEMPTS;
-
                     }
-
                 } catch (error) {
-
                     console.error("Network Error, trying next key:", error);
-
                     currentKeyIndex = (currentKeyIndex + 1) % MAX_ATTEMPTS;
-
                     attempts++;
-
                 }
-
             }
 
-
-
             database.ref('messages').push({
-
                 username: "BhodAi 🤖", text: aiResponse, senderId: BOT_ID, 
-
                 timestamp: firebase.database.ServerValue.TIMESTAMP, isDeleted: false
-
             });
-
         }
 
-
-
         async function handleFileUpload(e) {
-
             const file = e.target.files[0];
-
             if(!file) return;
-
-
 
             if(file.size > 5 * 1024 * 1024) { alert("File too large. Max 5MB."); fileInput.value = ''; return; }
 
-
-
             let fileToUpload = file;
-
             let fileName = file.name;
 
-
-
             if(file.name.toLowerCase().endsWith('.heic') && typeof heic2any !== 'undefined') {
-
                 try {
-
                     const blob = await heic2any({ blob: file, toType: "image/jpeg", quality: 0.8 });
-
                     fileToUpload = new File([blob], fileName.replace(/\.heic$/i, ".jpg"), { type: "image/jpeg" });
-
                     fileName = fileToUpload.name;
-
                 } catch(err) { console.error("HEIC Conversion failed:", err); }
-
             }
-
-
 
             const tempId = 'temp-' + Date.now();
-
             displayMessage(tempId, username, "📸 Uploading image... 0%", Date.now(), myUUID, false, null);
 
-
-
             try {
-
                 const url = await uploadToCloudinary(fileToUpload, (progress) => {
-
                       const tempMsg = document.getElementById(`msg-${tempId}`);
-
                       if(tempMsg) {
-
                           const textEl = tempMsg.querySelector('.text');
-
                           if(textEl) textEl.innerText = `📸 Uploading image... ${Math.round(progress)}%`;
-
                       }
-
                 });
 
-
-
                 const tempEl = document.getElementById(`msg-${tempId}`);
-
                 if(tempEl) tempEl.remove();
-
-
 
                 sendMessage(false, url);
-
             } catch (error) {
-
                 alert("Upload failed: " + error.message);
-
                 const tempEl = document.getElementById(`msg-${tempId}`);
-
                 if(tempEl) tempEl.remove();
-
             } finally {
-
                 fileInput.value = '';
-
             }
-
         }
 
-
-
         function sendMessage(isDirectAI = false, imageURL = null) {
-
             const text = messageInput.value.trim();
-
             if (!database || (!text && !imageURL)) return;
 
-
-
             const isReplyingToBot = currentReply && currentReply.username === "BhodAi 🤖";
-
             const isAiRequest = isDirectAI || text.toLowerCase().startsWith('@ai') || text.toLowerCase().startsWith('/ai') || isReplyingToBot;
-
             
-
             const msgData = {
-
                 username: username, text: text, senderId: myUUID, avatar: myAvatar,
-
                 timestamp: firebase.database.ServerValue.TIMESTAMP, isDeleted: false
-
             };
-
-
 
             if(imageURL) msgData.imageURL = imageURL;
 
-
-
             if (currentReply) {
-
                 msgData.replyTo = { id: currentReply.id, username: currentReply.username, text: currentReply.text };
-
             }
-
-
 
             database.ref('messages').push(msgData).then(() => { 
-
                 messageInput.value = ''; 
-
                 cancelReply();
-
                 scrollToBottom(true); 
-
                 
-
                 inputWrapper.classList.remove('typing');
 
-
-
                 if (currentUserKey && database) {
-
                     database.ref('active_users/' + currentUserKey).update({ isTyping: false });
-
                     if (typingTimeout) clearTimeout(typingTimeout);
-
                     isTypingStatusSent = false;
-
                 }
-
-
 
                 if (isAiRequest) {
-
                     let query = text.replace(/^(@ai|\/ai)\s*/i, '');
-
                     if(query.trim() === '') query = text; 
-
                     setTimeout(() => askGemini(query), 500);
-
                 }
-
             }).catch(error => console.error(error));
-
         }
-
-
 
         function deleteMessage(msgId) {
-
             // Check if current user is Admin
-
             if(username.toLowerCase() !== 'naimur rahman') {
-
                 alert("Only Admin Naimur Rahman can delete messages.");
-
                 return;
-
             }
-
-
 
             if(confirm("Delete this message permanently?")) {
-
                 database.ref('messages/' + msgId).update({
-
                     text: "🚫 Admin deleted message", 
-
                     isDeleted: true,
-
                     replyTo: null,
-
                     username: "Unknown"  // <--- ADDED: Changes name to Unknown
-
                 }).catch(error => alert("Error: " + error.message));
-
             }
-
         }
-
-
 
         function loadMessages() {
-
             if (!database) return;
-
             const messagesRef = database.ref('messages');
-
             
-
             messagesRef.limitToLast(MAX_MESSAGES).on('child_added', (snapshot) => {
-
                 const data = snapshot.val();
-
                 const msgId = snapshot.key; 
-
                 if (data) { 
-
                     displayMessage(msgId, data.username, data.text, data.timestamp, data.senderId, data.isDeleted, data.replyTo, data.imageURL, data.avatar);
-
                     if (isAtBottom) scrollToBottom(); 
-
                 }
-
             });
-
-
 
             messagesRef.limitToLast(MAX_MESSAGES).on('child_changed', (snapshot) => {
-
                 const data = snapshot.val();
-
                 const msgId = snapshot.key;
-
                 
-
                 if(data.reactions) updateReactions(msgId, data.reactions);
 
-
-
                 const msgEl = document.getElementById(`msg-${msgId}`);
-
                 if (msgEl) {
-
                     // We simply re-render to handle state changes cleanly
-
                     displayMessage(msgId, data.username, data.text, data.timestamp, data.senderId, data.isDeleted, data.replyTo, data.imageURL, data.avatar);
-
                 }
-
             });
-
         }
 
-
-
         function displayMessage(msgId, user, text, timestamp, senderId, isDeleted, replyToData, imageURL, senderAvatar) {
-
             const existingMsg = document.getElementById(`msg-${msgId}`);
 
-
-
             // --- FIX START: FORCE UNKNOWN IF DELETED ---
-
             if (isDeleted) {
-
                 text = "🚫 Admin deleted message";
-
                 imageURL = null;   
-
                 replyToData = null; 
-
                 user = "Unknown";      // <--- Forces name to Unknown
-
                 senderAvatar = null;   // <--- Removes their profile picture
-
             }
-
             // --- FIX END ---
 
-
-
             const isMyMessage = senderId ? (senderId === myUUID) : (user === username);
-
             const isBot = senderId === BOT_ID; 
-
             const cleanUser = user || "Anonymous";
-
             const lowerUser = cleanUser.toLowerCase();
-
             const isNaimur = lowerUser.includes('naimur rahman');
-
             const iAmAdmin = username.toLowerCase().includes('naimur rahman');
 
-
-
             // 2. STANDARD MESSAGE LOGIC
-
             const wrapper = document.createElement('div');
-
             wrapper.classList.add('message-wrapper');
-
             wrapper.id = `msg-${msgId}`;
-
-
 
             let timeStr = timestamp ? new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "";
 
-
-
             const messageBubble = document.createElement('div');
-
             messageBubble.classList.add('message');
-
             
-
             // PREVENT CONTEXT MENU
-
             messageBubble.addEventListener('contextmenu', (e) => { e.preventDefault(); });
 
-
-
             if (isDeleted) {
-
                 messageBubble.classList.add('deleted-state');
-
             }
 
-
-
             // Apply standard classes
-
             if (isBot) messageBubble.classList.add('other-message', 'ai-message');
-
             else messageBubble.classList.add(isMyMessage ? 'my-message' : 'other-message');
-
-
 
             if (isNaimur && !isBot && !isDeleted) messageBubble.style.border = "1px solid #ffd700";
 
-
-
             const headerDiv = document.createElement('div');
-
             headerDiv.className = 'msg-header-inside';
-
             
-
             if (isMyMessage) {
-
                 headerDiv.style.justifyContent = 'flex-end';
-
                 headerDiv.innerHTML = `${timeStr}`;
-
             } else {
-
                 let nameHtml = cleanUser;
-
                 // Only show verified tick if NOT deleted
-
                 if (isNaimur && !isDeleted) nameHtml += ` <span style="color:#1da1f2">✔</span>`;
-
                 headerDiv.innerHTML = `${nameHtml} &bull; ${timeStr}`;
-
             }
-
             messageBubble.appendChild(headerDiv);
 
-
-
             if (replyToData) {
-
                 const replyBlock = document.createElement('div');
-
                 replyBlock.className = 'reply-quote-block';
-
                 replyBlock.innerHTML = `
-
                     <div class="reply-quote-name">${replyToData.username}</div>
-
                     <div class="reply-quote-text">${replyToData.text}</div>
-
                 `;
-
                 replyBlock.onclick = () => {
-
                       const originalMsg = document.getElementById(`msg-${replyToData.id}`);
-
                       if(originalMsg) originalMsg.scrollIntoView({behavior: 'smooth', block: 'center'});
-
                 };
-
                 messageBubble.appendChild(replyBlock);
-
             }
-
-
 
             if (imageURL) {
-
                 const imgContainer = document.createElement('div');
-
                 imgContainer.style.marginBottom = text ? '8px' : '0';
-
                 imgContainer.innerHTML = `<img src="${imageURL}" class="chat-image-img" onclick="window.open('${imageURL}', '_blank')">`;
-
                 messageBubble.appendChild(imgContainer);
-
             }
-
-
 
             if (text) {
-
                 const textDiv = document.createElement('div');
-
                 textDiv.className = 'text';
-
                 textDiv.innerText = text;
-
                 messageBubble.appendChild(textDiv);
-
             }
-
-
 
             if (iAmAdmin) {
-
                 const delBtn = document.createElement('button');
-
                 delBtn.innerHTML = '×';
-
                 delBtn.className = 'admin-delete-btn';
-
                 delBtn.style.position = 'absolute';
-
                 delBtn.style.top = '-5px';
-
                 delBtn.style.right = isMyMessage ? '10px' : '-10px';
-
                 delBtn.style.width = '18px'; delBtn.style.height = '18px'; delBtn.style.fontSize = '12px';
-
                 delBtn.onclick = (e) => { e.stopPropagation(); deleteMessage(msgId); };
-
                 messageBubble.appendChild(delBtn);
-
             }
-
-
 
             const reactionDisplay = document.createElement('div');
-
             reactionDisplay.id = `react-disp-${msgId}`;
-
             reactionDisplay.className = 'reaction-display-bubble hidden';
-
             
-
             if (isMyMessage) {
-
                 wrapper.style.alignItems = 'flex-end';
-
                 messageBubble.appendChild(reactionDisplay);
-
                 wrapper.appendChild(messageBubble);
-
             } else {
-
                 wrapper.style.alignItems = 'flex-start';
-
                 const row = document.createElement('div');
-
                 row.className = 'message-row';
 
-
-
                 const avatarDiv = document.createElement('div');
-
                 avatarDiv.className = 'msg-avatar';
-
                 
-
                 if (isBot) {
-
                     avatarDiv.innerHTML = '🤖'; avatarDiv.style.background = '#6c5ce7'; avatarDiv.style.display='flex'; avatarDiv.style.alignItems='center'; avatarDiv.style.justifyContent='center';
-
                 } else if (senderAvatar && senderAvatar.startsWith('http')) {
-
                     avatarDiv.innerHTML = `<img src="${senderAvatar}">`;
-
                 } else {
-
                     avatarDiv.innerHTML = '<div style="width:100%; height:100%; background:#ddd; display:flex; align-items:center; justify-content:center; color:#555;"><i data-lucide="user" style="width:16px;"></i></div>';
-
                 }
-
-
 
                 const contentCol = document.createElement('div');
-
                 contentCol.className = 'msg-content';
-
                 contentCol.appendChild(messageBubble);
-
                 contentCol.appendChild(reactionDisplay);
 
-
-
                 row.appendChild(avatarDiv);
-
                 row.appendChild(contentCol);
-
                 wrapper.appendChild(row);
-
             }
-
-
 
             messageBubble.addEventListener('dblclick', (e) => showReactionMenu(e, msgId, wrapper));
-
             
-
             enableSwipeToReply(messageBubble, msgId, cleanUser, text, wrapper);
 
-
-
             if (existingMsg) {
-
                 existingMsg.replaceWith(wrapper);
-
             } else {
-
                 messagesContainer.appendChild(wrapper);
-
             }
-
             if (typeof lucide !== 'undefined') lucide.createIcons();
 
-
-
             database.ref(`messages/${msgId}/reactions`).once('value', (snap) => {
-
                 if(snap.exists()) updateReactions(msgId, snap.val());
-
             });
-
         }
-
-
 
         // --- UPDATED UNIFIED SWIPE & LONG PRESS FUNCTION ---
-
         function enableSwipeToReply(element, msgId, user, text, wrapper) {
-
             let startX = 0;
-
             let startY = 0; // Track vertical position to detect scrolling
-
             let currentX = 0;
-
             let isDragging = false;
-
             let hasMoved = false;
-
             let longPressTimer = null; // Variable for the timer
-
             let lastTapTime = 0;
-
             const threshold = 60; // Distance to trigger reply
 
-
-
             // Create Reply Icon visual
-
             let replyIcon = wrapper.querySelector('.swipe-reply-icon');
-
             if (!replyIcon) {
-
                 replyIcon = document.createElement('div');
-
                 replyIcon.className = 'swipe-reply-icon';
-
                 replyIcon.innerHTML = '<i data-lucide="reply" style="width:20px;"></i>';
-
                 wrapper.style.position = 'relative';
-
                 wrapper.appendChild(replyIcon);
-
                 if (typeof lucide !== 'undefined') lucide.createIcons();
-
             }
-
-
 
             // --- TOUCH EVENTS (Mobile) ---
-
             element.addEventListener('touchstart', (e) => {
-
                 startX = e.touches[0].clientX;
-
                 startY = e.touches[0].clientY; // Capture Y to check for scroll
-
                 isDragging = true;
-
                 hasMoved = false;
-
                 element.style.transition = 'none';
-
-
 
                 // --- 1. START LONG PRESS TIMER ---
-
                 longPressTimer = setTimeout(() => {
-
                     // If this runs, it means user held for 600ms without moving
-
                     isDragging = false; // Stop swipe logic
-
                     if (navigator.vibrate) navigator.vibrate(50); // Haptic feedback
-
                     showReactionMenu(e, msgId, wrapper); // Trigger your existing menu
-
                 }, 600); // 600ms hold time
 
-
-
             }, { passive: true });
-
-
 
             element.addEventListener('touchmove', (e) => {
-
                 if (!isDragging) return;
-
                 
-
                 currentX = e.touches[0].clientX;
-
                 let currentY = e.touches[0].clientY;
-
                 const diffX = currentX - startX;
-
                 const diffY = Math.abs(currentY - startY);
 
-
-
                 // --- 2. CANCEL TIMER IF MOVED ---
-
                 // If user moves finger > 10px (swiping or scrolling), cancel hold
-
                 if (Math.abs(diffX) > 10 || diffY > 10) {
-
                     clearTimeout(longPressTimer);
-
                     longPressTimer = null;
-
                     hasMoved = true;
-
                 }
-
-
 
                 // Normal Swipe Logic
-
                 // Only allow dragging to the right and ensure it's not a vertical scroll
-
                 if (diffX > 0 && diffX < 150 && diffY < 20) {
-
                     element.style.transform = `translateX(${diffX}px)`;
-
                     
-
                     if(diffX > threshold) {
-
                         replyIcon.style.transform = 'translateY(-50%) scale(1.2)';
-
                         replyIcon.style.color = 'var(--primary)';
-
                     } else {
-
                         replyIcon.style.transform = `translateY(-50%) scale(${diffX/threshold})`;
-
                         replyIcon.style.color = 'var(--text-secondary)';
-
                     }
-
                 }
-
             }, { passive: true });
 
-
-
             element.addEventListener('touchend', (e) => {
-
                 // --- 3. CLEAR TIMER ON RELEASE ---
-
                 if (longPressTimer) {
-
                     clearTimeout(longPressTimer);
-
                     longPressTimer = null;
-
                 }
-
-
 
                 // Double Tap Logic (Custom)
-
                 const currentTime = new Date().getTime();
-
                 const tapLength = currentTime - lastTapTime;
-
                 if (!hasMoved && tapLength < 300 && tapLength > 0) {
-
-                     if (navigator.vibrate) navigator.vibrate(50);
-
-                     showReactionMenu(e, msgId, wrapper);
-
+                      if (navigator.vibrate) navigator.vibrate(50);
+                      showReactionMenu(e, msgId, wrapper);
                 }
-
                 lastTapTime = currentTime;
 
-
-
                 finishDrag();
-
             });
-
-
 
             // --- MOUSE EVENTS (PC) ---
-
             element.addEventListener('mousedown', (e) => {
-
                 startX = e.clientX;
-
                 isDragging = true;
-
                 element.style.transition = 'none';
-
             });
-
-
 
             window.addEventListener('mousemove', (e) => {
-
                 if (!isDragging) return;
-
                 currentX = e.clientX;
-
                 const diff = currentX - startX;
-
-
 
                 if (diff > 0 && diff < 150) {
-
                     e.preventDefault();
-
                     element.style.transform = `translateX(${diff}px)`;
-
                     
-
                     if(diff > threshold) {
-
                         replyIcon.style.transform = 'translateY(-50%) scale(1.2)';
-
                         replyIcon.style.color = 'var(--primary)';
-
                     } else {
-
                         replyIcon.style.transform = `translateY(-50%) scale(${diff/threshold})`;
-
                         replyIcon.style.color = 'var(--text-secondary)';
-
                     }
-
                 }
-
             });
-
-
 
             window.addEventListener('mouseup', (e) => {
-
                 if (isDragging) finishDrag();
-
             });
 
-
-
             function finishDrag() {
-
                 if (!isDragging) return;
-
                 isDragging = false;
-
                 
-
                 const diff = currentX - startX;
-
                 
-
                 element.style.transition = 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
-
                 element.style.transform = 'translateX(0)';
-
                 
-
                 replyIcon.style.transform = 'translateY(-50%) scale(0)';
 
-
-
                 if (diff > threshold) {
-
                     if (navigator.vibrate) navigator.vibrate(50);
-
                     initiateReply(msgId, user, text);
-
                 }
-
                 
-
                 startX = 0;
-
                 currentX = 0;
-
             }
-
         }
-
-
 
         function initiateReply(msgId, name, text) {
-
             currentReply = { id: msgId, username: name, text: text };
-
             replyToName.innerText = `Replying to ${name}`;
-
             replyTextDisplay.innerText = text;
-
             replyPreview.classList.remove('hidden');
-
             messageInput.focus();
-
         }
-
-
 
         function cancelReply() {
-
             currentReply = null;
-
             replyPreview.classList.add('hidden');
-
         }
-
-
 
         let currentOpenMenuId = null;
 
-
-
         function showReactionMenu(e, msgId, wrapper) {
-
             if(e) e.preventDefault(); 
-
             const existingMenu = document.getElementById('active-reaction-menu');
-
             if(existingMenu) existingMenu.remove();
-
-
 
             if (currentOpenMenuId === msgId) { currentOpenMenuId = null; return; }
 
-
-
             const menu = document.createElement('div');
-
             menu.id = 'active-reaction-menu';
-
             menu.className = 'reaction-menu';
 
-
-
             const replyBtn = document.createElement('div');
-
             replyBtn.innerHTML = '<i data-lucide="reply" style="width:16px;"></i>';
-
             replyBtn.className = 'reply-option-btn';
-
             replyBtn.onclick = () => {
-
                 const msgEl = document.getElementById(`msg-${msgId}`);
-
                 const textContent = msgEl.querySelector('.text').innerText;
-
                 const nameContent = msgEl.querySelector('.msg-header-inside').innerText.split('•')[0].trim();
-
                 initiateReply(msgId, nameContent, textContent);
-
                 menu.remove();
-
                 currentOpenMenuId = null;
-
             };
-
             menu.appendChild(replyBtn);
 
-
-
             if(username.toLowerCase() === 'naimur rahman') {
-
                 const pinBtn = document.createElement('div');
-
                 pinBtn.innerHTML = '<i data-lucide="pin" style="width:16px;"></i>';
-
                 pinBtn.className = 'pin-option-btn';
-
                 pinBtn.style.marginLeft = '8px';
-
                 pinBtn.onclick = () => {
-
                     const msgEl = document.getElementById(`msg-${msgId}`);
-
                     const textContent = msgEl.querySelector('.text').innerText;
-
                     const nameContent = msgEl.querySelector('.msg-header-inside').innerText.split('•')[0].trim();
-
                     pinMessage(msgId, textContent, nameContent);
-
                     menu.remove();
-
                     currentOpenMenuId = null;
-
                 };
-
                 menu.appendChild(pinBtn);
-
             }
-
-
 
             const sep = document.createElement('span');
-
             sep.style.borderLeft = '1px solid #ccc'; sep.style.margin = '0 5px';
-
             menu.appendChild(sep);
 
-
-
             REACTION_OPTIONS.forEach(emoji => {
-
                 const span = document.createElement('span');
-
                 span.className = 'reaction-option';
-
                 span.textContent = emoji;
-
                 span.onclick = () => submitReaction(msgId, emoji);
-
                 menu.appendChild(span);
-
             });
-
-
 
             wrapper.appendChild(menu);
-
             if (typeof lucide !== 'undefined') lucide.createIcons();
-
             currentOpenMenuId = msgId;
 
-
-
             setTimeout(() => { if(menu.parentNode) menu.remove(); currentOpenMenuId = null; }, 4000);
-
         }
-
-
 
         function submitReaction(msgId, emoji) {
-
             const existingMenu = document.getElementById('active-reaction-menu');
-
             if(existingMenu) existingMenu.remove();
-
             currentOpenMenuId = null;
-
             database.ref(`messages/${msgId}/reactions/${myUUID}`).set(emoji);
-
         }
-
-
 
         function updateReactions(msgId, reactionsData) {
-
             const display = document.getElementById(`react-disp-${msgId}`);
-
             if(!display) return;
-
             if (!reactionsData) { display.classList.add('hidden'); return; }
 
-
-
             const counts = {};
-
             Object.values(reactionsData).forEach(emoji => { counts[emoji] = (counts[emoji] || 0) + 1; });
 
-
-
             let html = '';
-
             Object.entries(counts).sort((a,b) => b[1] - a[1]).forEach(([emoji, count]) => {
-
                 html += `<span>${emoji} ${count > 1 ? count : ''}</span>`;
-
             });
-
-
 
             if (html === '') display.classList.add('hidden');
-
             else { display.innerHTML = html; display.classList.remove('hidden'); }
-
         }
-
-
 
         document.addEventListener('click', (e) => {
-
             if(!e.target.closest('.message') && !e.target.closest('.reaction-menu') && !e.target.closest('.admin-delete-btn')) {
-
                 const existingMenu = document.getElementById('active-reaction-menu');
-
                 if(existingMenu) { existingMenu.remove(); currentOpenMenuId = null; }
-
             }
-
         });
 
-
-
         function scrollToBottom(force = false) { 
-
             if(isAtBottom || force) {
-
                 messagesContainer.scrollTop = messagesContainer.scrollHeight; 
-
             }
-
         }
-
-
 
         function updateTypingIndicator(users) {
-
             if (!users) {
-
                 removeTypingIndicator();
-
                 return;
-
             }
-
-
 
             let isAnyoneTyping = false;
-
             // Check if any other user is typing
-
             Object.keys(users).forEach(key => {
-
                 if (key !== currentUserKey && users[key].isTyping) {
-
                     isAnyoneTyping = true;
-
                 }
-
             });
 
-
-
             if (isAnyoneTyping) {
-
                 showTypingIndicator();
-
             } else {
-
                 removeTypingIndicator();
-
             }
-
         }
 
-
-
         function showTypingIndicator() {
-
             let indicator = document.getElementById('typing-indicator-bubble');
-
             if (!indicator) {
-
                 const wrapper = document.createElement('div');
-
                 wrapper.className = 'message-wrapper';
-
                 wrapper.id = 'typing-indicator-wrapper';
 
-
-
                 indicator = document.createElement('div');
-
                 indicator.id = 'typing-indicator-bubble';
-
                 indicator.className = 'typing-indicator';
-
                 indicator.innerHTML = `
-
                     <div class="typing-dot"></div>
-
                     <div class="typing-dot"></div>
-
                     <div class="typing-dot"></div>
-
                 `;
 
-
-
                 const row = document.createElement('div');
-
                 row.className = 'message-row';
 
-
-
                 const avatarDiv = document.createElement('div');
-
                 avatarDiv.className = 'msg-avatar';
-
                 avatarDiv.innerHTML = '<div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; opacity:0.5;"><i data-lucide="more-horizontal" style="width:16px;"></i></div>';
 
-
-
                 row.appendChild(avatarDiv);
-
                 row.appendChild(indicator);
-
                 wrapper.appendChild(row);
-
-
 
                 messagesContainer.appendChild(wrapper);
 
-
-
                 if (isAtBottom) scrollToBottom();
-
                 if (typeof lucide !== 'undefined') lucide.createIcons();
-
             } else {
-
                 // Ensure it stays at bottom if messagesContainer is updated
-
                 const wrapper = document.getElementById('typing-indicator-wrapper');
-
                 if (wrapper && wrapper.nextSibling) {
-
                     messagesContainer.appendChild(wrapper);
-
                     if (isAtBottom) scrollToBottom();
-
                 }
-
             }
-
         }
-
-
 
         function removeTypingIndicator() {
-
             const wrapper = document.getElementById('typing-indicator-wrapper');
-
             if (wrapper) wrapper.remove();
-
         }
-
-
 
         // --- MOBILE LOGIN NAVIGATION ---
-
         function showMobilePanel(type) {
-
             const selection = document.getElementById('mobile-login-selection');
-
             const container = document.getElementById('login-card-split-container');
-
             const guestPanel = document.getElementById('panel-guest');
-
             const memberPanel = document.getElementById('panel-member');
 
-
-
             selection.style.display = 'none';
-
             container.style.display = 'flex'; // Enable the container
 
-
-
             if(type === 'guest') {
-
                 guestPanel.style.display = 'flex';
-
                 memberPanel.style.display = 'none';
-
             } else {
-
                 guestPanel.style.display = 'none';
-
                 memberPanel.style.display = 'flex';
-
             }
-
         }
-
-
 
         function showMobileSelection() {
-
             const selection = document.getElementById('mobile-login-selection');
-
             const container = document.getElementById('login-card-split-container');
 
-
-
             selection.style.display = 'flex';
-
             container.style.display = 'none';
-
         }
-
     </script>
-
 </body>
-
 </html>
