@@ -304,6 +304,21 @@ body.dark-mode .message.mentioned {
 
             .back-to-select-btn { display: flex; }
         }
+        
+        /* Add this anywhere in your CSS */
+#inbox-badge {
+    position: absolute;
+    top: 6px;       /* Adjusts vertical position */
+    right: 6px;     /* Adjusts horizontal position */
+    width: 9px;
+    height: 9px;
+    background: #ff4757; /* A nicer red color */
+    border-radius: 50%;
+    border: 2px solid var(--glass-bg); /* Adds a cutout effect around the dot */
+    display: none; /* Hidden by default */
+    z-index: 5;
+    pointer-events: none;
+}
 
         /* --- CHAT SCREEN --- */
         #chat-screen { 
@@ -770,7 +785,7 @@ body.dark-mode .message.mentioned {
         body.dark-mode .reply-option-btn, body.dark-mode .pin-option-btn { color: white; }
 
         .hidden { display: none !important; }
-        .icon-btn { background: none; border: none; cursor: pointer; color: var(--text-color); padding: 8px; border-radius: 50%; transition: background 0.2s; display: flex; align-items: center; justify-content: center; }
+        .icon-btn { background: none; border: none; cursor: pointer; color: var(--text-color); padding: 8px; border-radius: 50%; transition: background 0.2s; display: flex; align-items: center; justify-content: center; position: relative;}
         
         .reaction-menu {
             position: absolute; top: -50px; background: var(--glass-bg); backdrop-filter: blur(15px);
@@ -1172,7 +1187,7 @@ body.dark-mode .message.mentioned {
             <div class="header-controls">
                 <button id="inbox-btn" class="icon-btn" title="Inbox">
                     <i data-lucide="inbox"></i>
-                    <span id="inbox-badge" style="position:absolute; top:5px; right:5px; width:8px; height:8px; background:red; border-radius:50%; display:none;"></span>
+                    <span id="inbox-badge"></span>
                 </button>
                 <button id="mute-toggle-btn" class="icon-btn" title="Mute Sounds">
                     <i data-lucide="volume-2"></i>
@@ -3248,6 +3263,10 @@ messageInput.addEventListener('input', (e) => {
         }
 
         function openInbox() {
+            // --- ADDED: Hide the red badge when inbox opens ---
+            const badge = document.getElementById('inbox-badge');
+            if(badge) badge.style.display = 'none';
+
             inboxScreen.classList.remove('hidden');
             loadInboxList();
         }
