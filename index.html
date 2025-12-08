@@ -689,6 +689,25 @@
             padding: 12px; gap: 6px; overflow-y: auto; z-index: 100;
             animation: floatUp 0.2s ease;
         }
+
+        .mention-suggestions {
+            position: absolute; bottom: 80px; left: 60px; width: 220px;
+            background: var(--glass-bg); backdrop-filter: blur(25px);
+            border-radius: 12px; border: 1px solid var(--glass-border);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            display: flex; flex-direction: column;
+            overflow-y: auto; max-height: 200px; z-index: 110;
+            animation: floatUp 0.2s ease;
+        }
+        .mention-item {
+            padding: 10px 14px; cursor: pointer; display: flex; align-items: center; gap: 10px;
+            font-size: 0.9rem; color: var(--text-color); border-bottom: 1px solid rgba(0,0,0,0.05);
+            transition: background 0.2s;
+        }
+        .mention-item:last-child { border-bottom: none; }
+        .mention-item:hover { background: rgba(0,0,0,0.1); }
+        .mention-item i { width: 16px; height: 16px; opacity: 0.7; }
+        body.dark-mode .mention-item:hover { background: rgba(255,255,255,0.1); }
         .emoji-item { font-size: 1.5rem; cursor: pointer; text-align: center; padding: 6px; border-radius: 10px; transition: background 0.2s; user-select: none; }
         .emoji-item:hover { background: rgba(0,0,0,0.1); transform: scale(1.1); }
         body.dark-mode .emoji-item:hover { background: rgba(255,255,255,0.1); }
@@ -839,6 +858,72 @@
             40% { transform: scale(1); }
         }
 
+        /* --- INBOX SCREEN --- */
+        #inbox-screen {
+            height: 100%; width: 100%; display: flex; flex-direction: column;
+            background: var(--bg-gradient);
+            animation: slideInRight 0.3s ease;
+            position: absolute; top: 0; left: 0; z-index: 50;
+        }
+        .inbox-list {
+            flex: 1; overflow-y: auto; padding: 10px;
+            display: flex; flex-direction: column; gap: 8px;
+        }
+        .inbox-item {
+            background: var(--glass-bg); backdrop-filter: blur(15px);
+            padding: 12px 16px; border-radius: 16px;
+            display: flex; align-items: center; gap: 12px;
+            cursor: pointer; transition: transform 0.2s;
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+        .inbox-item:hover { transform: translateY(-2px); background: rgba(255,255,255,0.9); }
+        body.dark-mode .inbox-item:hover { background: rgba(50,50,60,0.9); }
+
+        .inbox-avatar {
+            width: 48px; height: 48px; border-radius: 50%;
+            background: #eee; display: flex; align-items: center; justify-content: center;
+            overflow: hidden; flex-shrink: 0;
+            font-size: 1.2rem;
+        }
+        .inbox-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+        .inbox-info { flex: 1; overflow: hidden; }
+        .inbox-name { font-weight: 600; font-size: 1rem; color: var(--text-color); }
+        .inbox-last-msg {
+            font-size: 0.8rem; color: var(--text-secondary);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            margin-top: 2px;
+        }
+
+        /* --- USER ACTION MODAL --- */
+        #user-action-modal {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(5px);
+            z-index: 300; display: flex; align-items: center; justify-content: center;
+            animation: fadeIn 0.3s;
+        }
+        .action-card {
+            background: var(--glass-bg); padding: 24px; border-radius: 24px;
+            width: 85%; max-width: 320px; text-align: center;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3); border: 1px solid var(--glass-border);
+            animation: popUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex; flex-direction: column; align-items: center; gap: 15px;
+        }
+        .action-avatar {
+            width: 80px; height: 80px; border-radius: 50%;
+            background: #eee; display: flex; align-items: center; justify-content: center;
+            overflow: hidden; margin-bottom: 5px; border: 3px solid var(--primary);
+        }
+        .action-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .action-btn {
+            width: 100%; padding: 12px; border-radius: 12px; border: none; cursor: pointer;
+            font-weight: 600; font-size: 0.95rem; display: flex; align-items: center; justify-content: center; gap: 8px;
+            transition: 0.2s;
+        }
+        .btn-msg { background: var(--primary); color: white; }
+        .btn-ban { background: #ff4757; color: white; }
+        .btn-cancel { background: transparent; color: var(--text-secondary); border: 1px solid rgba(0,0,0,0.1); }
+
     </style>
 </head>
 <body>
@@ -875,6 +960,26 @@
             </button>
 
             <button id="close-avatar-modal" class="secondary-btn">Close</button>
+        </div>
+    </div>
+
+    <!-- USER ACTION MODAL (Start Private Chat / Ban) -->
+    <div id="user-action-modal" class="hidden">
+        <div class="action-card">
+            <div class="action-avatar" id="action-user-avatar">
+                <i data-lucide="user" style="width: 40px; height: 40px;"></i>
+            </div>
+            <h3 id="action-user-name" style="color: var(--text-color);">User Name</h3>
+
+            <button id="action-msg-btn" class="action-btn btn-msg">
+                <i data-lucide="message-circle"></i> Message Privately
+            </button>
+
+            <button id="action-ban-btn" class="action-btn btn-ban hidden">
+                <i data-lucide="ban"></i> Ban User (1h)
+            </button>
+
+            <button id="action-cancel-btn" class="action-btn btn-cancel">Cancel</button>
         </div>
     </div>
 
@@ -984,6 +1089,13 @@
                 </div>
             </div>
             <div class="header-controls">
+                <button id="inbox-btn" class="icon-btn" title="Inbox">
+                    <i data-lucide="inbox"></i>
+                    <span id="inbox-badge" style="position:absolute; top:5px; right:5px; width:8px; height:8px; background:red; border-radius:50%; display:none;"></span>
+                </button>
+                <button id="mute-toggle-btn" class="icon-btn" title="Mute Sounds">
+                    <i data-lucide="volume-2"></i>
+                </button>
                 <button id="theme-toggle-chat" class="icon-btn">
                     <i data-lucide="moon"></i>
                 </button>
@@ -992,6 +1104,25 @@
                 </button>
             </div>
         </header>
+
+        <!-- INBOX SCREEN OVERLAY -->
+        <div id="inbox-screen" class="hidden">
+            <header class="glass-header">
+                <div class="header-info">
+                    <button id="close-inbox-btn" class="icon-btn" style="margin-right: 10px;">
+                        <i data-lucide="arrow-left"></i>
+                    </button>
+                    <div class="header-text">
+                        <h2>Inbox</h2>
+                        <span class="active-count">Private Conversations</span>
+                    </div>
+                </div>
+            </header>
+            <div id="inbox-list" class="inbox-list">
+                <!-- Items will be injected here -->
+                <div style="text-align:center; padding:20px; color:var(--text-secondary); opacity:0.6;">No recent chats</div>
+            </div>
+        </div>
 
         <div id="pinned-banner" class="hidden">
             <div class="pinned-content">
@@ -1032,6 +1163,7 @@
             </div>
             
             <div id="emoji-picker" class="emoji-picker hidden"></div>
+            <div id="mention-suggestions" class="mention-suggestions hidden"></div>
 
             <div class="input-wrapper">
                 <button id="ai-trigger-btn" class="icon-btn ai-trigger" title="Ask AI">
@@ -1097,6 +1229,11 @@
         const ADMIN_PASSWORD = "0112420186"; 
         const RESTRICTED_NAMES = ['naimur rahman', 'naimur rahma', 'naimur', 'admin', 'uiu bot', 'ai'];
 
+        // --- SOUNDS ---
+        const SOUND_SENT = new Audio('https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3');
+        const SOUND_RECEIVED = new Audio('https://assets.mixkit.co/active_storage/sfx/2354/2354-preview.mp3');
+        let isMuted = localStorage.getItem('isMuted') === 'true';
+
         // --- CLOUDINARY CONFIGURATION ---
         const CLOUDINARY_CLOUD_NAME = 'dxjtj6wan'; 
         const CLOUDINARY_UPLOAD_PRESET = 'Naimur'; 
@@ -1118,6 +1255,7 @@
 
         const activeUsersText = document.getElementById('active-users-text');
         const logoutBtn = document.getElementById('logout-btn');
+        const muteToggleBtn = document.getElementById('mute-toggle-btn');
         const messagesContainer = document.getElementById('messages-container');
         const messageInput = document.getElementById('message-input');
         const sendBtn = document.getElementById('send-btn');
@@ -1136,6 +1274,7 @@
         const unpinBtn = document.getElementById('unpin-btn');
         const emojiBtn = document.getElementById('emoji-btn');
         const emojiPicker = document.getElementById('emoji-picker');
+        const mentionSuggestions = document.getElementById('mention-suggestions');
 
         const imageBtn = document.getElementById('image-btn');
         const fileInput = document.getElementById('image-input');
@@ -1152,6 +1291,18 @@
 
         const scrollBottomBtn = document.getElementById('scroll-bottom-btn');
 
+        // Inbox & Modal Elements
+        const inboxBtn = document.getElementById('inbox-btn');
+        const inboxScreen = document.getElementById('inbox-screen');
+        const closeInboxBtn = document.getElementById('close-inbox-btn');
+        const inboxList = document.getElementById('inbox-list');
+        const userActionModal = document.getElementById('user-action-modal');
+        const actionUserName = document.getElementById('action-user-name');
+        const actionUserAvatar = document.getElementById('action-user-avatar');
+        const actionMsgBtn = document.getElementById('action-msg-btn');
+        const actionBanBtn = document.getElementById('action-ban-btn');
+        const actionCancelBtn = document.getElementById('action-cancel-btn');
+
         let username = '';
         let myUUID = ''; 
         let database = null;
@@ -1159,10 +1310,17 @@
         const MAX_MESSAGES = 60;
         let myAvatar = null; 
         let pendingMemberAvatarFile = null;
+        let activeUsersList = [];
         
         let typingTimeout = null;
         let currentUserKey = null;
         let isTypingStatusSent = false;
+
+        // Chat Mode State
+        let currentChatMode = 'global'; // 'global' or 'private'
+        let privateChatUser = null; // { uuid, name, avatar }
+        let privateRoomId = null;
+        let messagesRef = null;
 
         let isAtBottom = true; 
         const SCROLL_THRESHOLD = 150; 
@@ -1354,6 +1512,30 @@
             if (typeof lucide !== 'undefined') lucide.createIcons();
         }
 
+        function updateMuteIcon() {
+            if(!muteToggleBtn) return;
+            muteToggleBtn.innerHTML = isMuted ? '<i data-lucide="volume-x"></i>' : '<i data-lucide="volume-2"></i>';
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        }
+
+        function toggleMute() {
+            isMuted = !isMuted;
+            localStorage.setItem('isMuted', isMuted);
+            updateMuteIcon();
+        }
+
+        function playSound(type) {
+            if(isMuted) return;
+            // Reset to start to allow rapid playback
+            if(type === 'sent') {
+                SOUND_SENT.currentTime = 0;
+                SOUND_SENT.play().catch(e => console.log('Audio play failed', e));
+            } else {
+                SOUND_RECEIVED.currentTime = 0;
+                SOUND_RECEIVED.play().catch(e => console.log('Audio play failed', e));
+            }
+        }
+
         function initFirebase() {
             if (typeof firebase === 'undefined') { console.error("Firebase SDK not loaded."); return; }
             try {
@@ -1362,11 +1544,17 @@
                 
                 const activeUsersRef = database.ref('active_users');
                 activeUsersRef.on('value', (snapshot) => {
+                    activeUsersList = [];
                     const count = snapshot.exists() ? snapshot.numChildren() : 0;
                     if (activeUsersText) activeUsersText.innerText = `${count} Online`;
 
                     if (snapshot.exists()) {
-                        updateTypingIndicator(snapshot.val());
+                        const users = snapshot.val();
+                        updateTypingIndicator(users);
+
+                        Object.values(users).forEach(u => {
+                            if(u.originalName) activeUsersList.push(u.originalName);
+                        });
                     } else {
                         updateTypingIndicator(null);
                     }
@@ -1380,15 +1568,18 @@
         initTheme();
         updateMetaThemeColor(document.body.classList.contains('dark-mode'));
         initAvatar();
+        updateMuteIcon();
         initFirebase();
         initEmojiPicker();
 
         // --- 3. EVENT LISTENERS ---
+        if (muteToggleBtn) muteToggleBtn.addEventListener('click', toggleMute);
         if (themeToggleLogin) themeToggleLogin.addEventListener('click', toggleTheme);
         if (themeToggleChat) themeToggleChat.addEventListener('click', toggleTheme);
 
         if(headerAvatar) {
             headerAvatar.addEventListener('click', () => {
+                // Only allow editing my avatar in global mode or handle logic to not confuse user
                 avatarModal.classList.remove('hidden');
             });
         }
@@ -1397,6 +1588,13 @@
                 avatarModal.classList.add('hidden');
             });
         }
+
+        // Inbox Listeners
+        if(inboxBtn) inboxBtn.addEventListener('click', openInbox);
+        if(closeInboxBtn) closeInboxBtn.addEventListener('click', closeInbox);
+
+        // User Action Modal Listeners
+        if(actionCancelBtn) actionCancelBtn.addEventListener('click', () => userActionModal.classList.add('hidden'));
         if(chooseAvatarBtn && avatarUploadInput) {
             chooseAvatarBtn.addEventListener('click', () => avatarUploadInput.click());
             avatarUploadInput.addEventListener('change', handleAvatarUpload);
@@ -1451,8 +1649,26 @@
         if (messageInput) messageInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
 
         if (messageInput) {
-            messageInput.addEventListener('input', () => {
-                const hasText = messageInput.value.trim().length > 0;
+            messageInput.addEventListener('input', (e) => {
+                const val = messageInput.value;
+                const hasText = val.trim().length > 0;
+
+                // --- MENTION LOGIC ---
+                const cursorPosition = messageInput.selectionStart;
+                const textBeforeCursor = val.substring(0, cursorPosition);
+                const lastAtPos = textBeforeCursor.lastIndexOf('@');
+
+                if (lastAtPos !== -1) {
+                    const query = textBeforeCursor.substring(lastAtPos + 1);
+                    // Check if there's a space after the @ (invalid mention usually)
+                    if (!query.includes(' ')) {
+                        showMentions(query, lastAtPos);
+                    } else {
+                        mentionSuggestions.classList.add('hidden');
+                    }
+                } else {
+                    mentionSuggestions.classList.add('hidden');
+                }
 
                 if (hasText) {
                     inputWrapper.classList.add('typing');
@@ -1473,6 +1689,55 @@
                     }, 3000);
                 }
             });
+
+            // Hide mentions on click out
+            document.addEventListener('click', (e) => {
+                if (e.target !== messageInput && !mentionSuggestions.contains(e.target)) {
+                    mentionSuggestions.classList.add('hidden');
+                }
+            });
+        }
+
+        function showMentions(query, atIndex) {
+            mentionSuggestions.innerHTML = '';
+            const lowerQuery = query.toLowerCase();
+
+            // Always suggest AI first
+            const suggestions = [{name: 'ai', display: 'BhodAi (AI Bot)'}];
+
+            // Add active users
+            activeUsersList.forEach(name => {
+                if(name !== username) suggestions.push({name: name, display: name});
+            });
+
+            const filtered = suggestions.filter(s => s.name.toLowerCase().startsWith(lowerQuery));
+
+            if (filtered.length === 0) {
+                mentionSuggestions.classList.add('hidden');
+                return;
+            }
+
+            filtered.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'mention-item';
+                div.innerHTML = `<i data-lucide="${item.name === 'ai' ? 'bot' : 'user'}"></i> ${item.display}`;
+                div.onclick = () => {
+                    const text = messageInput.value;
+                    const before = text.substring(0, atIndex);
+                    const after = text.substring(messageInput.selectionStart);
+                    const insert = `@${item.name} `;
+
+                    messageInput.value = before + insert + after;
+                    messageInput.focus();
+                    mentionSuggestions.classList.add('hidden');
+
+                    // Reset input height or other triggers if needed
+                };
+                mentionSuggestions.appendChild(div);
+            });
+
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+            mentionSuggestions.classList.remove('hidden');
         }
 
         if(aiTriggerBtn) aiTriggerBtn.addEventListener('click', () => {
@@ -1634,7 +1899,29 @@
                       if (password !== ADMIN_PASSWORD) { alert("Access Denied."); return; }
                 }
 
-                completeLogin(rawName);
+                // Check if Banned
+                checkBanStatus(userKey, () => {
+                    completeLogin(rawName);
+                });
+            });
+        }
+
+        function checkBanStatus(userKey, onSuccess) {
+            database.ref('banned_users/' + userKey).once('value', (snap) => {
+                if(snap.exists()) {
+                    const expiry = snap.val();
+                    if(Date.now() < expiry) {
+                        const minsLeft = Math.ceil((expiry - Date.now()) / 60000);
+                        alert(`You are banned for ${minsLeft} minutes.`);
+                        return;
+                    } else {
+                        // Ban expired
+                        database.ref('banned_users/' + userKey).remove();
+                        onSuccess();
+                    }
+                } else {
+                    onSuccess();
+                }
             });
         }
 
@@ -1650,60 +1937,67 @@
             const userKey = rawName.toLowerCase().replace(/[^a-z0-9]/g, '_');
             const userRef = database.ref('registered_users/' + userKey);
 
-            userRef.once('value', async (snapshot) => {
-                if (snapshot.exists()) {
-                    // Login
-                    const data = snapshot.val();
-                    if (data.password === password) {
-                        // Success
-                        myAvatar = data.avatar || null;
-                        if(myAvatar) localStorage.setItem('myAvatar', myAvatar);
+            // Check Ban Status First
+            checkBanStatus(userKey, () => {
+                userRef.once('value', async (snapshot) => {
+                    if (snapshot.exists()) {
+                        // Login
+                        const data = snapshot.val();
+                        if (data.password === password) {
+                            // Success
+                            myAvatar = data.avatar || null;
+                            if(myAvatar) localStorage.setItem('myAvatar', myAvatar);
 
-                        // Update reservation
-                        userRef.update({
-                            reservedUntil: Date.now() + (7 * 24 * 60 * 60 * 1000), // 7 Days
-                            lastSeen: firebase.database.ServerValue.TIMESTAMP
-                        });
+                            // Update reservation
+                            userRef.update({
+                                reservedUntil: Date.now() + (7 * 24 * 60 * 60 * 1000), // 7 Days
+                                lastSeen: firebase.database.ServerValue.TIMESTAMP
+                            });
 
-                        completeLogin(rawName);
-                    } else {
-                        alert("Incorrect Password!");
-                    }
-                } else {
-                    // Register
-                    if(confirm(`Username "${rawName}" not found. Create new account with this password?`)) {
-                        let uploadedAvatarUrl = null;
-
-                        if (pendingMemberAvatarFile) {
-                             memberLoginBtn.innerText = "Uploading...";
-                             memberLoginBtn.disabled = true;
-                             try {
-                                 uploadedAvatarUrl = await uploadToCloudinary(pendingMemberAvatarFile);
-                             } catch(err) {
-                                 alert("Avatar upload failed, continuing without avatar.");
-                             }
-                             memberLoginBtn.innerText = "Login / Register";
-                             memberLoginBtn.disabled = false;
-                        }
-
-                        const newData = {
-                            originalName: rawName,
-                            password: password,
-                            avatar: uploadedAvatarUrl,
-                            createdAt: firebase.database.ServerValue.TIMESTAMP,
-                            reservedUntil: Date.now() + (7 * 24 * 60 * 60 * 1000)
-                        };
-
-                        userRef.set(newData).then(() => {
-                            if(uploadedAvatarUrl) {
-                                myAvatar = uploadedAvatarUrl;
-                                localStorage.setItem('myAvatar', myAvatar);
-                            }
                             completeLogin(rawName);
-                        });
+                        } else {
+                            alert("Incorrect Password!");
+                        }
+                    } else {
+                        // Register Logic (Nested to continue flow)
+                        registerNewMember(rawName, password, userRef);
                     }
-                }
+                });
             });
+        }
+
+        async function registerNewMember(rawName, password, userRef) {
+            if(confirm(`Username "${rawName}" not found. Create new account with this password?`)) {
+                let uploadedAvatarUrl = null;
+
+                if (pendingMemberAvatarFile) {
+                        memberLoginBtn.innerText = "Uploading...";
+                        memberLoginBtn.disabled = true;
+                        try {
+                            uploadedAvatarUrl = await uploadToCloudinary(pendingMemberAvatarFile);
+                        } catch(err) {
+                            alert("Avatar upload failed, continuing without avatar.");
+                        }
+                        memberLoginBtn.innerText = "Login / Register";
+                        memberLoginBtn.disabled = false;
+                }
+
+                const newData = {
+                    originalName: rawName,
+                    password: password,
+                    avatar: uploadedAvatarUrl,
+                    createdAt: firebase.database.ServerValue.TIMESTAMP,
+                    reservedUntil: Date.now() + (7 * 24 * 60 * 60 * 1000)
+                };
+
+                userRef.set(newData).then(() => {
+                    if(uploadedAvatarUrl) {
+                        myAvatar = uploadedAvatarUrl;
+                        localStorage.setItem('myAvatar', myAvatar);
+                    }
+                    completeLogin(rawName);
+                });
+            }
         }
 
         function completeLogin(finalName) {
@@ -1739,7 +2033,22 @@
                     setTimeout(() => scrollToBottom(true), 500);
                     setTimeout(() => scrollToBottom(true), 2000); 
                     
-                    if(username.toLowerCase() === 'naimur rahman') unpinBtn.classList.remove('hidden');
+                if(username.toLowerCase() === 'naimur rahman') {
+                    unpinBtn.classList.remove('hidden');
+
+                    // Add Admin Delete All Button to Header
+                    const headerControls = document.querySelector('.header-controls');
+                    const delAllBtn = document.createElement('button');
+                    delAllBtn.className = 'icon-btn danger';
+                    delAllBtn.style.color = '#ff4757';
+                    delAllBtn.title = "Delete All Chat";
+                    delAllBtn.innerHTML = '<i data-lucide="trash"></i>';
+                    delAllBtn.onclick = deleteAllMessages;
+
+                    // Insert before Logout button
+                    headerControls.insertBefore(delAllBtn, logoutBtn);
+                    if (typeof lucide !== 'undefined') lucide.createIcons();
+                }
 
                     const loginTime = Date.now();
                     const usersRef = database.ref('active_users');
@@ -1957,38 +2266,76 @@
             const text = messageInput.value.trim();
             if (!database || (!text && !imageURL)) return;
 
-            const isReplyingToBot = currentReply && currentReply.username === "BhodAi 🤖";
-            const isAiRequest = isDirectAI || text.toLowerCase().startsWith('@ai') || text.toLowerCase().startsWith('/ai') || isReplyingToBot;
-            
+            // Prepare Message Data
             const msgData = {
                 username: username, text: text, senderId: myUUID, avatar: myAvatar,
                 timestamp: firebase.database.ServerValue.TIMESTAMP, isDeleted: false
             };
 
             if(imageURL) msgData.imageURL = imageURL;
-
             if (currentReply) {
                 msgData.replyTo = { id: currentReply.id, username: currentReply.username, text: currentReply.text };
             }
 
-            database.ref('messages').push(msgData).then(() => { 
+            // Determine Path based on Mode
+            let targetRef;
+            if (currentChatMode === 'private' && privateRoomId) {
+                targetRef = database.ref(`private_messages/${privateRoomId}`);
+            } else {
+                targetRef = database.ref('messages');
+            }
+
+            targetRef.push(msgData).then(() => {
                 messageInput.value = ''; 
                 cancelReply();
                 scrollToBottom(true); 
                 
                 inputWrapper.classList.remove('typing');
 
-                if (currentUserKey && database) {
+                // Typing Status Logic (Global Only or Private Specific?)
+                // Currently keeping global typing status for simplicity, or we can update a private path
+                if (currentUserKey && database && currentChatMode === 'global') {
                     database.ref('active_users/' + currentUserKey).update({ isTyping: false });
                     if (typingTimeout) clearTimeout(typingTimeout);
                     isTypingStatusSent = false;
                 }
 
-                if (isAiRequest) {
+                // Update Inbox metadata if Private
+                if (currentChatMode === 'private' && privateChatUser) {
+                    const updatePayload = {
+                        lastMsg: text || 'Sent an image',
+                        timestamp: firebase.database.ServerValue.TIMESTAMP,
+                        partnerName: privateChatUser.name,
+                        partnerAvatar: privateChatUser.avatar,
+                        partnerId: privateChatUser.uuid
+                    };
+
+                    // Update for Me
+                    database.ref(`user_chats/${myUUID}/${privateChatUser.uuid}`).update(updatePayload);
+
+                    // Update for Them
+                    database.ref(`user_chats/${privateChatUser.uuid}/${myUUID}`).update({
+                        lastMsg: text || 'Sent an image',
+                        timestamp: firebase.database.ServerValue.TIMESTAMP,
+                        partnerName: username,
+                        partnerAvatar: myAvatar,
+                        partnerId: myUUID
+                    });
+                }
+
+                // AI Logic (Only Global)
+                const isReplyingToBot = currentReply && currentReply.username === "BhodAi 🤖";
+                const isAiRequest = isDirectAI || text.toLowerCase().startsWith('@ai') || text.toLowerCase().startsWith('/ai') || isReplyingToBot;
+
+                if (currentChatMode === 'global' && isAiRequest) {
                     let query = text.replace(/^(@ai|\/ai)\s*/i, '');
                     if(query.trim() === '') query = text; 
                     setTimeout(() => askGemini(query), 500);
                 }
+
+                // Play Sent Sound
+                playSound('sent');
+
             }).catch(error => console.error(error));
         }
 
@@ -2009,20 +2356,39 @@
             }
         }
 
+        let currentMessagesListener = null;
+        let currentChangedListener = null;
+
         function loadMessages() {
             if (!database) return;
-            const messagesRef = database.ref('messages');
             
-            messagesRef.limitToLast(MAX_MESSAGES).on('child_added', (snapshot) => {
+            // Detach previous listeners if any
+            if (currentMessagesListener && messagesRef) messagesRef.off('child_added', currentMessagesListener);
+            if (currentChangedListener && messagesRef) messagesRef.off('child_changed', currentChangedListener);
+
+            messagesContainer.innerHTML = ''; // Clear chat
+
+            if (currentChatMode === 'private' && privateRoomId) {
+                messagesRef = database.ref(`private_messages/${privateRoomId}`);
+            } else {
+                messagesRef = database.ref('messages');
+            }
+
+            currentMessagesListener = messagesRef.limitToLast(MAX_MESSAGES).on('child_added', (snapshot) => {
                 const data = snapshot.val();
                 const msgId = snapshot.key; 
                 if (data) { 
                     displayMessage(msgId, data.username, data.text, data.timestamp, data.senderId, data.isDeleted, data.replyTo, data.imageURL, data.avatar);
                     if (isAtBottom) scrollToBottom(); 
+
+                    const isMyMessage = data.senderId === myUUID;
+                    if(!isMyMessage && (Date.now() - data.timestamp) < 5000) {
+                         playSound('received');
+                    }
                 }
             });
 
-            messagesRef.limitToLast(MAX_MESSAGES).on('child_changed', (snapshot) => {
+            currentChangedListener = messagesRef.limitToLast(MAX_MESSAGES).on('child_changed', (snapshot) => {
                 const data = snapshot.val();
                 const msgId = snapshot.key;
                 
@@ -2030,7 +2396,6 @@
 
                 const msgEl = document.getElementById(`msg-${msgId}`);
                 if (msgEl) {
-                    // We simply re-render to handle state changes cleanly
                     displayMessage(msgId, data.username, data.text, data.timestamp, data.senderId, data.isDeleted, data.replyTo, data.imageURL, data.avatar);
                 }
             });
@@ -2155,6 +2520,15 @@
                     avatarDiv.innerHTML = `<img src="${senderAvatar}">`;
                 } else {
                     avatarDiv.innerHTML = '<div style="width:100%; height:100%; background:#ddd; display:flex; align-items:center; justify-content:center; color:#555;"><i data-lucide="user" style="width:16px;"></i></div>';
+                }
+
+                // Add Click Handler for User Modal (Only for non-bots and not me)
+                if (!isBot && !isMyMessage) {
+                    avatarDiv.style.cursor = 'pointer';
+                    avatarDiv.onclick = (e) => {
+                        e.stopPropagation();
+                        openUserActionModal({ uuid: senderId, name: user, avatar: senderAvatar });
+                    };
                 }
 
                 const contentCol = document.createElement('div');
@@ -2527,6 +2901,168 @@
 
             selection.style.display = 'flex';
             container.style.display = 'none';
+        }
+
+        // --- PRIVATE CHAT LOGIC ---
+
+        function openUserActionModal(userObj) {
+            if(!userObj.uuid) return;
+
+            actionUserName.innerText = userObj.name;
+            if (userObj.avatar && userObj.avatar.startsWith('http')) {
+                actionUserAvatar.innerHTML = `<img src="${userObj.avatar}">`;
+            } else {
+                actionUserAvatar.innerHTML = '<i data-lucide="user" style="width: 40px; height: 40px; color:#555;"></i>';
+            }
+
+            // Setup Buttons
+            actionMsgBtn.onclick = () => {
+                startPrivateChat(userObj);
+                userActionModal.classList.add('hidden');
+            };
+
+            // Check Admin Status for Ban Button
+            if (username.toLowerCase() === 'naimur rahman') {
+                actionBanBtn.classList.remove('hidden');
+                actionBanBtn.onclick = () => {
+                    if(confirm(`Ban ${userObj.name} for 1 hour?`)) {
+                        // Pass name to banUser to derive key
+                        banUser(userObj.name);
+                        userActionModal.classList.add('hidden');
+                    }
+                };
+            } else {
+                actionBanBtn.classList.add('hidden');
+            }
+
+            userActionModal.classList.remove('hidden');
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        }
+
+        function startPrivateChat(targetUser) {
+            currentChatMode = 'private';
+            privateChatUser = targetUser;
+
+            // Create consistent Room ID (Alphabetical sort)
+            const ids = [myUUID, targetUser.uuid].sort();
+            privateRoomId = ids.join('_');
+
+            // Update UI
+            document.querySelector('.header-text h2').innerText = `${targetUser.name}`;
+            document.querySelector('.active-count').innerText = "Private Chat";
+            inboxScreen.classList.add('hidden'); // Close inbox if open
+
+            // Show Back Button in Chat Header
+            const headerInfo = document.querySelector('.header-info');
+            let backBtn = document.getElementById('chat-back-btn');
+            if(!backBtn) {
+                backBtn = document.createElement('button');
+                backBtn.id = 'chat-back-btn';
+                backBtn.className = 'icon-btn';
+                backBtn.style.marginRight = '8px';
+                backBtn.innerHTML = '<i data-lucide="arrow-left"></i>';
+                backBtn.onclick = exitPrivateChat;
+                headerInfo.insertBefore(backBtn, headerInfo.firstChild);
+            }
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+
+            loadMessages();
+        }
+
+        function exitPrivateChat() {
+            currentChatMode = 'global';
+            privateChatUser = null;
+            privateRoomId = null;
+
+            // Reset UI
+            document.querySelector('.header-text h2').innerText = "UIU Community";
+            // Trigger update count
+            const activeUsersRef = database.ref('active_users');
+            activeUsersRef.once('value', (snap) => {
+                 const count = snap.exists() ? snap.numChildren() : 0;
+                 if (activeUsersText) activeUsersText.innerText = `${count} Online`;
+            });
+
+            const backBtn = document.getElementById('chat-back-btn');
+            if(backBtn) backBtn.remove();
+
+            loadMessages();
+        }
+
+        function openInbox() {
+            inboxScreen.classList.remove('hidden');
+            loadInboxList();
+        }
+
+        function closeInbox() {
+            inboxScreen.classList.add('hidden');
+        }
+
+        function loadInboxList() {
+            inboxList.innerHTML = '<div style="text-align:center; padding:20px;">Loading...</div>';
+
+            database.ref(`user_chats/${myUUID}`).once('value', (snapshot) => {
+                inboxList.innerHTML = '';
+                if(!snapshot.exists()) {
+                    inboxList.innerHTML = '<div style="text-align:center; padding:20px; color:var(--text-secondary); opacity:0.6;">No recent chats</div>';
+                    return;
+                }
+
+                const chats = [];
+                snapshot.forEach(child => {
+                    chats.push(child.val());
+                });
+
+                // Sort by time desc
+                chats.sort((a,b) => b.timestamp - a.timestamp);
+
+                chats.forEach(chat => {
+                    const item = document.createElement('div');
+                    item.className = 'inbox-item';
+
+                    let avatarHtml = '';
+                    if(chat.partnerAvatar) avatarHtml = `<img src="${chat.partnerAvatar}">`;
+                    else avatarHtml = '<i data-lucide="user" style="width:24px; color:#555;"></i>';
+
+                    item.innerHTML = `
+                        <div class="inbox-avatar">${avatarHtml}</div>
+                        <div class="inbox-info">
+                            <div class="inbox-name">${chat.partnerName}</div>
+                            <div class="inbox-last-msg">${chat.lastMsg}</div>
+                        </div>
+                    `;
+
+                    item.onclick = () => {
+                         startPrivateChat({ uuid: chat.partnerId, name: chat.partnerName, avatar: chat.partnerAvatar });
+                    };
+
+                    inboxList.appendChild(item);
+                });
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+            });
+        }
+
+        function banUser(targetName) {
+             // Convert name to key
+             const key = targetName.toLowerCase().replace(/[^a-z0-9]/g, '_');
+             const expiry = Date.now() + (60 * 60 * 1000); // 1 Hour
+             database.ref(`banned_users/${key}`).set(expiry);
+
+             // Also try to kick them if they are active (remove from active_users)
+             database.ref(`active_users/${key}`).remove();
+
+             alert(`User ${targetName} has been banned for 1 hour.`);
+        }
+
+        function deleteAllMessages() {
+            if(confirm("⚠ WARNING: This will delete ALL messages in the GLOBAL CHAT. Are you sure?")) {
+                const promptVal = prompt("Type 'DELETE' to confirm:");
+                if(promptVal === 'DELETE') {
+                    database.ref('messages').remove()
+                    .then(() => alert("All messages deleted."))
+                    .catch(err => alert("Error: " + err.message));
+                }
+            }
         }
     </script>
 </body>
