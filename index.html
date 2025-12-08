@@ -171,6 +171,40 @@
             text-align: center;
             position: relative; z-index: 2;
         }
+        
+        /* --- MENTION HIGHLIGHT EFFECTS --- */
+.message.mentioned {
+    background: linear-gradient(135deg, #fff9c4 0%, #fff176 100%) !important;
+    border: 2px solid #fbc02d !important;
+    color: #333 !important;
+    position: relative;
+    font-weight: 500;
+}
+
+/* Glow Animation */
+.message.mentioned::after {
+    content: '';
+    position: absolute;
+    top: -2px; left: -2px; right: -2px; bottom: -2px;
+    border-radius: 20px;
+    box-shadow: 0 0 20px rgba(253, 216, 53, 0.6);
+    animation: pulse-glow 2s infinite;
+    z-index: -1;
+    pointer-events: none;
+}
+
+@keyframes pulse-glow {
+    0% { opacity: 0.6; transform: scale(1); }
+    50% { opacity: 0; transform: scale(1.05); }
+    100% { opacity: 0; transform: scale(1); }
+}
+
+/* Dark Mode Mention Style */
+body.dark-mode .message.mentioned {
+    background: linear-gradient(135deg, #f57f17 0%, #f9a825 100%) !important;
+    color: #000 !important; /* Black text for contrast on yellow */
+    border-color: #ffeb3b !important;
+}
 
         .vertical-divider {
             width: 1px;
@@ -291,7 +325,16 @@
             box-shadow: 0 4px 10px rgba(0,0,0,0.05); border: 1px solid rgba(255,255,255,0.2);
         }
         
-        .header-text h2 { font-size: 1rem; margin-bottom: 2px; font-weight: 600; }
+        .header-text h2 { 
+    font-size: 1rem; 
+    margin-bottom: 2px; 
+    font-weight: 600; 
+    
+    /* ADD THESE LINES */
+    white-space: nowrap; 
+    overflow: hidden;
+    text-overflow: ellipsis; 
+}
         .active-count { font-size: 0.75rem; color: var(--text-secondary); font-weight: 500; display: flex; align-items: center; gap: 6px; }
         .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; background-color: var(--status-green); box-shadow: 0 0 8px var(--status-green); }
         .header-controls { display: flex; gap: 8px; }
@@ -779,6 +822,44 @@
             /* Optimization for replies on mobile */
             .reply-quote-block { font-size: 0.75rem; padding: 4px 8px; }
             .reply-quote-text { font-size: 0.75rem; }
+
+            /* --- HEADER FIXES FOR 1 LINE TITLE --- */
+            .glass-header {
+                padding: 8px 8px; /* Reduce padding to give more width to text */
+            }
+            
+            .header-info {
+                flex: 1;      /* Take up all available space */
+                min-width: 0; /* Critical: Allows text to shrink/truncate */
+                gap: 8px;     /* Reduce gap between avatar and text */
+            }
+
+            .header-text {
+                min-width: 0; /* Critical for child truncation */
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+            }
+
+            .header-text h2 {
+                font-size: 0.95rem;
+                white-space: nowrap;     /* Force single line */
+                overflow: hidden;        /* Hide overflow */
+                text-overflow: ellipsis; /* Add "..." if text is too long */
+                margin-bottom: 0;
+            }
+
+            /* Tighten button spacing on right side */
+            .header-controls {
+                gap: 2px; 
+                flex-shrink: 0; /* Prevent buttons from squishing */
+            }
+
+            .header-controls .icon-btn {
+                padding: 5px;
+                width: 32px;
+                height: 32px;
+            }
         }
 
         /* --- SAFARI / iOS SPECIFIC FIXES --- */
@@ -1230,8 +1311,11 @@
         const RESTRICTED_NAMES = ['naimur rahman', 'naimur rahma', 'naimur', 'admin', 'uiu bot', 'ai'];
 
         // --- SOUNDS ---
+        // --- SOUNDS ---
         const SOUND_SENT = new Audio('https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3');
         const SOUND_RECEIVED = new Audio('https://assets.mixkit.co/active_storage/sfx/2354/2354-preview.mp3');
+        // NEW: Specific sound for mentions
+        const SOUND_MENTION = new Audio('https://assets.mixkit.co/active_storage/sfx/2578/2578-preview.mp3');
         let isMuted = localStorage.getItem('isMuted') === 'true';
 
         // --- CLOUDINARY CONFIGURATION ---
@@ -1537,33 +1621,45 @@
         }
 
         function initFirebase() {
-            if (typeof firebase === 'undefined') { console.error("Firebase SDK not loaded."); return; }
-            try {
-                firebase.initializeApp(firebaseConfig);
-                database = firebase.database();
-                
-                const activeUsersRef = database.ref('active_users');
-                activeUsersRef.on('value', (snapshot) => {
-                    activeUsersList = [];
-                    const count = snapshot.exists() ? snapshot.numChildren() : 0;
-                    if (activeUsersText) activeUsersText.innerText = `${count} Online`;
+    if (typeof firebase === 'undefined') { console.error("Firebase SDK not loaded."); return; }
+    try {
+        firebase.initializeApp(firebaseConfig);
+        database = firebase.database();
+        
+        const activeUsersRef = database.ref('active_users');
+        activeUsersRef.on('value', (snapshot) => {
+            // 1. Clear list and rebuild
+            activeUsersList = [];
+            const count = snapshot.exists() ? snapshot.numChildren() : 0;
+            
+            // 2. Populate list for Mentions
+            if (snapshot.exists()) {
+                const users = snapshot.val();
+                updateTypingIndicator(users);
 
-                    if (snapshot.exists()) {
-                        const users = snapshot.val();
-                        updateTypingIndicator(users);
-
-                        Object.values(users).forEach(u => {
-                            if(u.originalName) activeUsersList.push(u.originalName);
-                        });
-                    } else {
-                        updateTypingIndicator(null);
-                    }
+                Object.values(users).forEach(u => {
+                    // Store names for the @mention logic
+                    if(u.originalName) activeUsersList.push(u.originalName);
                 });
-                
-                initPinListener();
-                
-            } catch (error) { console.error("Firebase Init Error:", error); }
-        }
+            } else {
+                updateTypingIndicator(null);
+            }
+
+            // 3. Update Header Count UI (Handles Global vs Private)
+            if (activeUsersText) {
+                if (currentChatMode === 'private') {
+                    // Shows: "X Online • Private"
+                    activeUsersText.innerHTML = `${count} Online <span style="margin:0 5px; opacity:0.5">•</span> <span style="color:#2ecc71; font-weight:bold;">Private Chat</span>`;
+                } else {
+                    activeUsersText.innerText = `${count} Online`;
+                }
+            }
+        });
+        
+        initPinListener();
+        
+    } catch (error) { console.error("Firebase Init Error:", error); }
+}
 
         initTheme();
         updateMetaThemeColor(document.body.classList.contains('dark-mode'));
@@ -1649,46 +1745,53 @@
         if (messageInput) messageInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
 
         if (messageInput) {
-            messageInput.addEventListener('input', (e) => {
-                const val = messageInput.value;
-                const hasText = val.trim().length > 0;
+            // Replace the existing messageInput.addEventListener('input', ...) block with this:
 
-                // --- MENTION LOGIC ---
-                const cursorPosition = messageInput.selectionStart;
-                const textBeforeCursor = val.substring(0, cursorPosition);
-                const lastAtPos = textBeforeCursor.lastIndexOf('@');
+messageInput.addEventListener('input', (e) => {
+    const val = messageInput.value;
+    const hasText = val.trim().length > 0;
 
-                if (lastAtPos !== -1) {
-                    const query = textBeforeCursor.substring(lastAtPos + 1);
-                    // Check if there's a space after the @ (invalid mention usually)
-                    if (!query.includes(' ')) {
-                        showMentions(query, lastAtPos);
-                    } else {
-                        mentionSuggestions.classList.add('hidden');
-                    }
-                } else {
-                    mentionSuggestions.classList.add('hidden');
-                }
+    // --- MENTION TRIGGER LOGIC START ---
+    const cursorPosition = messageInput.selectionStart;
+    const textBeforeCursor = val.substring(0, cursorPosition);
+    const lastAtPos = textBeforeCursor.lastIndexOf('@');
 
-                if (hasText) {
-                    inputWrapper.classList.add('typing');
-                } else {
-                    inputWrapper.classList.remove('typing');
-                }
+    if (lastAtPos !== -1) {
+        // Get text immediately after the @
+        const query = textBeforeCursor.substring(lastAtPos + 1);
+        
+        // Show suggestions if there are no spaces (standard mention behavior)
+        if (!query.includes(' ')) {
+            showMentions(query, lastAtPos);
+        } else {
+            mentionSuggestions.classList.add('hidden');
+        }
+    } else {
+        mentionSuggestions.classList.add('hidden');
+    }
+    // --- MENTION TRIGGER LOGIC END ---
 
-                if (currentUserKey && database) {
-                    if (!isTypingStatusSent) {
-                        database.ref('active_users/' + currentUserKey).update({ isTyping: true });
-                        isTypingStatusSent = true;
-                    }
+    // Typing Indicator Logic
+    if (hasText) {
+        inputWrapper.classList.add('typing');
+    } else {
+        inputWrapper.classList.remove('typing');
+    }
 
-                    if (typingTimeout) clearTimeout(typingTimeout);
-                    typingTimeout = setTimeout(() => {
-                        database.ref('active_users/' + currentUserKey).update({ isTyping: false });
-                        isTypingStatusSent = false;
-                    }, 3000);
-                }
-            });
+    // Send Typing Status to Firebase
+    if (currentUserKey && database && currentChatMode === 'global') {
+        if (!isTypingStatusSent) {
+            database.ref('active_users/' + currentUserKey).update({ isTyping: true });
+            isTypingStatusSent = true;
+        }
+
+        if (typingTimeout) clearTimeout(typingTimeout);
+        typingTimeout = setTimeout(() => {
+            database.ref('active_users/' + currentUserKey).update({ isTyping: false });
+            isTypingStatusSent = false;
+        }, 3000);
+    }
+});
 
             // Hide mentions on click out
             document.addEventListener('click', (e) => {
@@ -1699,46 +1802,52 @@
         }
 
         function showMentions(query, atIndex) {
-            mentionSuggestions.innerHTML = '';
-            const lowerQuery = query.toLowerCase();
+    mentionSuggestions.innerHTML = '';
+    const lowerQuery = query.toLowerCase();
 
-            // Always suggest AI first
-            const suggestions = [{name: 'ai', display: 'BhodAi (AI Bot)'}];
+    // 1. Build Suggestion List
+    const suggestions = [{name: 'ai', display: 'BhodAi (AI Bot)'}];
 
-            // Add active users
-            activeUsersList.forEach(name => {
-                if(name !== username) suggestions.push({name: name, display: name});
-            });
+    // Add active users (excluding self)
+    activeUsersList.forEach(name => {
+        if(name !== username) suggestions.push({name: name, display: name});
+    });
 
-            const filtered = suggestions.filter(s => s.name.toLowerCase().startsWith(lowerQuery));
+    // 2. Filter List
+    // If query is empty (just typed @), show everyone. Otherwise filter.
+    const filtered = query === '' 
+        ? suggestions 
+        : suggestions.filter(s => s.name.toLowerCase().startsWith(lowerQuery));
 
-            if (filtered.length === 0) {
-                mentionSuggestions.classList.add('hidden');
-                return;
-            }
+    // 3. Hide if no matches
+    if (filtered.length === 0) {
+        mentionSuggestions.classList.add('hidden');
+        return;
+    }
 
-            filtered.forEach(item => {
-                const div = document.createElement('div');
-                div.className = 'mention-item';
-                div.innerHTML = `<i data-lucide="${item.name === 'ai' ? 'bot' : 'user'}"></i> ${item.display}`;
-                div.onclick = () => {
-                    const text = messageInput.value;
-                    const before = text.substring(0, atIndex);
-                    const after = text.substring(messageInput.selectionStart);
-                    const insert = `@${item.name} `;
+    // 4. Render Items
+    filtered.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'mention-item';
+        div.innerHTML = `<i data-lucide="${item.name === 'ai' ? 'bot' : 'user'}"></i> ${item.display}`;
+        
+        div.onclick = () => {
+            const text = messageInput.value;
+            const before = text.substring(0, atIndex);
+            const after = text.substring(messageInput.selectionStart);
+            // Insert name with a space after
+            const insert = `@${item.name} `;
 
-                    messageInput.value = before + insert + after;
-                    messageInput.focus();
-                    mentionSuggestions.classList.add('hidden');
+            messageInput.value = before + insert + after;
+            messageInput.focus();
+            mentionSuggestions.classList.add('hidden');
+        };
+        mentionSuggestions.appendChild(div);
+    });
 
-                    // Reset input height or other triggers if needed
-                };
-                mentionSuggestions.appendChild(div);
-            });
-
-            if (typeof lucide !== 'undefined') lucide.createIcons();
-            mentionSuggestions.classList.remove('hidden');
-        }
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+    mentionSuggestions.classList.remove('hidden');
+}
 
         if(aiTriggerBtn) aiTriggerBtn.addEventListener('click', () => {
             const text = messageInput.value.trim();
@@ -2402,160 +2511,190 @@
         }
 
         function displayMessage(msgId, user, text, timestamp, senderId, isDeleted, replyToData, imageURL, senderAvatar) {
-            const existingMsg = document.getElementById(`msg-${msgId}`);
+    const existingMsg = document.getElementById(`msg-${msgId}`);
 
-            // --- FIX START: FORCE UNKNOWN IF DELETED ---
-            if (isDeleted) {
-                text = "🚫 Admin deleted message";
-                imageURL = null;   
-                replyToData = null; 
-                user = "Unknown";      // <--- Forces name to Unknown
-                senderAvatar = null;   // <--- Removes their profile picture
-            }
-            // --- FIX END ---
+    // --- 1. HANDLE DELETED STATE ---
+    if (isDeleted) {
+        text = "🚫 Admin deleted message";
+        imageURL = null;   
+        replyToData = null; 
+        user = "Unknown";      
+        senderAvatar = null;   
+    }
 
-            const isMyMessage = senderId ? (senderId === myUUID) : (user === username);
-            const isBot = senderId === BOT_ID; 
-            const cleanUser = user || "Anonymous";
-            const lowerUser = cleanUser.toLowerCase();
-            const isNaimur = lowerUser.includes('naimur rahman');
-            const iAmAdmin = username.toLowerCase().includes('naimur rahman');
-
-            // 2. STANDARD MESSAGE LOGIC
-            const wrapper = document.createElement('div');
-            wrapper.classList.add('message-wrapper');
-            wrapper.id = `msg-${msgId}`;
-
-            let timeStr = timestamp ? new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "";
-
-            const messageBubble = document.createElement('div');
-            messageBubble.classList.add('message');
-            
-            // PREVENT CONTEXT MENU
-            messageBubble.addEventListener('contextmenu', (e) => { e.preventDefault(); });
-
-            if (isDeleted) {
-                messageBubble.classList.add('deleted-state');
-            }
-
-            // Apply standard classes
-            if (isBot) messageBubble.classList.add('other-message', 'ai-message');
-            else messageBubble.classList.add(isMyMessage ? 'my-message' : 'other-message');
-
-            if (isNaimur && !isBot && !isDeleted) messageBubble.style.border = "1px solid #ffd700";
-
-            const headerDiv = document.createElement('div');
-            headerDiv.className = 'msg-header-inside';
-            
-            if (isMyMessage) {
-                headerDiv.style.justifyContent = 'flex-end';
-                headerDiv.innerHTML = `${timeStr}`;
-            } else {
-                let nameHtml = cleanUser;
-                // Only show verified tick if NOT deleted
-                if (isNaimur && !isDeleted) nameHtml += ` <span style="color:#1da1f2">✔</span>`;
-                headerDiv.innerHTML = `${nameHtml} &bull; ${timeStr}`;
-            }
-            messageBubble.appendChild(headerDiv);
-
-            if (replyToData) {
-                const replyBlock = document.createElement('div');
-                replyBlock.className = 'reply-quote-block';
-                replyBlock.innerHTML = `
-                    <div class="reply-quote-name">${replyToData.username}</div>
-                    <div class="reply-quote-text">${replyToData.text}</div>
-                `;
-                replyBlock.onclick = () => {
-                      const originalMsg = document.getElementById(`msg-${replyToData.id}`);
-                      if(originalMsg) originalMsg.scrollIntoView({behavior: 'smooth', block: 'center'});
-                };
-                messageBubble.appendChild(replyBlock);
-            }
-
-            if (imageURL) {
-                const imgContainer = document.createElement('div');
-                imgContainer.style.marginBottom = text ? '8px' : '0';
-                imgContainer.innerHTML = `<img src="${imageURL}" class="chat-image-img" onclick="window.open('${imageURL}', '_blank')">`;
-                messageBubble.appendChild(imgContainer);
-            }
-
-            if (text) {
-                const textDiv = document.createElement('div');
-                textDiv.className = 'text';
-                textDiv.innerText = text;
-                messageBubble.appendChild(textDiv);
-            }
-
-            if (iAmAdmin) {
-                const delBtn = document.createElement('button');
-                delBtn.innerHTML = '×';
-                delBtn.className = 'admin-delete-btn';
-                delBtn.style.position = 'absolute';
-                delBtn.style.top = '-5px';
-                delBtn.style.right = isMyMessage ? '10px' : '-10px';
-                delBtn.style.width = '18px'; delBtn.style.height = '18px'; delBtn.style.fontSize = '12px';
-                delBtn.onclick = (e) => { e.stopPropagation(); deleteMessage(msgId); };
-                messageBubble.appendChild(delBtn);
-            }
-
-            const reactionDisplay = document.createElement('div');
-            reactionDisplay.id = `react-disp-${msgId}`;
-            reactionDisplay.className = 'reaction-display-bubble hidden';
-            
-            if (isMyMessage) {
-                wrapper.style.alignItems = 'flex-end';
-                messageBubble.appendChild(reactionDisplay);
-                wrapper.appendChild(messageBubble);
-            } else {
-                wrapper.style.alignItems = 'flex-start';
-                const row = document.createElement('div');
-                row.className = 'message-row';
-
-                const avatarDiv = document.createElement('div');
-                avatarDiv.className = 'msg-avatar';
-                
-                if (isBot) {
-                    avatarDiv.innerHTML = '🤖'; avatarDiv.style.background = '#6c5ce7'; avatarDiv.style.display='flex'; avatarDiv.style.alignItems='center'; avatarDiv.style.justifyContent='center';
-                } else if (senderAvatar && senderAvatar.startsWith('http')) {
-                    avatarDiv.innerHTML = `<img src="${senderAvatar}">`;
-                } else {
-                    avatarDiv.innerHTML = '<div style="width:100%; height:100%; background:#ddd; display:flex; align-items:center; justify-content:center; color:#555;"><i data-lucide="user" style="width:16px;"></i></div>';
-                }
-
-                // Add Click Handler for User Modal (Only for non-bots and not me)
-                if (!isBot && !isMyMessage) {
-                    avatarDiv.style.cursor = 'pointer';
-                    avatarDiv.onclick = (e) => {
-                        e.stopPropagation();
-                        openUserActionModal({ uuid: senderId, name: user, avatar: senderAvatar });
-                    };
-                }
-
-                const contentCol = document.createElement('div');
-                contentCol.className = 'msg-content';
-                contentCol.appendChild(messageBubble);
-                contentCol.appendChild(reactionDisplay);
-
-                row.appendChild(avatarDiv);
-                row.appendChild(contentCol);
-                wrapper.appendChild(row);
-            }
-
-            messageBubble.addEventListener('dblclick', (e) => showReactionMenu(e, msgId, wrapper));
-            
-            enableSwipeToReply(messageBubble, msgId, cleanUser, text, wrapper);
-
-            if (existingMsg) {
-                existingMsg.replaceWith(wrapper);
-            } else {
-                messagesContainer.appendChild(wrapper);
-            }
-            if (typeof lucide !== 'undefined') lucide.createIcons();
-
-            database.ref(`messages/${msgId}/reactions`).once('value', (snap) => {
-                if(snap.exists()) updateReactions(msgId, snap.val());
-            });
+    const isMyMessage = senderId ? (senderId === myUUID) : (user === username);
+    const isBot = senderId === BOT_ID; 
+    const cleanUser = user || "Anonymous";
+    
+    // --- 2. MENTION DETECTION ---
+    let isMentioned = false;
+    // Check if I am mentioned in the text (case insensitive)
+    if (!isMyMessage && !isDeleted && text) {
+        const mentionTag = `@${username}`;
+        // Also check simply matching name if needed, but @ tag is safer
+        if (text.toLowerCase().includes(mentionTag.toLowerCase())) {
+            isMentioned = true;
         }
+    }
+
+    // Create Wrappers
+    const wrapper = document.createElement('div');
+    wrapper.classList.add('message-wrapper');
+    wrapper.id = `msg-${msgId}`;
+
+    let timeStr = timestamp ? new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "";
+
+    const messageBubble = document.createElement('div');
+    messageBubble.classList.add('message');
+    
+    messageBubble.addEventListener('contextmenu', (e) => { e.preventDefault(); });
+
+    if (isDeleted) messageBubble.classList.add('deleted-state');
+
+    // --- 3. APPLY CLASSES (Including Mention) ---
+    if (isMentioned) {
+        messageBubble.classList.add('mentioned');
+    }
+
+    if (isBot) messageBubble.classList.add('other-message', 'ai-message');
+    else messageBubble.classList.add(isMyMessage ? 'my-message' : 'other-message');
+
+    // Header Construction
+    const headerDiv = document.createElement('div');
+    headerDiv.className = 'msg-header-inside';
+    
+    if (isMyMessage) {
+        headerDiv.style.justifyContent = 'flex-end';
+        headerDiv.innerHTML = `${timeStr}`;
+    } else {
+        const isNaimur = cleanUser.toLowerCase().includes('naimur rahman');
+        let nameHtml = cleanUser;
+        if (isNaimur && !isDeleted) nameHtml += ` <span style="color:#1da1f2">✔</span>`;
+        headerDiv.innerHTML = `${nameHtml} &bull; ${timeStr}`;
+    }
+    messageBubble.appendChild(headerDiv);
+
+    // Reply Block
+    if (replyToData) {
+        const replyBlock = document.createElement('div');
+        replyBlock.className = 'reply-quote-block';
+        replyBlock.innerHTML = `
+            <div class="reply-quote-name">${replyToData.username}</div>
+            <div class="reply-quote-text">${replyToData.text}</div>
+        `;
+        replyBlock.onclick = () => {
+              const originalMsg = document.getElementById(`msg-${replyToData.id}`);
+              if(originalMsg) originalMsg.scrollIntoView({behavior: 'smooth', block: 'center'});
+        };
+        messageBubble.appendChild(replyBlock);
+    }
+
+    // Image
+    if (imageURL) {
+        const imgContainer = document.createElement('div');
+        imgContainer.style.marginBottom = text ? '8px' : '0';
+        imgContainer.innerHTML = `<img src="${imageURL}" class="chat-image-img" onclick="window.open('${imageURL}', '_blank')">`;
+        messageBubble.appendChild(imgContainer);
+    }
+
+    // Text
+    if (text) {
+        const textDiv = document.createElement('div');
+        textDiv.className = 'text';
+        textDiv.innerText = text;
+        messageBubble.appendChild(textDiv);
+    }
+
+    // Admin Delete Button
+    const iAmAdmin = username.toLowerCase().includes('naimur rahman');
+    if (iAmAdmin) {
+        const delBtn = document.createElement('button');
+        delBtn.innerHTML = '×';
+        delBtn.className = 'admin-delete-btn';
+        delBtn.style.position = 'absolute';
+        delBtn.style.top = '-5px';
+        delBtn.style.right = isMyMessage ? '10px' : '-10px';
+        delBtn.style.width = '18px'; delBtn.style.height = '18px'; delBtn.style.fontSize = '12px';
+        delBtn.onclick = (e) => { e.stopPropagation(); deleteMessage(msgId); };
+        messageBubble.appendChild(delBtn);
+    }
+
+    // --- 4. ASSEMBLE LAYOUT & PLAY SOUND ---
+    const reactionDisplay = document.createElement('div');
+    reactionDisplay.id = `react-disp-${msgId}`;
+    reactionDisplay.className = 'reaction-display-bubble hidden';
+    
+    if (isMyMessage) {
+        wrapper.style.alignItems = 'flex-end';
+        messageBubble.appendChild(reactionDisplay);
+        wrapper.appendChild(messageBubble);
+    } else {
+        wrapper.style.alignItems = 'flex-start';
+        const row = document.createElement('div');
+        row.className = 'message-row';
+
+        const avatarDiv = document.createElement('div');
+        avatarDiv.className = 'msg-avatar';
+        
+        if (isBot) {
+            avatarDiv.innerHTML = '🤖'; avatarDiv.style.background = '#6c5ce7'; avatarDiv.style.display='flex'; avatarDiv.style.alignItems='center'; avatarDiv.style.justifyContent='center';
+        } else if (senderAvatar && senderAvatar.startsWith('http')) {
+            avatarDiv.innerHTML = `<img src="${senderAvatar}">`;
+        } else {
+            avatarDiv.innerHTML = '<div style="width:100%; height:100%; background:#ddd; display:flex; align-items:center; justify-content:center; color:#555;"><i data-lucide="user" style="width:16px;"></i></div>';
+        }
+
+        if (!isBot && !isMyMessage) {
+            avatarDiv.style.cursor = 'pointer';
+            avatarDiv.onclick = (e) => {
+                e.stopPropagation();
+                openUserActionModal({ uuid: senderId, name: user, avatar: senderAvatar });
+            };
+        }
+
+        const contentCol = document.createElement('div');
+        contentCol.className = 'msg-content';
+        contentCol.appendChild(messageBubble);
+        contentCol.appendChild(reactionDisplay);
+
+        row.appendChild(avatarDiv);
+        row.appendChild(contentCol);
+        wrapper.appendChild(row);
+
+        // --- PLAY SOUND LOGIC ---
+        // Play mention sound if mentioned, otherwise play received sound.
+        // Only if message is new (less than 3s old) to prevent spam on load.
+        if((Date.now() - timestamp) < 3000) {
+            if(isMentioned) {
+                 if(!isMuted) {
+                    SOUND_MENTION.currentTime = 0;
+                    SOUND_MENTION.play().catch(e => console.log(e));
+                 }
+            } else {
+                 // Do not play normal receive sound if mentioned (priority)
+                 // Or play standard receive if NOT mentioned
+                 // Note: Your loadMessages function triggers playSound('received').
+                 // We rely on that, but if you want specific mention sound override:
+                 // The loadMessages function handles the generic 'received' sound. 
+                 // We will let this specific block handle the Mention sound specifically.
+            }
+        }
+    }
+
+    messageBubble.addEventListener('dblclick', (e) => showReactionMenu(e, msgId, wrapper));
+    enableSwipeToReply(messageBubble, msgId, cleanUser, text, wrapper);
+
+    if (existingMsg) {
+        existingMsg.replaceWith(wrapper);
+    } else {
+        messagesContainer.appendChild(wrapper);
+    }
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+
+    database.ref(`messages/${msgId}/reactions`).once('value', (snap) => {
+        if(snap.exists()) updateReactions(msgId, snap.val());
+    });
+}
 
         // --- UPDATED UNIFIED SWIPE & LONG PRESS FUNCTION ---
         function enableSwipeToReply(element, msgId, user, text, wrapper) {
@@ -2940,34 +3079,42 @@
         }
 
         function startPrivateChat(targetUser) {
-            currentChatMode = 'private';
-            privateChatUser = targetUser;
+    currentChatMode = 'private';
+    privateChatUser = targetUser;
 
-            // Create consistent Room ID (Alphabetical sort)
-            const ids = [myUUID, targetUser.uuid].sort();
-            privateRoomId = ids.join('_');
+    // Create unique room ID
+    const ids = [myUUID, targetUser.uuid].sort();
+    privateRoomId = ids.join('_');
 
-            // Update UI
-            document.querySelector('.header-text h2').innerText = `${targetUser.name}`;
-            document.querySelector('.active-count').innerText = "Private Chat";
-            inboxScreen.classList.add('hidden'); // Close inbox if open
+    // 1. Update Header Name
+    document.querySelector('.header-text h2').innerText = `${targetUser.name}`;
+    
+    // 2. Force Header Status Update (Immediate visual feedback)
+    if(activeUsersText) {
+         // Keep the current online count but add the Private label
+         const currentCount = activeUsersList.length || 0; 
+         activeUsersText.innerHTML = `${currentCount} Online <span style="margin:0 5px; opacity:0.5">•</span> <span style="color:#2ecc71; font-weight:bold;">Private Chat</span>`;
+    }
 
-            // Show Back Button in Chat Header
-            const headerInfo = document.querySelector('.header-info');
-            let backBtn = document.getElementById('chat-back-btn');
-            if(!backBtn) {
-                backBtn = document.createElement('button');
-                backBtn.id = 'chat-back-btn';
-                backBtn.className = 'icon-btn';
-                backBtn.style.marginRight = '8px';
-                backBtn.innerHTML = '<i data-lucide="arrow-left"></i>';
-                backBtn.onclick = exitPrivateChat;
-                headerInfo.insertBefore(backBtn, headerInfo.firstChild);
-            }
-            if (typeof lucide !== 'undefined') lucide.createIcons();
+    inboxScreen.classList.add('hidden'); // Close inbox
 
-            loadMessages();
-        }
+    // 3. Add Back Button
+    const headerInfo = document.querySelector('.header-info');
+    let backBtn = document.getElementById('chat-back-btn');
+    if(!backBtn) {
+        backBtn = document.createElement('button');
+        backBtn.id = 'chat-back-btn';
+        backBtn.className = 'icon-btn';
+        backBtn.style.marginRight = '8px';
+        backBtn.innerHTML = '<i data-lucide="arrow-left"></i>';
+        backBtn.onclick = exitPrivateChat;
+        headerInfo.insertBefore(backBtn, headerInfo.firstChild);
+    }
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+
+    // 4. Load Messages for this room
+    loadMessages();
+}
 
         function exitPrivateChat() {
             currentChatMode = 'global';
