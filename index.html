@@ -1885,6 +1885,10 @@ messageInput.addEventListener('input', (e) => {
             logoutBtn.addEventListener('click', () => {
                 if(username && database) {
                     const userKey = username.toLowerCase().replace(/[^a-z0-9]/g, '_');
+
+                    // Clear Guest UUID on explicit logout
+                    localStorage.removeItem('guest_uuid_' + userKey);
+
                     database.ref('active_users/' + userKey).remove()
                     .then(() => { location.reload(); })
                     .catch(() => { location.reload(); });
@@ -2060,7 +2064,14 @@ messageInput.addEventListener('input', (e) => {
                                 lastSeen: firebase.database.ServerValue.TIMESTAMP
                             });
 
-                            completeLogin(rawName);
+                            // --- PERSISTENT UUID LOGIC ---
+                            let userUUID = data.uuid;
+                            if (!userUUID) {
+                                userUUID = generateUUID();
+                                userRef.update({ uuid: userUUID });
+                            }
+
+                            completeLogin(rawName, userUUID);
                         } else {
                             alert("Incorrect Password!");
                         }
@@ -2088,10 +2099,13 @@ messageInput.addEventListener('input', (e) => {
                         memberLoginBtn.disabled = false;
                 }
 
+                const newUUID = generateUUID();
+
                 const newData = {
                     originalName: rawName,
                     password: password,
                     avatar: uploadedAvatarUrl,
+                    uuid: newUUID,
                     createdAt: firebase.database.ServerValue.TIMESTAMP,
                     reservedUntil: Date.now() + (7 * 24 * 60 * 60 * 1000)
                 };
@@ -2101,12 +2115,12 @@ messageInput.addEventListener('input', (e) => {
                         myAvatar = uploadedAvatarUrl;
                         localStorage.setItem('myAvatar', myAvatar);
                     }
-                    completeLogin(rawName);
+                    completeLogin(rawName, newUUID);
                 });
             }
         }
 
-        function completeLogin(finalName) {
+        function completeLogin(finalName, persistentUUID = null) {
             const userKey = finalName.toLowerCase().replace(/[^a-z0-9]/g, '_');
             const activeRef = database.ref('active_users/' + userKey);
 
@@ -2115,11 +2129,27 @@ messageInput.addEventListener('input', (e) => {
                     alert(`The user "${finalName}" is already online in another session.`);
                 } else {
                     username = finalName;
-                    myUUID = generateUUID(); 
+
+                    // --- UUID PERSISTENCE LOGIC ---
+                    if (persistentUUID) {
+                        // Case 1: Member (UUID provided)
+                        myUUID = persistentUUID;
+                    } else {
+                        // Case 2: Guest (Check LocalStorage)
+                        const storedGuestUUID = localStorage.getItem('guest_uuid_' + userKey);
+                        if (storedGuestUUID) {
+                            myUUID = storedGuestUUID;
+                        } else {
+                            myUUID = generateUUID();
+                            localStorage.setItem('guest_uuid_' + userKey, myUUID);
+                        }
+                    }
+
                     currentUserKey = userKey;
                     
                     activeRef.set({
                         originalName: username, status: "online", avatar: myAvatar,
+                        uuid: myUUID, // Save UUID here too for reference
                         timestamp: firebase.database.ServerValue.TIMESTAMP,
                         isTyping: false
                     });
