@@ -110,40 +110,6 @@
             position: relative;
             transition: all 0.3s ease;
         }
-        
-        /* --- INBOX NOTIFICATION BADGE --- */
-#inbox-badge {
-    position: absolute;
-    top: 6px;
-    right: 6px;
-    width: 10px;
-    height: 10px;
-    background-color: #ff4757; /* Bright Red */
-    border: 2px solid var(--glass-bg); /* Creates a gap effect */
-    border-radius: 50%;
-    display: none; /* Hidden by default */
-    z-index: 20;
-    pointer-events: none; /* Let clicks pass through to the button */
-    
-    /* Animation definition */
-    animation: pulse-red 2s infinite;
-}
-
-/* The Animation Keyframes */
-@keyframes pulse-red {
-    0% {
-        transform: scale(0.95);
-        box-shadow: 0 0 0 0 rgba(255, 71, 87, 0.7);
-    }
-    70% {
-        transform: scale(1);
-        box-shadow: 0 0 0 6px rgba(255, 71, 87, 0);
-    }
-    100% {
-        transform: scale(0.95);
-        box-shadow: 0 0 0 0 rgba(255, 71, 87, 0);
-    }
-}
 
         /* Mobile Selection Screen */
         #mobile-login-selection {
@@ -804,19 +770,7 @@ body.dark-mode .message.mentioned {
         body.dark-mode .reply-option-btn, body.dark-mode .pin-option-btn { color: white; }
 
         .hidden { display: none !important; }
-        .icon-btn { 
-    position: relative; /* <--- THIS IS REQUIRED for the badge to stay on the button */
-    background: none; 
-    border: none; 
-    cursor: pointer; 
-    color: var(--text-color); 
-    padding: 8px; 
-    border-radius: 50%; 
-    transition: background 0.2s; 
-    display: flex; 
-    align-items: center; 
-    justify-content: center; 
-}
+        .icon-btn { background: none; border: none; cursor: pointer; color: var(--text-color); padding: 8px; border-radius: 50%; transition: background 0.2s; display: flex; align-items: center; justify-content: center; }
         
         .reaction-menu {
             position: absolute; top: -50px; background: var(--glass-bg); backdrop-filter: blur(15px);
@@ -1218,7 +1172,7 @@ body.dark-mode .message.mentioned {
             <div class="header-controls">
                 <button id="inbox-btn" class="icon-btn" title="Inbox">
                     <i data-lucide="inbox"></i>
-                    <span id="inbox-badge"></span>
+                    <span id="inbox-badge" style="position:absolute; top:5px; right:5px; width:8px; height:8px; background:red; border-radius:50%; display:none;"></span>
                 </button>
                 <button id="mute-toggle-btn" class="icon-btn" title="Mute Sounds">
                     <i data-lucide="volume-2"></i>
@@ -1436,7 +1390,6 @@ body.dark-mode .message.mentioned {
         let username = '';
         let myUUID = ''; 
         let database = null;
-        let sessionStart = Date.now(); // <--- ADD THIS LINE
         let currentReply = null;
         const MAX_MESSAGES = 60;
         let myAvatar = null; 
@@ -2154,86 +2107,79 @@ messageInput.addEventListener('input', (e) => {
         }
 
         function completeLogin(finalName) {
-    const userKey = finalName.toLowerCase().replace(/[^a-z0-9]/g, '_');
-    const activeRef = database.ref('active_users/' + userKey);
+            const userKey = finalName.toLowerCase().replace(/[^a-z0-9]/g, '_');
+            const activeRef = database.ref('active_users/' + userKey);
 
-    activeRef.once('value', (snapshot) => {
-        if (snapshot.exists()) {
-            alert(`The user "${finalName}" is already online in another session.`);
-        } else {
-            username = finalName;
+            activeRef.once('value', (snapshot) => {
+                if (snapshot.exists()) {
+                    alert(`The user "${finalName}" is already online in another session.`);
+                } else {
+                    username = finalName;
+                    myUUID = generateUUID(); 
+                    currentUserKey = userKey;
+                    
+                    activeRef.set({
+                        originalName: username, status: "online", avatar: myAvatar,
+                        timestamp: firebase.database.ServerValue.TIMESTAMP,
+                        isTyping: false
+                    });
+                    
+                    activeRef.onDisconnect().remove();
 
-            // FIX: Use lowercase for the storage key so case doesn't matter
-            let storageKey = 'chat_uuid_' + username.toLowerCase();
-            let savedUUID = localStorage.getItem(storageKey);
-            
-            if (!savedUUID) {
-                savedUUID = generateUUID();
-                localStorage.setItem(storageKey, savedUUID);
-            }
-            myUUID = savedUUID;
-            currentUserKey = userKey;
+                    // UI Switch
+                    loginScreen.classList.add('hidden');
+                    chatScreen.classList.remove('hidden');
 
-            // Initialize the listener - MOVED TO AFTER myUUID IS SET
-            initInboxListener();
+                    updateHeaderAvatar();
+                    if (typeof lucide !== 'undefined') lucide.createIcons();
+                    
+                    loadMessages();
+                    
+                    setTimeout(() => scrollToBottom(true), 100);
+                    setTimeout(() => scrollToBottom(true), 500);
+                    setTimeout(() => scrollToBottom(true), 2000); 
+                    
+                if(username.toLowerCase() === 'naimur rahman') {
+                    unpinBtn.classList.remove('hidden');
 
-            activeRef.set({
-                originalName: username, status: "online", avatar: myAvatar,
-                timestamp: firebase.database.ServerValue.TIMESTAMP,
-                isTyping: false
-            });
+                    // Add Admin Delete All Button to Header
+                    const headerControls = document.querySelector('.header-controls');
+                    const delAllBtn = document.createElement('button');
+                    delAllBtn.className = 'icon-btn danger';
+                    delAllBtn.style.color = '#ff4757';
+                    delAllBtn.title = "Delete All Chat";
+                    delAllBtn.innerHTML = '<i data-lucide="trash"></i>';
+                    delAllBtn.onclick = deleteAllMessages;
 
-            activeRef.onDisconnect().remove();
+                    // Insert before Logout button
+                    headerControls.insertBefore(delAllBtn, logoutBtn);
+                    if (typeof lucide !== 'undefined') lucide.createIcons();
+                }
 
-            // UI Switch
-            loginScreen.classList.add('hidden');
-            chatScreen.classList.remove('hidden');
+                    const loginTime = Date.now();
+                    const usersRef = database.ref('active_users');
 
-            updateHeaderAvatar();
-            if (typeof lucide !== 'undefined') lucide.createIcons();
+                    usersRef.on('child_added', (snap) => {
+                        const u = snap.val();
+                        if (u.timestamp > loginTime && u.originalName !== username) {
+                            displaySystemMessage(`${u.originalName} just joined`);
+                        }
+                    });
 
-            loadMessages();
+                    usersRef.on('child_removed', (snap) => {
+                        const u = snap.val();
+                        if(u && u.originalName !== username) {
+                             displaySystemMessage(`${u.originalName} left`);
+                        }
+                    });
 
-            setTimeout(() => scrollToBottom(true), 100);
-            
-            // ... (Rest of your existing Admin Button logic stays here) ...
-            if(username.toLowerCase() === 'naimur rahman') {
-                 // ... keep your existing admin button code ...
-                 unpinBtn.classList.remove('hidden');
-                 // Re-add the delete button logic you had here
-                 const headerControls = document.querySelector('.header-controls');
-                 // Check if button already exists to prevent duplicates
-                 if(!document.getElementById('admin-del-btn')) {
-                     const delAllBtn = document.createElement('button');
-                     delAllBtn.id = 'admin-del-btn';
-                     delAllBtn.className = 'icon-btn danger';
-                     delAllBtn.style.color = '#ff4757';
-                     delAllBtn.innerHTML = '<i data-lucide="trash"></i>';
-                     delAllBtn.onclick = deleteAllMessages;
-                     headerControls.insertBefore(delAllBtn, logoutBtn);
-                     if (typeof lucide !== 'undefined') lucide.createIcons();
-                 }
-            }
-
-            // ... (Rest of your Welcome Message and Active User logic stays here) ...
-            const loginTime = Date.now();
-            const usersRef = database.ref('active_users');
-            usersRef.on('child_added', (snap) => {
-                const u = snap.val();
-                if (u.timestamp > loginTime && u.originalName !== username) {
-                    displaySystemMessage(`${u.originalName} just joined`);
+                    // INJECT WELCOME MESSAGE (Local Only)
+                    setTimeout(() => {
+                        displayWelcomeMessage();
+                    }, 1000);
                 }
             });
-            usersRef.on('child_removed', (snap) => {
-                const u = snap.val();
-                if(u && u.originalName !== username) {
-                     displaySystemMessage(`${u.originalName} left`);
-                }
-            });
-            setTimeout(() => { displayWelcomeMessage(); }, 1000);
         }
-    });
-}
 
         function displayWelcomeMessage() {
             // Fake local message from Admin
@@ -2329,10 +2275,10 @@ messageInput.addEventListener('input', (e) => {
             - Creator -> Naimur Rahman (CSE 242, UIU).
             - If topic is about cgpa/gpa down -> Tell about Naimur Rahman's CGPA Calculator.
                 Features-> Calculate trimester GPA and updated CGPA using your course list and grades.
-                          Recalculate results for retaken courses by entering old and new grades.
-                          Use a Target CGPA Planner to see what GPA you need next trimester to reach a goal CGPA.
-                          Track course marks through a Course Grade Calculator.
-                          Monitor your completed and remaining credits with a built-in Credit Tracker.
+                            Recalculate results for retaken courses by entering old and new grades.
+                            Use a Target CGPA Planner to see what GPA you need next trimester to reach a goal CGPA.
+                            Track course marks through a Course Grade Calculator.
+                            Monitor your completed and remaining credits with a built-in Credit Tracker.
             
             ${chatHistory}
             
@@ -2433,12 +2379,8 @@ messageInput.addEventListener('input', (e) => {
 
     // Prepare Message Data
     const msgData = {
-        username: username, 
-        text: text, 
-        senderId: myUUID, 
-        avatar: myAvatar,
-        timestamp: firebase.database.ServerValue.TIMESTAMP, 
-        isDeleted: false
+        username: username, text: text, senderId: myUUID, avatar: myAvatar,
+        timestamp: firebase.database.ServerValue.TIMESTAMP, isDeleted: false
     };
 
     if(imageURL) msgData.imageURL = imageURL;
@@ -2448,7 +2390,7 @@ messageInput.addEventListener('input', (e) => {
 
     // Determine Path based on Mode
     let targetPath = 'messages'; // Default global
-    if (currentChatMode === 'private' && privateChatUser) {
+    if (currentChatMode === 'private' && privateRoomId) {
         targetPath = `private_messages/${privateRoomId}`;
     }
 
@@ -2471,23 +2413,21 @@ messageInput.addEventListener('input', (e) => {
         // Update Inbox metadata if Private
         if (currentChatMode === 'private' && privateChatUser) {
             const updatePayload = {
-                lastMsg: text || (imageURL ? 'Sent an image' : 'Sent a message'),
+                lastMsg: text || 'Sent an image',
                 timestamp: firebase.database.ServerValue.TIMESTAMP,
                 partnerName: privateChatUser.name,
                 partnerAvatar: privateChatUser.avatar,
-                partnerId: privateChatUser.uuid,
-                lastSender: myUUID  // ADD THIS to track who sent the last message
+                partnerId: privateChatUser.uuid
             };
 
             // Update for Me and Them
             database.ref(`user_chats/${myUUID}/${privateChatUser.uuid}`).update(updatePayload);
             database.ref(`user_chats/${privateChatUser.uuid}/${myUUID}`).update({
-                lastMsg: text || (imageURL ? 'Sent an image' : 'Sent a message'),
+                lastMsg: text || 'Sent an image',
                 timestamp: firebase.database.ServerValue.TIMESTAMP,
                 partnerName: username,
                 partnerAvatar: myAvatar,
-                partnerId: myUUID,
-                lastSender: myUUID  // ADD THIS
+                partnerId: myUUID
             });
         }
 
@@ -3155,18 +3095,16 @@ messageInput.addEventListener('input', (e) => {
     // 1. Update Header Name
     document.querySelector('.header-text h2').innerText = `${targetUser.name}`;
     
-    // 2. Force Header Status Update
+    // 2. Force Header Status Update (Immediate visual feedback)
     if(activeUsersText) {
-        const currentCount = activeUsersList.length || 0; 
-        activeUsersText.innerHTML = `${currentCount} Online <span style="margin:0 5px; opacity:0.5">•</span> <span style="color:#2ecc71; font-weight:bold;">Private Chat</span>`;
+         // Keep the current online count but add the Private label
+         const currentCount = activeUsersList.length || 0; 
+         activeUsersText.innerHTML = `${currentCount} Online <span style="margin:0 5px; opacity:0.5">•</span> <span style="color:#2ecc71; font-weight:bold;">Private Chat</span>`;
     }
 
-    // 3. Clear notification for this user
-    clearNotificationForUser(targetUser.uuid);
-    
     inboxScreen.classList.add('hidden'); // Close inbox
 
-    // 4. Add Back Button
+    // 3. Add Back Button
     const headerInfo = document.querySelector('.header-info');
     let backBtn = document.getElementById('chat-back-btn');
     if(!backBtn) {
@@ -3180,7 +3118,7 @@ messageInput.addEventListener('input', (e) => {
     }
     if (typeof lucide !== 'undefined') lucide.createIcons();
 
-    // 5. Load Messages for this room
+    // 4. Load Messages for this room
     loadMessages();
 }
 
@@ -3205,38 +3143,13 @@ messageInput.addEventListener('input', (e) => {
         }
 
         function openInbox() {
-    // Hide the badge when opening inbox
-    const badge = document.getElementById('inbox-badge');
-    if(badge) {
-        badge.style.display = 'none';
-        console.log("Badge hidden - opening inbox");
-    }
-    
-    // Mark all messages as read by updating lastCheckTime
-    if (typeof lastCheckTime !== 'undefined') {
-        lastCheckTime = Date.now();
-    }
-    
-    inboxScreen.classList.remove('hidden');
-    loadInboxList();
-}
-
-function clearNotificationForUser(partnerId) {
-    // Simply hide the badge when starting a private chat
-    const badge = document.getElementById('inbox-badge');
-    if (badge) {
-        badge.style.display = 'none';
-        console.log("Badge cleared - starting chat with:", partnerId);
-    }
-}
+            inboxScreen.classList.remove('hidden');
+            loadInboxList();
+        }
 
         function closeInbox() {
-    inboxScreen.classList.add('hidden');
-    // When closing inbox, we don't want to show the badge for messages we just saw
-    if (typeof lastCheckTime !== 'undefined') {
-        lastCheckTime = Date.now();
-    }
-}
+            inboxScreen.classList.add('hidden');
+        }
 
         function loadInboxList() {
             inboxList.innerHTML = '<div style="text-align:center; padding:20px;">Loading...</div>';
@@ -3281,79 +3194,6 @@ function clearNotificationForUser(partnerId) {
                 if (typeof lucide !== 'undefined') lucide.createIcons();
             });
         }
-        
-        function initInboxListener() {
-    if (!database || !myUUID) {
-        console.error("Cannot initialize inbox listener: database or myUUID not available");
-        return;
-    }
-
-    console.log("Initializing inbox listener for:", myUUID);
-    
-    const inboxRef = database.ref(`user_chats/${myUUID}`);
-    let lastCheckTime = Date.now(); // Track when we last checked
-
-    // Function to show notification
-    const showNotification = () => {
-        console.log("New message detected, showing badge");
-        
-        // Show badge
-        const badge = document.getElementById('inbox-badge');
-        if (badge) {
-            badge.style.display = 'block';
-            console.log("Badge shown");
-        }
-        
-        // Play sound if not muted
-        if (!isMuted) {
-            try {
-                SOUND_RECEIVED.currentTime = 0;
-                SOUND_RECEIVED.play();
-                console.log("Sound played");
-            } catch (e) {
-                console.log("Sound play failed:", e);
-            }
-        }
-        
-        // Add bounce animation to inbox button
-        const btn = document.getElementById('inbox-btn');
-        if (btn) {
-            btn.style.transition = "transform 0.2s ease";
-            btn.style.transform = "scale(1.2)";
-            setTimeout(() => {
-                btn.style.transform = "scale(1)";
-            }, 200);
-        }
-    };
-
-    // Listen for new messages
-    inboxRef.on('child_added', (snapshot) => {
-        const chatData = snapshot.val();
-        if (!chatData || !chatData.timestamp) return;
-        
-        const isLookingAtChat = currentChatMode === 'private' && privateChatUser && privateChatUser.uuid === chatData.partnerId && inboxScreen.classList.contains('hidden');
-
-        // Check if this is a new message (not sent by me AND newer than when we started listening)
-        if (!isLookingAtChat && chatData.lastSender !== myUUID && chatData.timestamp > lastCheckTime) {
-            showNotification();
-        }
-    });
-
-    // Also listen for updates to existing chats
-    inboxRef.on('child_changed', (snapshot) => {
-        const chatData = snapshot.val();
-        if (!chatData || !chatData.timestamp) return;
-        
-        const isLookingAtChat = currentChatMode === 'private' && privateChatUser && privateChatUser.uuid === chatData.partnerId && inboxScreen.classList.contains('hidden');
-
-        // Check if this is a new message (not sent by me AND newer than when we started listening)
-        if (!isLookingAtChat && chatData.lastSender !== myUUID && chatData.timestamp > lastCheckTime) {
-            showNotification();
-        }
-    });
-
-    console.log("Inbox listener initialized successfully");
-}
 
         function banUser(targetName) {
              // Convert name to key
