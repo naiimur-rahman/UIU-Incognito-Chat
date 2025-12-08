@@ -2488,14 +2488,20 @@ messageInput.addEventListener('input', (e) => {
             };
 
             // Update for Me and Them
+            // Ensure values are not undefined (Firebase rejects undefined keys in update)
+            if (updatePayload.partnerAvatar === undefined) updatePayload.partnerAvatar = null;
+
             database.ref(`user_chats/${myUUID}/${privateChatUser.uuid}`).update(updatePayload);
-            database.ref(`user_chats/${privateChatUser.uuid}/${myUUID}`).update({
+
+            const themPayload = {
                 lastMsg: text || 'Sent an image',
                 timestamp: firebase.database.ServerValue.TIMESTAMP,
                 partnerName: username,
-                partnerAvatar: myAvatar,
+                partnerAvatar: myAvatar || null,
                 partnerId: myUUID
-            });
+            };
+
+            database.ref(`user_chats/${privateChatUser.uuid}/${myUUID}`).update(themPayload);
         }
 
         // AI Logic (Enabled for BOTH Global and Private)
