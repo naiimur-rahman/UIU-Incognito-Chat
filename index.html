@@ -2459,13 +2459,14 @@ messageInput.addEventListener('input', (e) => {
     const text = messageInput.value.trim();
     if (!database || (!text && !imageURL)) return;
 
-            
-    const activeReply = currentReply; // <---Add this
-
-    // <--- CHANGED from currentReply to activeReply
-    const isReplyingToBot = activeReply && activeReply.username.includes("BhodAi"); 
-
-
+    // 1. Capture state at the very beginning
+    const activeReply = currentReply; 
+    
+    // 2. Calculate if it's a bot reply NOW (while activeReply exists)
+    const isReplyingToBot = activeReply && (
+        activeReply.username.includes("BhodAi") || 
+        activeReply.username.toLowerCase().includes("bot")
+    );
 
     // Prepare Message Data
     const msgData = {
@@ -2474,10 +2475,11 @@ messageInput.addEventListener('input', (e) => {
     };
 
     if(imageURL) msgData.imageURL = imageURL;
-    if (activeReply) { // <--- CHANGED from currentReply
-    msgData.replyTo = { id: activeReply.id, username: activeReply.username, text: activeReply.text };
-}
-
+    
+    // 3. Use activeReply for the database payload
+    if (activeReply) { 
+        msgData.replyTo = { id: activeReply.id, username: activeReply.username, text: activeReply.text };
+    }
 
     // Determine Path based on Mode
     let targetPath = 'messages'; // Default global
@@ -2489,19 +2491,19 @@ messageInput.addEventListener('input', (e) => {
 
     targetRef.push(msgData).then(() => {
         messageInput.value = ''; 
-        cancelReply();
+        cancelReply(); // Clears global currentReply (doesn't matter, we have isReplyingToBot saved)
         scrollToBottom(true); 
         
         inputWrapper.classList.remove('typing');
 
-        // Typing Status Logic (Global Only)
+        // Typing Status Logic
         if (currentUserKey && database && currentChatMode === 'global') {
             database.ref('active_users/' + currentUserKey).update({ isTyping: false });
             if (typingTimeout) clearTimeout(typingTimeout);
             isTypingStatusSent = false;
         }
 
-        // Update Inbox metadata if Private
+        // Update Inbox metadata
         if (currentChatMode === 'private' && privateChatUser) {
             const updatePayload = {
                 lastMsg: text || 'Sent an image',
@@ -2510,11 +2512,7 @@ messageInput.addEventListener('input', (e) => {
                 partnerAvatar: privateChatUser.avatar,
                 partnerId: privateChatUser.uuid
             };
-
-            // Update for Me and Them
-            // Ensure values are not undefined (Firebase rejects undefined keys in update)
             if (updatePayload.partnerAvatar === undefined) updatePayload.partnerAvatar = null;
-
             database.ref(`user_chats/${myUUID}/${privateChatUser.uuid}`).update(updatePayload);
 
             const themPayload = {
@@ -2524,18 +2522,16 @@ messageInput.addEventListener('input', (e) => {
                 partnerAvatar: myAvatar || null,
                 partnerId: myUUID
             };
-
             database.ref(`user_chats/${privateChatUser.uuid}/${myUUID}`).update(themPayload);
         }
 
-        // AI Logic (Enabled for BOTH Global and Private)
-        const isReplyingToBot = currentReply && currentReply.username === "BhodAi 🤖";
+        // --- AI LOGIC FIXED ---
+        // We do NOT recalculate isReplyingToBot here. We use the one from the top.
         const isAiRequest = isDirectAI || text.toLowerCase().startsWith('@ai') || text.toLowerCase().startsWith('/ai') || isReplyingToBot;
 
         if (isAiRequest) {
             let query = text.replace(/^(@ai|\/ai)\s*/i, '');
             if(query.trim() === '') query = text; 
-            // FIX: Pass the targetPath so AI replies in the correct room
             setTimeout(() => askGemini(query, targetPath), 500);
         }
 
@@ -2543,6 +2539,7 @@ messageInput.addEventListener('input', (e) => {
 
     }).catch(error => console.error(error));
 }
+
 
         function deleteMessage(msgId) {
             // Check if current user is Admin
