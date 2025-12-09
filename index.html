@@ -682,6 +682,9 @@ body.dark-mode .message.mentioned {
             -webkit-appearance: none; appearance: none;
             -webkit-text-fill-color: var(--text-color);
             opacity: 1;
+            user-select: text !important;
+            -webkit-user-select: text !important;
+            -webkit-touch-callout: default !important;
         }
         .input-area input::placeholder { color: var(--text-secondary); opacity: 0.7; }
         .input-area input:focus { 
@@ -2501,17 +2504,49 @@ function completeLogin(finalName, persistentUUID = null, ip = 'unknown', deviceI
             }
         }
 
-        // PASTE LISTENER
-        document.addEventListener('paste', (e) => {
-            const items = (e.clipboardData || e.originalEvent.clipboardData).items;
-            for (let index in items) {
-                const item = items[index];
-                if (item.kind === 'file' && item.type.indexOf('image/') !== -1) {
-                    const blob = item.getAsFile();
-                    processFile(blob);
-                }
-            }
-        });
+        // --- ADVANCED PASTE LISTENER (PC & MOBILE) ---
+document.addEventListener('paste', (e) => {
+    // 1. Get Clipboard Data safely
+    const clipboardData = e.clipboardData || window.clipboardData;
+    if (!clipboardData) return;
+
+    const items = clipboardData.items;
+    if (!items) return;
+
+    let imageFound = false;
+
+    // 2. Loop through all clipboard items
+    for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        
+        // Check if the item is an image
+        if (item.type.indexOf('image') !== -1) {
+            // STOP the default paste (prevents file name from being pasted as text)
+            e.preventDefault(); 
+            
+            const blob = item.getAsFile();
+            
+            // Send to your existing upload function
+            // (We add a small delay/feedback to show user something is happening)
+            const inputArea = document.querySelector('.input-area');
+            if(inputArea) inputArea.style.opacity = '0.7'; // Visual feedback
+            
+            processFile(blob).finally(() => {
+                if(inputArea) inputArea.style.opacity = '1';
+            });
+            
+            imageFound = true;
+            break; // Stop after finding the first image
+        }
+    }
+
+    // 3. If NO image was found, do NOT call preventDefault().
+    // This lets the browser handle standard Text pasting (Ctrl+V or Long Press).
+    if (!imageFound) {
+        // Optional: You can add logic here to clean text if needed, 
+        // but usually letting the browser handle it is best.
+    }
+});
 
         function sendMessage(isDirectAI = false, imageURL = null) {
     const text = messageInput.value.trim();
