@@ -2063,89 +2063,113 @@ messageInput.addEventListener('input', (e) => {
         }
 
         async function loginAsMember() {
-            if (!database) { alert("Connecting to server..."); return; }
-            const rawName = memberUsernameInput.value.trim();
-            const password = memberPasswordInput.value.trim();
-            
-            if (!rawName) { alert("Please enter username."); return; }
-            if (!password) { alert("Please enter password."); return; }
-            if (/[.#$\[\]]/.test(rawName)) { alert("Username cannot contain special characters."); return; }
+    if (!database) { alert("Connecting to server..."); return; }
+    
+    const rawName = memberUsernameInput.value.trim();
+    const password = memberPasswordInput.value.trim();
+    
+    if (!rawName) { alert("Please enter username."); return; }
+    if (!password) { alert("Please enter password."); return; }
+    if (/[.#$\[\]]/.test(rawName)) { alert("Username cannot contain special characters."); return; }
 
-            const userKey = rawName.toLowerCase().replace(/[^a-z0-9]/g, '_');
-            const userRef = database.ref('registered_users/' + userKey);
+    // --- SECURITY UPDATE: CHECK IP/DEVICE BAN START ---
+    
+    // 1. Get IP and Device ID
+    const ipAddress = await getClientIP();
+    let deviceId = localStorage.getItem('device_uuid');
+    if (!deviceId) {
+        deviceId = generateUUID();
+        localStorage.setItem('device_uuid', deviceId);
+    }
 
-            // Check Ban Status First
-            checkBanStatus(userKey, () => {
-                userRef.once('value', async (snapshot) => {
-                    if (snapshot.exists()) {
-                        // Login
-                        const data = snapshot.val();
-                        if (data.password === password) {
-                            // Success
-                            myAvatar = data.avatar || null;
-                            if(myAvatar) localStorage.setItem('myAvatar', myAvatar);
+    // 2. Check the Ban List (IP & Device)
+    const banCheck = await checkBanList(ipAddress, deviceId);
+    if (banCheck.isBanned) {
+        alert(`⛔ You are banned for ${banCheck.minutesLeft} minutes.`);
+        return; // STOP EXECUTION HERE
+    }
+    // --- SECURITY UPDATE END ---
 
-                            // Update reservation
-                            userRef.update({
-                                reservedUntil: Date.now() + (7 * 24 * 60 * 60 * 1000), // 7 Days
-                                lastSeen: firebase.database.ServerValue.TIMESTAMP
-                            });
+    const userKey = rawName.toLowerCase().replace(/[^a-z0-9]/g, '_');
+    const userRef = database.ref('registered_users/' + userKey);
 
-                            // --- PERSISTENT UUID LOGIC ---
-                            let userUUID = data.uuid;
-                            if (!userUUID) {
-                                userUUID = generateUUID();
-                                userRef.update({ uuid: userUUID });
-                            }
+    // 3. Check Username Ban (Legacy check)
+    checkBanStatus(userKey, () => {
+        userRef.once('value', async (snapshot) => {
+            if (snapshot.exists()) {
+                // Login
+                const data = snapshot.val();
+                if (data.password === password) {
+                    // Success
+                    myAvatar = data.avatar || null;
+                    if(myAvatar) localStorage.setItem('myAvatar', myAvatar);
 
-                            completeLogin(rawName, userUUID);
-                        } else {
-                            alert("Incorrect Password!");
-                        }
-                    } else {
-                        // Register Logic (Nested to continue flow)
-                        registerNewMember(rawName, password, userRef);
+                    // Update reservation
+                    userRef.update({
+                        reservedUntil: Date.now() + (7 * 24 * 60 * 60 * 1000), // 7 Days
+                        lastSeen: firebase.database.ServerValue.TIMESTAMP
+                    });
+
+                    // --- PERSISTENT UUID LOGIC ---
+                    let userUUID = data.uuid;
+                    if (!userUUID) {
+                        userUUID = generateUUID();
+                        userRef.update({ uuid: userUUID });
                     }
-                });
-            });
-        }
 
-        async function registerNewMember(rawName, password, userRef) {
-            if(confirm(`Username "${rawName}" not found. Create new account with this password?`)) {
-                let uploadedAvatarUrl = null;
-
-                if (pendingMemberAvatarFile) {
-                        memberLoginBtn.innerText = "Uploading...";
-                        memberLoginBtn.disabled = true;
-                        try {
-                            uploadedAvatarUrl = await uploadToCloudinary(pendingMemberAvatarFile);
-                        } catch(err) {
-                            alert("Avatar upload failed, continuing without avatar.");
-                        }
-                        memberLoginBtn.innerText = "Login / Register";
-                        memberLoginBtn.disabled = false;
+                    // Pass IP and DeviceID so they are stored in active_users (allowing future bans)
+                    completeLogin(rawName, userUUID, ipAddress, deviceId);
+                } else {
+                    alert("Incorrect Password!");
                 }
-
-                const newUUID = generateUUID();
-
-                const newData = {
-                    originalName: rawName,
-                    password: password,
-                    avatar: uploadedAvatarUrl,
-                    uuid: newUUID,
-                    createdAt: firebase.database.ServerValue.TIMESTAMP,
-                    reservedUntil: Date.now() + (7 * 24 * 60 * 60 * 1000)
-                };
-
-                userRef.set(newData).then(() => {
-                    if(uploadedAvatarUrl) {
-                        myAvatar = uploadedAvatarUrl;
-                        localStorage.setItem('myAvatar', myAvatar);
-                    }
-                    completeLogin(rawName, newUUID);
-                });
+            } else {
+                // Register Logic (Nested to continue flow)
+                // Note: We need to modify registerNewMember slightly to pass IP/Device if needed,
+                // but since they are logged in immediately after reg, we pass it via completeLogin there.
+                registerNewMember(rawName, password, userRef, ipAddress, deviceId);
             }
+        });
+    });
+}
+
+        // Add ipAddress and deviceId as arguments
+async function registerNewMember(rawName, password, userRef, ipAddress = 'unknown', deviceId = 'unknown') {
+    if(confirm(`Username "${rawName}" not found. Create new account with this password?`)) {
+        let uploadedAvatarUrl = null;
+
+        if (pendingMemberAvatarFile) {
+                memberLoginBtn.innerText = "Uploading...";
+                memberLoginBtn.disabled = true;
+                try {
+                    uploadedAvatarUrl = await uploadToCloudinary(pendingMemberAvatarFile);
+                } catch(err) {
+                    alert("Avatar upload failed, continuing without avatar.");
+                }
+                memberLoginBtn.innerText = "Login / Register";
+                memberLoginBtn.disabled = false;
         }
+
+        const newUUID = generateUUID();
+
+        const newData = {
+            originalName: rawName,
+            password: password,
+            avatar: uploadedAvatarUrl,
+            uuid: newUUID,
+            createdAt: firebase.database.ServerValue.TIMESTAMP,
+            reservedUntil: Date.now() + (7 * 24 * 60 * 60 * 1000)
+        };
+
+        userRef.set(newData).then(() => {
+            if(uploadedAvatarUrl) {
+                myAvatar = uploadedAvatarUrl;
+                localStorage.setItem('myAvatar', myAvatar);
+            }
+            // Pass the IP and Device ID here
+            completeLogin(rawName, newUUID, ipAddress, deviceId);
+        });
+    }
+}
 
         // REPLACE THE ENTIRE completeLogin FUNCTION WITH THIS CODE
 
