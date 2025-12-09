@@ -2459,6 +2459,14 @@ messageInput.addEventListener('input', (e) => {
     const text = messageInput.value.trim();
     if (!database || (!text && !imageURL)) return;
 
+            
+    const activeReply = currentReply; // <---Add this
+
+    // <--- CHANGED from currentReply to activeReply
+    const isReplyingToBot = activeReply && activeReply.username.includes("BhodAi"); 
+
+
+
     // Prepare Message Data
     const msgData = {
         username: username, text: text, senderId: myUUID, avatar: myAvatar,
@@ -2466,9 +2474,10 @@ messageInput.addEventListener('input', (e) => {
     };
 
     if(imageURL) msgData.imageURL = imageURL;
-    if (currentReply) {
-        msgData.replyTo = { id: currentReply.id, username: currentReply.username, text: currentReply.text };
-    }
+    if (activeReply) { // <--- CHANGED from currentReply
+    msgData.replyTo = { id: activeReply.id, username: activeReply.username, text: activeReply.text };
+}
+
 
     // Determine Path based on Mode
     let targetPath = 'messages'; // Default global
