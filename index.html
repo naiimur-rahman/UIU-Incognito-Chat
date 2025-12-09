@@ -1993,43 +1993,55 @@ messageInput.addEventListener('input', (e) => {
             }
         }
 
-        function joinAsGuest() {
-            if (!database) { alert("Connecting to server..."); return; }
-            const rawName = guestUsernameInput.value.trim();
-            if (!rawName) { alert("Please enter a name."); return; }
-            if (/[.#$\[\]]/.test(rawName)) { alert("Name cannot contain special characters."); return; }
+        async function joinAsGuest() {
+    if (!database) { alert("Connecting to server..."); return; }
+    const rawName = guestUsernameInput.value.trim();
+    if (!rawName) { alert("Please enter a name."); return; }
+    if (/[.#$\[\]]/.test(rawName)) { alert("Name cannot contain special characters."); return; }
 
-            // Check if name is reserved in 'registered_users'
-            const userKey = rawName.toLowerCase().replace(/[^a-z0-9]/g, '_'); 
-            database.ref('registered_users/' + userKey).once('value', (snapshot) => {
-                if (snapshot.exists()) {
-                    const data = snapshot.val();
-                    const now = Date.now();
-                    if (data.reservedUntil && data.reservedUntil > now) {
-                        alert(`The name "${rawName}" is reserved for 7 days. Please choose another.`);
-                        return;
-                    }
-                }
-                // Also check restricted names for Admin
-                if (RESTRICTED_NAMES.includes(rawName.toLowerCase()) && rawName.toLowerCase() !== 'naimur rahman') {
-                      // Allow admin to bypass if they know the password (legacy check or manual override)
-                      // But strictly speaking, Admin should use Member Login now.
-                      // We'll keep the prompt for backward compatibility or direct admin access
-                      const password = prompt(`The username "${rawName}" is restricted. Enter Admin Password:`);
-                      if (password !== ADMIN_PASSWORD) { alert("Access Denied."); return; }
-                } else if (rawName.toLowerCase() === 'naimur rahman') {
-                      // Force admin to use member login ideally, but let's see.
-                      // Let's redirect them or just ask for password here too.
-                      const password = prompt("Admin Login: Enter Password");
-                      if (password !== ADMIN_PASSWORD) { alert("Access Denied."); return; }
-                }
+    const userKey = rawName.toLowerCase().replace(/[^a-z0-9]/g, '_'); 
+    
+    // 1. Get Identifiers
+    const ipAddress = await getClientIP();
+    
+    // Get or Create Device ID (UUID)
+    let deviceId = localStorage.getItem('device_uuid');
+    if (!deviceId) {
+        deviceId = generateUUID();
+        localStorage.setItem('device_uuid', deviceId);
+    }
 
-                // Check if Banned
-                checkBanStatus(userKey, () => {
-                    completeLogin(rawName);
-                });
-            });
+    // 2. CHECK BAN STATUS (IP or Device ID)
+    const banCheck = await checkBanList(ipAddress, deviceId);
+    if (banCheck.isBanned) {
+        alert(`⛔ You are banned for ${banCheck.minutesLeft} minutes.`);
+        return;
+    }
+
+    // 3. Normal Login Flow
+    database.ref('registered_users/' + userKey).once('value', (snapshot) => {
+        if (snapshot.exists()) {
+            const data = snapshot.val();
+            const now = Date.now();
+            if (data.reservedUntil && data.reservedUntil > now) {
+                alert(`The name "${rawName}" is reserved. Choose another.`);
+                return;
+            }
         }
+        
+        // Check Restricted Names
+        if (RESTRICTED_NAMES.includes(rawName.toLowerCase()) && rawName.toLowerCase() !== 'naimur rahman') {
+             const password = prompt(`Restricted Name. Enter Admin Password:`);
+             if (password !== ADMIN_PASSWORD) { alert("Access Denied."); return; }
+        } else if (rawName.toLowerCase() === 'naimur rahman') {
+             const password = prompt("Admin Login: Enter Password");
+             if (password !== ADMIN_PASSWORD) { alert("Access Denied."); return; }
+        }
+
+        // 4. Pass IP and DeviceID to completeLogin
+        completeLogin(rawName, null, ipAddress, deviceId);
+    });
+}
 
         function checkBanStatus(userKey, onSuccess) {
             database.ref('banned_users/' + userKey).once('value', (snap) => {
@@ -2135,50 +2147,47 @@ messageInput.addEventListener('input', (e) => {
             }
         }
 
-        function completeLogin(finalName, persistentUUID = null) {
-            const userKey = finalName.toLowerCase().replace(/[^a-z0-9]/g, '_');
-            const activeRef = database.ref('active_users/' + userKey);
+        function completeLogin(finalName, persistentUUID = null, ip = 'unknown', deviceId = 'unknown') {
+    const userKey = finalName.toLowerCase().replace(/[^a-z0-9]/g, '_');
+    const activeRef = database.ref('active_users/' + userKey);
 
-            activeRef.once('value', (snapshot) => {
-                if (snapshot.exists()) {
-                    alert(`The user "${finalName}" is already online in another session.`);
-                } else {
-                    username = finalName;
+    activeRef.once('value', (snapshot) => {
+        if (snapshot.exists()) {
+            alert(`The user "${finalName}" is already online.`);
+        } else {
+            username = finalName;
 
-                    // --- UUID PERSISTENCE LOGIC ---
-                    if (persistentUUID) {
-                        // Case 1: Member (UUID provided)
-                        myUUID = persistentUUID;
-                    } else {
-                        // Case 2: Guest (Check LocalStorage)
-                        const storedGuestUUID = localStorage.getItem('guest_uuid_' + userKey);
-                        if (storedGuestUUID) {
-                            myUUID = storedGuestUUID;
-                        } else {
-                            myUUID = generateUUID();
-                            localStorage.setItem('guest_uuid_' + userKey, myUUID);
-                        }
-                    }
+            if (persistentUUID) {
+                myUUID = persistentUUID;
+            } else {
+                // For guests, use the Device ID as their UUID to keep it sticky
+                myUUID = deviceId; 
+                localStorage.setItem('guest_uuid_' + userKey, myUUID);
+            }
 
-                    currentUserKey = userKey;
-                    
-                    activeRef.set({
-                        originalName: username, status: "online", avatar: myAvatar,
-                        uuid: myUUID, // Save UUID here too for reference
-                        timestamp: firebase.database.ServerValue.TIMESTAMP,
-                        isTyping: false
-                    });
-                    
-                    activeRef.onDisconnect().remove();
+            currentUserKey = userKey;
+            
+            // SAVE IP AND DEVICE ID HERE
+            activeRef.set({
+                originalName: username, 
+                status: "online", 
+                avatar: myAvatar,
+                uuid: myUUID,
+                timestamp: firebase.database.ServerValue.TIMESTAMP,
+                isTyping: false,
+                ip: ip,           // <--- Stored
+                deviceId: deviceId // <--- Stored
+            });
+            
+            activeRef.onDisconnect().remove();
 
-                    // UI Switch
-                    loginScreen.classList.add('hidden');
-                    chatScreen.classList.remove('hidden');
-
-                    updateHeaderAvatar();
-                    if (typeof lucide !== 'undefined') lucide.createIcons();
-                    
-                    loadMessages();
+            // UI Switch (Existing code...)
+            loginScreen.classList.add('hidden');
+            chatScreen.classList.remove('hidden');
+            updateHeaderAvatar();
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+            
+            loadMessages();
                     
                     setTimeout(() => scrollToBottom(true), 100);
                     setTimeout(() => scrollToBottom(true), 500);
@@ -3334,16 +3343,47 @@ messageInput.addEventListener('input', (e) => {
         }
 
         function banUser(targetName) {
-             // Convert name to key
-             const key = targetName.toLowerCase().replace(/[^a-z0-9]/g, '_');
-             const expiry = Date.now() + (60 * 60 * 1000); // 1 Hour
-             database.ref(`banned_users/${key}`).set(expiry);
-
-             // Also try to kick them if they are active (remove from active_users)
-             database.ref(`active_users/${key}`).remove();
-
-             alert(`User ${targetName} has been banned for 1 hour.`);
+    const key = targetName.toLowerCase().replace(/[^a-z0-9]/g, '_');
+    
+    // 1. Look up the user's active session to find their IP/ID
+    database.ref(`active_users/${key}`).once('value', (snapshot) => {
+        if (!snapshot.exists()) {
+            alert("User not found online. Cannot ban IP (Legacy ban applied to name only).");
+            // Fallback: Ban just the name
+            const expiry = Date.now() + (60 * 60 * 1000); 
+            database.ref(`banned_users/${key}`).set(expiry);
+            return;
         }
+
+        const userData = snapshot.val();
+        const ip = userData.ip;
+        const deviceId = userData.deviceId;
+        const expiry = Date.now() + (60 * 60 * 1000); // 1 Hour
+
+        const updates = {};
+
+        // 2. Ban the Name
+        updates[`banned_users/${key}`] = expiry;
+
+        // 3. Ban the IP (if exists)
+        if (ip && ip !== 'unknown') {
+            const sanitizedIp = ip.replace(/[.#$[\]]/g, '_');
+            updates[`banned_identifiers/${sanitizedIp}`] = expiry;
+        }
+
+        // 4. Ban the Device ID (if exists)
+        if (deviceId && deviceId !== 'unknown') {
+            updates[`banned_identifiers/${deviceId}`] = expiry;
+        }
+
+        // 5. Apply Bans & Kick User
+        database.ref().update(updates).then(() => {
+            // Kick them out immediately
+            database.ref(`active_users/${key}`).remove();
+            alert(`🚨 User ${targetName} has been BANNED (IP + Device) for 1 hour.`);
+        });
+    });
+}
 
         function deleteAllMessages() {
             if(confirm("⚠ WARNING: This will delete ALL messages in the GLOBAL CHAT. Are you sure?")) {
@@ -3355,6 +3395,37 @@ messageInput.addEventListener('input', (e) => {
                 }
             }
         }
+        // --- IP & DEVICE HELPERS ---
+async function getClientIP() {
+    try {
+        const response = await fetch('https://api.ipify.org?format=json');
+        const data = await response.json();
+        return data.ip;
+    } catch (error) {
+        console.error("Failed to get IP:", error);
+        return 'unknown-ip';
+    }
+}
+async function checkBanList(ip, deviceId) {
+    // Check IP Ban
+    const ipBanRef = database.ref('banned_identifiers/' + ip.replace(/[.#$[\]]/g, '_')); // Sanitize IP for Firebase key
+    const ipSnap = await ipBanRef.get();
+    
+    // Check Device Ban
+    const deviceBanRef = database.ref('banned_identifiers/' + deviceId);
+    const deviceSnap = await deviceBanRef.get();
+
+    let expiry = 0;
+
+    if (ipSnap.exists()) expiry = Math.max(expiry, ipSnap.val());
+    if (deviceSnap.exists()) expiry = Math.max(expiry, deviceSnap.val());
+
+    if (expiry > Date.now()) {
+        return { isBanned: true, minutesLeft: Math.ceil((expiry - Date.now()) / 60000) };
+    }
+    
+    return { isBanned: false };
+}
     </script>
 </body>
 </html>
