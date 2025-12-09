@@ -2147,7 +2147,9 @@ messageInput.addEventListener('input', (e) => {
             }
         }
 
-        function completeLogin(finalName, persistentUUID = null, ip = 'unknown', deviceId = 'unknown') {
+        // REPLACE THE ENTIRE completeLogin FUNCTION WITH THIS CODE
+
+function completeLogin(finalName, persistentUUID = null, ip = 'unknown', deviceId = 'unknown') {
     const userKey = finalName.toLowerCase().replace(/[^a-z0-9]/g, '_');
     const activeRef = database.ref('active_users/' + userKey);
 
@@ -2157,31 +2159,54 @@ messageInput.addEventListener('input', (e) => {
         } else {
             username = finalName;
 
+            // --- 1. ID ASSIGNMENT LOGIC (Fixed) ---
             if (persistentUUID) {
+                // Member login: Use the fixed UUID from their account
                 myUUID = persistentUUID;
             } else {
-                // For guests, use the Device ID as their UUID to keep it sticky
-                myUUID = deviceId; 
-                localStorage.setItem('guest_uuid_' + userKey, myUUID);
+                // Guest login: Check if we have a saved Chat ID specific to THIS username
+                let savedGuestChatID = localStorage.getItem('guest_chat_id_' + userKey);
+                
+                if (savedGuestChatID) {
+                    myUUID = savedGuestChatID;
+                } else {
+                    // Generate a NEW unique Chat ID
+                    myUUID = generateUUID();
+                    localStorage.setItem('guest_chat_id_' + userKey, myUUID);
+                }
             }
 
             currentUserKey = userKey;
             
-            // SAVE IP AND DEVICE ID HERE
+            // --- 2. REGISTER USER IN DATABASE ---
             activeRef.set({
                 originalName: username, 
                 status: "online", 
                 avatar: myAvatar,
-                uuid: myUUID,
+                uuid: myUUID,        // Chat ID
+                deviceId: deviceId,  // Ban ID
                 timestamp: firebase.database.ServerValue.TIMESTAMP,
                 isTyping: false,
-                ip: ip,           // <--- Stored
-                deviceId: deviceId // <--- Stored
+                ip: ip
             });
             
+            // Remove user if they close the tab
             activeRef.onDisconnect().remove();
 
-            // UI Switch (Existing code...)
+            // --- 3. NEW: AUTO-BAN LISTENER ---
+            // This watches the "banned_users" list for THIS username
+            const banListenerRef = database.ref('banned_users/' + userKey);
+            banListenerRef.on('value', (snap) => {
+                if (snap.exists()) {
+                    // If data appears here, it means Admin banned us!
+                    alert("🚨 You have been BANNED by the Admin.");
+                    
+                    // Force Logout immediately
+                    location.reload(); 
+                }
+            });
+
+            // UI Switch to Chat Screen
             loginScreen.classList.add('hidden');
             chatScreen.classList.remove('hidden');
             updateHeaderAvatar();
@@ -2189,56 +2214,56 @@ messageInput.addEventListener('input', (e) => {
             
             loadMessages();
                     
-                    setTimeout(() => scrollToBottom(true), 100);
-                    setTimeout(() => scrollToBottom(true), 500);
-                    setTimeout(() => scrollToBottom(true), 2000); 
-                    
-                if(username.toLowerCase() === 'naimur rahman') {
-                    unpinBtn.classList.remove('hidden');
-
-                    // Add Admin Delete All Button to Header
-                    const headerControls = document.querySelector('.header-controls');
+            setTimeout(() => scrollToBottom(true), 100);
+            setTimeout(() => scrollToBottom(true), 500);
+            
+            // Setup Admin Controls (Delete All button)
+            if(username.toLowerCase() === 'naimur rahman') {
+                unpinBtn.classList.remove('hidden');
+                const headerControls = document.querySelector('.header-controls');
+                if (!document.getElementById('del-all-btn')) {
                     const delAllBtn = document.createElement('button');
+                    delAllBtn.id = 'del-all-btn';
                     delAllBtn.className = 'icon-btn danger';
                     delAllBtn.style.color = '#ff4757';
                     delAllBtn.title = "Delete All Chat";
                     delAllBtn.innerHTML = '<i data-lucide="trash"></i>';
                     delAllBtn.onclick = deleteAllMessages;
-
-                    // Insert before Logout button
                     headerControls.insertBefore(delAllBtn, logoutBtn);
                     if (typeof lucide !== 'undefined') lucide.createIcons();
                 }
+            }
 
-                    const loginTime = Date.now();
-                    const usersRef = database.ref('active_users');
+            // System Message Listeners (Join/Leave)
+            const loginTime = Date.now();
+            const usersRef = database.ref('active_users');
 
-                    usersRef.on('child_added', (snap) => {
-                        const u = snap.val();
-                        if (u.timestamp > loginTime && u.originalName !== username) {
-                            displaySystemMessage(`${u.originalName} just joined`);
-                        }
-                    });
-
-                    usersRef.on('child_removed', (snap) => {
-                        const u = snap.val();
-                        if(u && u.originalName !== username) {
-                             displaySystemMessage(`${u.originalName} left`);
-                        }
-                    });
-
-                    // --- INBOX NOTIFICATION LISTENER ---
-                    const chatsRef = database.ref('user_chats/' + myUUID);
-                    chatsRef.on('child_changed', handleInboxUpdate);
-                    chatsRef.on('child_added', handleInboxUpdate);
-
-                    // INJECT WELCOME MESSAGE (Local Only)
-                    setTimeout(() => {
-                        displayWelcomeMessage();
-                    }, 1000);
+            usersRef.on('child_added', (snap) => {
+                const u = snap.val();
+                if (u.timestamp > loginTime && u.originalName !== username) {
+                    displaySystemMessage(`${u.originalName} just joined`);
                 }
             });
+
+            usersRef.on('child_removed', (snap) => {
+                const u = snap.val();
+                if(u && u.originalName !== username) {
+                     displaySystemMessage(`${u.originalName} left`);
+                }
+            });
+
+            // Inbox Notification Listener
+            const chatsRef = database.ref('user_chats/' + myUUID);
+            chatsRef.on('child_changed', handleInboxUpdate);
+            chatsRef.on('child_added', handleInboxUpdate);
+
+            // Welcome Message
+            setTimeout(() => {
+                displayWelcomeMessage();
+            }, 1000);
         }
+    });
+}
 
         function handleInboxUpdate(snapshot) {
             const partnerId = snapshot.key;
